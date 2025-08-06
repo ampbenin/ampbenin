@@ -1,0 +1,25 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AMP BENIN</title>
+    <meta name="description" content="Action Monde Productif - Organisation sociale dédiée à la promotion des ODD au Bénin." />
+    <meta property="og:title" content="AMP BENIN" />
+    <meta property="og:description" content="Organisation sociale dédiée à la promotion des Objectifs de Développement Durable au Bénin." />
+    <meta property="og:type" content="website" />
+    <slot name="head" /> 
+  </head>
+  <body class="flex flex-col min-h-screen">
+    <Header />
+    <main class="flex-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

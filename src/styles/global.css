@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== Styles personnalisés globaux ========== */
+
+body {
+  @apply bg-white text-gray-800 leading-relaxed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-bold text-green-800;
+}
+
+a {
+  @apply text-green-700 hover:text-green-900 transition duration-300;
+}

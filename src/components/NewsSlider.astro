@@ -1,0 +1,57 @@
+---
+const newsItems = [
+  {
+    image: "/images/news1.jpg",
+    title: "Lancement du programme Jeunesse et Citoyenneté",
+    date: "12 juillet 2025",
+    link: "/actualites/jeunesse-citoyennete"
+  },
+  {
+    image: "/images/news2.jpg",
+    title: "Atelier sur l’innovation sociale à Cotonou",
+    date: "5 juillet 2025",
+    link: "/actualites/atelier-innovation"
+  },
+  {
+    image: "/images/news3.jpg",
+    title: "Forum AMP BENIN pour un Bénin durable",
+    date: "28 juin 2025",
+    link: "/actualites/forum-benin-durable"
+  }
+];
+---
+<section class="relative w-full overflow-hidden">
+  <div
+    id="news-slider"
+    class="flex transition-transform duration-700 ease-in-out"
+    style={`width: calc(100% * ${newsItems.length});`}
+  >
+    {newsItems.map((item) => (
+      <a href={item.link} class="min-w-full md:min-w-1/2 lg:min-w-1/3 flex-shrink-0 block">
+        <div class="relative h-64 md:h-72 lg:h-80">
+          <img
+            src={item.image}
+            alt={item.title}
+            class="w-full h-full object-cover rounded-lg"
+            loading="lazy"
+          />
+          <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-4 rounded-b-lg">
+            <h3 class="text-md font-semibold">{item.title}</h3>
+            <p class="text-xs">{item.date}</p>
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <script is:script>
+    const slider = document.getElementById("news-slider");
+    const totalItems = {newsItems.length};
+    let index = 0;
+
+    setInterval(() => {
+      index = (index + 1) % totalItems;
+      slider.style.transform = `translateX(-${index * 100}%)`;
+    }, 5000);
+  </script>
+</section>

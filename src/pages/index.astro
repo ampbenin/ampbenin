@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import HeroSlider from "../components/HeroSlider.astro";
+import NewsSlider from "../components/NewsSlider.astro";
+import ISCarousel from "../components/ISCarousel.astro";
+---
+
+<BaseLayout>
+  <main>
+    <section class="mb-8">
+      <HeroSlider />
+    </section>
+
+    <section class="px-4 md:px-12 lg:px-24 py-8 text-center">
+      <h2 class="text-3xl font-bold mb-4">Bienvenue sur AMP BENIN</h2>
+      <p class="max-w-3xl mx-auto text-gray-600">
+        L'Action Monde Productif est une organisation sociale dédiée à la promotion des Objectifs de Développement Durable (ODD) au Bénin à travers des initiatives citoyennes, des programmes d'engagement communautaire et la mobilisation des jeunes.
+      </p>
+    </section>
+
+    <section class="py-12 bg-gray-100 px-4 md:px-12 lg:px-24">
+      <h2 class="text-2xl font-semibold mb-4">Dernières actualités</h2>
+      <NewsSlider />
+    </section>
+
+    <section class="py-12 px-4 md:px-12 lg:px-24">
+      <ISCarousel />
+    </section>
+  </main>
+</BaseLayout>
