@@ -1,14 +1,12 @@
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
-import image from "@astrojs/image";
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [
-    tailwind(),
-    image(),
+    tailwind(), 
   ],
-  site: "https://ampbenin.org", // tu peux mettre localhost si besoin
+  site: "https://ampbenin.org", // ou "http://localhost:4321" en local
   output: "static",
 
   // Options globales (hors intégrations)

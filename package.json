@@ -7,7 +7,6 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/image": "^0.18.0",
     "@astrojs/tailwind": "^6.0.2",
     "astro": "^5.12.0"
   },
