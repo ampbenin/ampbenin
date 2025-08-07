@@ -3,9 +3,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import HeroSlider from "../components/HeroSlider.astro";
 import NewsSlider from "../components/NewsSlider.astro";
 import ISCarousel from "../components/ISCarousel.astro";
+
+const title = "AMP BENIN";
+const description = "Découvrez les actions de AMP BENIN pour un Bénin plus durable à travers des programmes communautaires et la mobilisation des jeunes.";
+const url = "https://ampbenin.netlify.app";
+const image = "/og-image.png"; // place ce fichier dans /public
 ---
 
-<BaseLayout>
+<BaseLayout {title} {description} {url} {image}>
   <main>
     <section class="mb-8">
       <HeroSlider />

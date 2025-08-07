@@ -1,21 +1,23 @@
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
+import sitemap from "@astrojs/sitemap"; // 👉 Import du sitemap
 
-// https://astro.build/config
 export default defineConfig({
+  site: "https://ampbenin.netlify.app", // ⚠️ Obligatoire pour le sitemap
+
   integrations: [
-    tailwind(), 
+    tailwind(),
+    sitemap(), // 👉 Ajout ici
   ],
-  site: "https://ampbenin.org", // ou "http://localhost:4321" en local
+
   output: "static",
 
-  // Options globales (hors intégrations)
   defaultLocale: "fr",
   locales: ["fr", "en"],
   i18nextOptions: {
     interpolation: {
       escapeValue: false,
     },
-    fallbackLng: "fr"
+    fallbackLng: "fr",
   }
 });
