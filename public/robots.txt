@@ -1,4 +1,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://ampbenin.netlify.app/sitemap-index.xml
+Sitemap: https://ampbenin.netlify.app/sitemap-0.xml
