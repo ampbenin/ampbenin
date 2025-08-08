@@ -1,41 +1,51 @@
 ---
 const slides = [
   {
-    image: "/images/hero1.jpg",
-    title: "Pour un Bénin durable et inclusif",
+    image: "/images/impact-positif-ODD.jpg",
+    title: "Environnement, Climat et Promotion des ODD",
     subtitle: "Ensemble, promouvons les Objectifs de Développement Durable."
   },
   {
-    image: "/images/hero2.jpg",
-    title: "Mobilisation citoyenne et engagement",
-    subtitle: "Accompagnons les jeunes et communautés vers un avenir meilleur."
+    image: "/images/droits-hummains.jpg",
+    title: "Engagement, Cohésion Siciale et Droits Hummainns",
+    subtitle: "Accompagnons les jeunes et communautés vers un avenir meilleur sans les inégalités sociales et les violences."
   },
   {
-    image: "/images/hero3.jpg",
-    title: "Innovation et solidarité",
-    subtitle: "Soutenons les projets transformateurs pour notre pays."
+    image: "/images/forum-jeunesse.jpg",
+    title: "Innovation, Entrepreneuriat Social et Numérique",
+    subtitle: "Soutenons les projets transformateurs dans nos communautés."
+  },
+  {
+    image: "/images/sante-bienetre-social.jpg",
+    title: "Éducation, Santé et Promotion de l'Enfance",
+    subtitle: "Nous intervenons dans les domaine de l'Education, Santé communautaire et la Promotion de l'Enfance."
   }
 ];
 const SLIDE_COUNT = slides.length;
 ---
 
 <section class="relative w-full overflow-hidden">
-  <div
-    id="hero-slider"
-    class="flex transition-transform duration-700 ease-in-out"
-    data-slide-count={SLIDE_COUNT}
-  >
-    {slides.map((slide) => (
-      <div class="min-w-full relative h-[400px] md:h-[500px] lg:h-[600px]">
+  <div id="hero-slider" class="relative h-screen">
+    {slides.map((slide, i) => (
+      <div
+        class={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === 0 ? "opacity-100 z-10" : "opacity-0"}`}
+        data-slide-index={i}
+      >
         <img
           src={slide.image}
           alt={slide.title}
           class="w-full h-full object-cover"
           loading="lazy"
         />
-        <div class="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-center text-white px-4">
-          <h1 class="text-2xl md:text-4xl font-bold mb-2">{slide.title}</h1>
-          <p class="text-sm md:text-lg max-w-2xl">{slide.subtitle}</p>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/10 flex flex-col justify-center items-center text-center px-4 pt-24">
+          <div class="bg-black/50 px-6 py-4 rounded-lg backdrop-blur-sm">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-3 text-white drop-shadow-lg animate-fade-in-up">
+              {slide.title}
+            </h1>
+            <p class="text-base md:text-xl text-gray-200 animate-fade-in-up delay-200">
+              {slide.subtitle}
+            </p>
+          </div>
         </div>
       </div>
     ))}
@@ -43,14 +53,37 @@ const SLIDE_COUNT = slides.length;
 
   <script is:inline>
     document.addEventListener("DOMContentLoaded", () => {
-      const slider = document.getElementById("hero-slider");
-      const totalSlides = parseInt(slider.dataset.slideCount);
+      const slides = document.querySelectorAll("#hero-slider > div");
       let index = 0;
 
       setInterval(() => {
-        index = (index + 1) % totalSlides;
-        slider.style.transform = `translateX(-${index * 100}%)`;
+        slides[index].classList.remove("opacity-100", "z-10");
+        slides[index].classList.add("opacity-0");
+
+        index = (index + 1) % slides.length;
+
+        slides[index].classList.remove("opacity-0");
+        slides[index].classList.add("opacity-100", "z-10");
       }, 5000);
     });
   </script>
+
+  <style>
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 1s ease forwards;
+    }
+    .delay-200 {
+      animation-delay: 0.2s;
+    }
+  </style>
 </section>
