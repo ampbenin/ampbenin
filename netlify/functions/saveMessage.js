@@ -1,15 +1,22 @@
+// Charger les variables d'environnement en local
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const { MongoClient } = require('mongodb');
 
 let client;
 let clientPromise;
 
 const uri = process.env.MONGODB_URI;
+console.log("📌 URI Mongo chargée :", uri ? "✅ Oui" : "❌ Non");
 
 if (!uri) {
   console.error("❌ MONGODB_URI is not defined in environment variables.");
 }
 
 if (!clientPromise) {
+  console.log("📡 Initialisation de la connexion MongoDB...");
   client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -17,7 +24,9 @@ if (!clientPromise) {
   clientPromise = client.connect();
 }
 
-exports.handler = async function(event, context) {
+exports.handler = async function (event, context) {
+  console.log("📥 Requête reçue :", event.httpMethod);
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -26,10 +35,17 @@ exports.handler = async function(event, context) {
   }
 
   try {
+    console.log("📦 Corps reçu :", event.body);
     const data = JSON.parse(event.body);
 
+    console.log("🔗 Connexion à MongoDB...");
     const client = await clientPromise;
+    console.log("✅ Connexion MongoDB réussie");
+
+    console.log("📂 Sélection de la base AMPBENIN_DB_SITEWEB...");
     const db = client.db("AMPBENIN_DB_SITEWEB");
+
+    console.log("📑 Sélection de la collection CONTACT_FORMULAIRE...");
     const collection = db.collection("CONTACT_FORMULAIRE");
 
     const messageDoc = {
@@ -43,18 +59,25 @@ exports.handler = async function(event, context) {
       createdAt: new Date(),
     };
 
-    await collection.insertOne(messageDoc);
+    console.log("📝 Document à insérer :", messageDoc);
+
+    const result = await collection.insertOne(messageDoc);
+    console.log("✅ Insertion réussie :", result.insertedId);
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ result: 'success' }),
+      body: JSON.stringify({ result: 'success', id: result.insertedId }),
     };
 
   } catch (error) {
-    console.error("Erreur dans saveMessage:", error);
+    console.error("❌ Erreur dans saveMessage:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ result: 'error', error: error.message }),
+      body: JSON.stringify({
+        result: 'error',
+        error: error.message,
+        stack: error.stack
+      }),
     };
   }
 };
