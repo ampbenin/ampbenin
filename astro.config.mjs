@@ -2,13 +2,13 @@ import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap"; // 👉 Import du sitemap
 
+import react from "@astrojs/react";
+
 export default defineConfig({
   site: "https://ampbenin.netlify.app", // ⚠️ Obligatoire pour le sitemap
 
-  integrations: [
-    tailwind(),
-    sitemap(), // 👉 Ajout ici
-  ],
+  integrations: [tailwind(), // 👉 Ajout ici
+  sitemap(), react()],
 
   output: "static",
 

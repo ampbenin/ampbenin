@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const title = "Résumé d’exécution du projet MyCountry229 – 2025";
+const description = "Synthèse de la campagne MyCountry229 (11–24 août 2025) avec volontaires, statistiques et actions clés.";
+const pubDate = "2025-08-25";
+const author = "AMP BENIN";
+
+// Volontaires
+const volontaires = [
+  { nom: "Alice HOUNTONDJI", message: "Heureuse d’avoir contribué à la paix numérique.", photo: "/images/vol1.png" },
+  { nom: "Jean KOUASSI", message: "Une belle expérience de cohésion et d’apprentissage.", photo: "/images/vol2.png" },
+  { nom: "Mariam ISSA", message: "J’ai appris à mieux lutter contre la désinformation.", photo: "/images/vol3.png" },
+  { nom: "Dieudonné AHOUANSOU", message: "La jeunesse béninoise peut être moteur de changement positif.", photo: "/images/vol4.png" },
+  { nom: "Clémentine ADJOVI", message: "Cette mission a renforcé ma confiance en moi et mes compétences.", photo: "/images/vol5.png" },
+];
+
+// Statistiques
+const stats = [
+  { chiffre: "226", label: "Volontaires mobilisés" },
+  { chiffre: "2", label: "Équipes constituées" },
+  { chiffre: "14", label: "Jours de mobilisation digitale" },
+  { chiffre: "500K+", label: "Personnes touchées en ligne" },
+];
+---
+
+<BaseLayout title={title}>
+  <article class="prose lg:prose-xl max-w-6xl mx-auto px-4 md:px-0 py-12">
+    <!-- Titre -->
+    <header class="mb-8 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-green-800">{title}</h1>
+      <p class="text-gray-600 mt-2">{description}</p>
+    </header>
+
+    <!-- Statistiques -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-6 my-8">
+      {stats.map((s) => (
+        <div class="bg-white shadow-md rounded-lg p-6 text-center">
+          <div class="text-3xl font-bold text-green-700">{s.chiffre}</div>
+          <div class="text-gray-600 mt-2">{s.label}</div>
+        </div>
+      ))}
+    </section>
+
+    <!-- Volontaires -->
+    <section class="mt-12">
+      <h2 class="text-2xl font-bold text-green-800 mb-6">Nos volontaires</h2>
+      <div class="grid gap-6 md:grid-cols-3">
+        {volontaires.map((v) => (
+          <div class="bg-white shadow rounded-lg p-4 text-center">
+            <img src={v.photo} alt={v.nom} class="w-32 h-32 mx-auto rounded-lg object-cover" />
+            <h3 class="mt-4 font-semibold text-lg">{v.nom}</h3>
+            <p class="text-gray-600 mt-2">{v.message}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="mt-12 grid gap-6 md:grid-cols-3">
+      <a href="/attestations" class="bg-green-700 text-white text-center px-6 py-4 rounded-xl shadow hover:bg-green-800 font-semibold">
+        📜 Télécharger mon attestation
+      </a>
+      <a href="/contact" class="bg-yellow-500 text-white text-center px-6 py-4 rounded-xl shadow hover:bg-yellow-600 font-semibold">
+        📩 Nous contacter pour une campagne
+      </a>
+      <a href="/soutenir" class="bg-blue-600 text-white text-center px-6 py-4 rounded-xl shadow hover:bg-blue-700 font-semibold">
+        🤝 Soutenir les campagnes
+      </a>
+    </section>
+
+    <!-- Footer méta -->
+    <footer class="mt-12 text-sm text-gray-500 text-center">
+      <div>Publié le : <time datetime={pubDate}>{pubDate}</time></div>
+      <div>Auteur : {author}</div>
+    </footer>
+  </article>
+</BaseLayout>

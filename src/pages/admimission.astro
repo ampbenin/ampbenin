@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Admin from '../components/Admin.jsx';
+import SaveVolunteers from '../components/SaveVolunteers.jsx';
+import GenerateCertificate from '../components/GenerateCertificate.jsx';
+---
+
+<BaseLayout title="Admin Missions | AMP BENIN">
+  <!-- Hydrate les composants React côté client -->
+  <Admin client:load />
+  <SaveVolunteers client:load />
+  <GenerateCertificate client:load />
+</BaseLayout>

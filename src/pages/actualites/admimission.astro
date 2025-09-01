@@ -1,0 +1,282 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// ⚠️ À déplacer en variable d’environnement plus tard
+const PASSWORD = "AMP2025";
+---
+
+<BaseLayout title="Administration Missions & Volontaires">
+
+  <section class="container mx-auto px-4 py-10 space-y-10">
+    <h1 class="text-3xl font-bold mb-6 text-blue-700">
+      🔑 Administration Missions & Volontaires
+    </h1>
+
+    <!-- -------------------- LOGIN -------------------- -->
+    <div id="loginDiv" class="bg-white p-6 rounded-lg shadow-md">
+      <p class="mb-2">Veuillez entrer le mot de passe admin :</p>
+      <input type="password" id="adminPass" placeholder="Mot de passe" class="border p-2 rounded w-full mb-3" />
+      <button onclick="login()" class="bg-blue-600 text-white px-4 py-2 rounded">
+        Se connecter
+      </button>
+      <div id="loginMessage" class="mt-2"></div>
+    </div>
+
+    <!-- -------------------- ADMIN PANEL -------------------- -->
+    <div id="adminPanel" class="hidden space-y-8">
+
+      <!-- FORMULAIRE : Création de mission -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">📌 Créer une mission</h2>
+        <form id="missionForm" class="space-y-3">
+          <input type="text" id="missionCode" placeholder="Code (ex: MYCOUNTRY229_2025)" required class="border p-2 rounded w-full" />
+          <input type="text" id="missionTitre" placeholder="Titre" required class="border p-2 rounded w-full" />
+          <textarea id="missionDesc" placeholder="Description" class="border p-2 rounded w-full"></textarea>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+            Ajouter Mission
+          </button>
+        </form>
+        <div id="missionMessage" class="mt-2"></div>
+      </div>
+
+      <!-- FORMULAIRE : Ajout volontaire -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">👥 Ajouter un volontaire</h2>
+        <form id="volontaireForm" class="space-y-3">
+          <input type="text" id="nom" placeholder="Nom" required class="border p-2 rounded w-full" />
+          <input type="email" id="email" placeholder="Email" required class="border p-2 rounded w-full" />
+          <input type="text" id="identifiant" placeholder="Identifiant (Nom@DA)" required class="border p-2 rounded w-full" />
+          <!-- ⚠️ remplacé par un select alimenté dynamiquement -->
+          <select id="missionCodeVol" required class="border p-2 rounded w-full">
+            <option value="">-- Sélectionner une mission --</option>
+          </select>
+          <select id="statut" class="border p-2 rounded w-full">
+            <option value="Non disponible">Non disponible</option>
+            <option value="Refusé">Refusé</option>
+            <option value="Disponible">Disponible</option>
+          </select>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+            Ajouter Volontaire
+          </button>
+        </form>
+        <div id="volontaireMessage" class="mt-2"></div>
+      </div>
+
+      <!-- FORMULAIRE : Admission membre actif -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">📝 Nouvelle admission de membre actif</h2>
+        <form id="memberForm" class="grid grid-cols-2 gap-4">
+          <input type="text" id="name" placeholder="Nom complet" class="border p-2 rounded" required />
+          <input type="email" id="memberEmail" placeholder="Email" class="border p-2 rounded" required />
+          <input type="text" id="phone" placeholder="Téléphone" class="border p-2 rounded" />
+          <!-- ⚠️ remplacé aussi par un select dynamique -->
+          <select id="missionMember" required class="border p-2 rounded col-span-2">
+            <option value="">-- Sélectionner une mission --</option>
+          </select>
+          <button type="submit" class="col-span-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            Enregistrer
+          </button>
+        </form>
+      </div>
+
+      <!-- TABLEAU VOLONTAIRES -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">📊 Gestion des Volontaires par Mission</h2>
+
+        <!-- Filtre Mission -->
+        <div class="mb-4 flex items-center space-x-2">
+          <label for="missionFilter" class="font-medium">Mission :</label>
+          <select id="missionFilter" class="border p-2 rounded">
+            <option value="">-- Toutes les missions --</option>
+          </select>
+        </div>
+
+        <!-- Tableau -->
+        <table class="w-full border border-gray-300">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border p-2">Nom</th>
+              <th class="border p-2">Email</th>
+              <th class="border p-2">Mission</th>
+              <th class="border p-2">Statut</th>
+              <th class="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="volunteerTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <script>
+    // ---------------- LOGIN ----------------
+    function login() {
+      const inputPass = document.getElementById("adminPass").value;
+      const message = document.getElementById("loginMessage");
+      if (inputPass === "${PASSWORD}") {
+        document.getElementById("loginDiv").classList.add("hidden");
+        document.getElementById("adminPanel").classList.remove("hidden");
+      } else {
+        message.innerHTML = "<span style='color:red;'>Mot de passe incorrect</span>";
+      }
+    }
+
+    // ---------------- CREATION MISSION ----------------
+    document.getElementById("missionForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const missionMessage = document.getElementById("missionMessage");
+      missionMessage.innerHTML = "⏳ Enregistrement en cours...";
+
+      const code = document.getElementById("missionCode").value.trim();
+      const titre = document.getElementById("missionTitre").value.trim();
+      const description = document.getElementById("missionDesc").value.trim();
+
+      try {
+        const res = await fetch("/.netlify/functions/saveMission", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, titre, description })
+        });
+        const data = await res.json();
+        missionMessage.innerHTML = res.ok
+          ? `<div class="success">✅ ${data.message}</div>`
+          : `<div class="error">❌ ${data.error}</div>`;
+        if (res.ok) e.target.reset();
+        fetchMissions(); // rafraîchir les listes déroulantes
+      } catch (err) {
+        missionMessage.innerHTML = `<div class="error">⚠️ Erreur serveur : ${err.message}</div>`;
+      }
+    });
+
+    // ---------------- AJOUT VOLONTAIRE ----------------
+    document.getElementById("volontaireForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const volontaireMessage = document.getElementById("volontaireMessage");
+      volontaireMessage.innerHTML = "⏳ Enregistrement en cours...";
+
+      const nom = document.getElementById("nom").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const identifiant = document.getElementById("identifiant").value.trim();
+      const missionCode = document.getElementById("missionCodeVol").value.trim();
+      const statut = document.getElementById("statut").value;
+
+      try {
+        const res = await fetch("/.netlify/functions/saveVolontaire", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nom, email, identifiant, missionCode, statut })
+        });
+        const data = await res.json();
+        volontaireMessage.innerHTML = res.ok
+          ? `<div class="success">✅ ${data.message}</div>`
+          : `<div class="error">❌ ${data.error}</div>`;
+        if (res.ok) e.target.reset();
+        fetchVolunteers();
+      } catch (err) {
+        volontaireMessage.innerHTML = `<div class="error">⚠️ Erreur serveur : ${err.message}</div>`;
+      }
+    });
+
+    // ---------------- AJOUT MEMBRE ----------------
+    document.getElementById("memberForm")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("memberEmail").value,
+        phone: document.getElementById("phone").value,
+        mission: document.getElementById("missionMember").value,
+        status: "En attente"
+      };
+      await fetch("/.netlify/functions/saveMember", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      e.target.reset();
+      fetchVolunteers();
+    });
+
+    // ---------------- TABLEAU VOLONTAIRES ----------------
+    const tableBody = document.getElementById("volunteerTable");
+    const missionSelect = document.getElementById("missionFilter");
+    const missionCodeVol = document.getElementById("missionCodeVol");
+    const missionMember = document.getElementById("missionMember");
+
+    // Charger missions dynamiquement
+    async function fetchMissions() {
+      const res = await fetch("/.netlify/functions/getMissions");
+      const missions = await res.json();
+
+      // Réinitialiser les selects
+      [missionSelect, missionCodeVol, missionMember].forEach(select => {
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Sélectionner une mission --</option>';
+        missions.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m._id;
+          opt.textContent = m.nom || m.titre || m.code;
+          select.appendChild(opt);
+        });
+      });
+    }
+
+    // Charger volontaires (global ou filtré)
+    async function fetchVolunteers(missionId = "") {
+      let url = "/.netlify/functions/getVolunteers";
+      if (missionId) url = `/.netlify/functions/getVolunteersByMission?missionId=${missionId}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      tableBody.innerHTML = "";
+      data.forEach(v => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="border p-2">${v.nom || v.name}</td>
+          <td class="border p-2">${v.email}</td>
+          <td class="border p-2">${v.mission || v.missionCode || v.missionId}</td>
+          <td class="border p-2">
+            <select onchange="updateStatus('${v._id}', this.value)" class="border rounded p-1">
+              <option value="En attente" ${v.status === "En attente" ? "selected" : ""}>En attente</option>
+              <option value="Validé" ${v.status === "Validé" ? "selected" : ""}>Validé</option>
+              <option value="Rejeté" ${v.status === "Rejeté" ? "selected" : ""}>Rejeté</option>
+            </select>
+          </td>
+          <td class="border p-2">
+            <button onclick="deleteVolunteer('${v._id}')" class="bg-red-500 text-white px-2 py-1 rounded">Supprimer</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Mettre à jour statut volontaire
+    async function updateStatus(id, status) {
+      await fetch("/.netlify/functions/updateVolunteer", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status })
+      });
+      fetchVolunteers(missionSelect.value);
+    }
+
+    // Supprimer volontaire
+    async function deleteVolunteer(id) {
+      if (!confirm("Supprimer ce volontaire ?")) return;
+      await fetch("/.netlify/functions/deleteVolunteer", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      fetchVolunteers(missionSelect.value);
+    }
+
+    missionSelect?.addEventListener("change", () => {
+      fetchVolunteers(missionSelect.value);
+    });
+
+    // ---------------- INIT ----------------
+    fetchMissions();
+    fetchVolunteers();
+  </script>
+</BaseLayout>

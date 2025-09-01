@@ -1,13 +1,10 @@
-// Charger les variables d'environnement en local
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
-
-const { MongoClient } = require('mongodb');
+// netlify/functions/saveMessage.js
+import { MongoClient } from "mongodb";
 
 let client;
 let clientPromise;
 
+// Charger la bonne URI MongoDB
 const uri = process.env.MONGODB_URI;
 console.log("📌 URI Mongo chargée :", uri ? "✅ Oui" : "❌ Non");
 
@@ -15,6 +12,7 @@ if (!uri) {
   console.error("❌ MONGODB_URI is not defined in environment variables.");
 }
 
+// Initialiser la connexion une seule fois
 if (!clientPromise) {
   console.log("📡 Initialisation de la connexion MongoDB...");
   client = new MongoClient(uri, {
@@ -24,13 +22,13 @@ if (!clientPromise) {
   clientPromise = client.connect();
 }
 
-exports.handler = async function (event, context) {
+export async function handler(event, context) {
   console.log("📥 Requête reçue :", event.httpMethod);
 
-  if (event.httpMethod !== 'POST') {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: JSON.stringify({ result: 'error', error: 'Method Not Allowed' }),
+      body: JSON.stringify({ result: "error", error: "Method Not Allowed" }),
     };
   }
 
@@ -66,18 +64,17 @@ exports.handler = async function (event, context) {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ result: 'success', id: result.insertedId }),
+      body: JSON.stringify({ result: "success", id: result.insertedId }),
     };
-
   } catch (error) {
     console.error("❌ Erreur dans saveMessage:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        result: 'error',
+        result: "error",
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       }),
     };
   }
-};
+}

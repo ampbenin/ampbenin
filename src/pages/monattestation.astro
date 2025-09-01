@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AttestationForm from '../components/AttestationForm.jsx';
+---
+
+<BaseLayout title="Mon Attestation">
+  <section class="bg-white text-gray-800 py-12 px-4 md:px-12">
+    <AttestationForm client:load />
+  </section>
+</BaseLayout>

@@ -2,7 +2,7 @@
 const newsItems = [
   {
     image: "/images/campagne-mycountry229-paix-benin.png",
-    title: "Lancement de la Campagne Nationale DIgitale #MyCountry229",
+    title: "Lancement de la Campagne Nationale Digitale #MyCountry229",
     date: "11 - 24 Août 2025",
     link: "/actualites/campagne-mycountry229-paix-benin"
   },
@@ -46,7 +46,7 @@ const newsItems = [
 
   <script is:script>
     const slider = document.getElementById("news-slider");
-    const totalItems = {newsItems.length};
+    const totalItems = newsItems.length; // <-- correction ici
     let index = 0;
 
     setInterval(() => {

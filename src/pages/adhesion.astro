@@ -1,0 +1,260 @@
+---
+import Layout from '../layouts/BaseLayout.astro';
+---
+
+<Layout title="Devenir membre actif | AMP BENIN">
+  <section class="py-12 px-6 md:px-20 bg-gradient-to-b from-white to-gray-50 text-gray-900">
+    <div class="max-w-6xl mx-auto">
+      <!-- Intro -->
+      <div class="grid md:grid-cols-2 gap-8 items-center mb-12">
+        <div>
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-50 text-green-600 mb-4">
+            <!-- Icon "membre" inline -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11c1.657 0 3-1.343 3-3S17.657 5 16 5s-3 1.343-3 3 1.343 3 3 3zM8 11c1.657 0 3-1.343 3-3S9.657 5 8 5 5 6.343 5 8s1.343 3 3 3zM2 20a6 6 0 0112 0M12 20a6 6 0 0012 0" />
+            </svg>
+          </div>
+
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-3">Devenez membre actif d'AMP BENIN</h1>
+          <p class="text-gray-600 mb-4">
+            Nous accueillons avec plaisir toute personne ou structure souhaitant s’engager pour un Bénin durable, inclusif et solidaire.
+            Que vous soyez professionnel·le, étudiant·e, technicien·ne ou bénévole — votre énergie et vos compétences nous intéressent.
+          </p>
+
+          <ul class="space-y-3 text-sm text-gray-700">
+            <li class="flex items-start gap-3">
+              <span class="mt-1 text-green-600">
+                <!-- small check icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <span><strong>Inclusif :</strong> ouverture à toutes origines, religions et classes sociales.</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="mt-1 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                </svg>
+              </span>
+              <span><strong>Flexible :</strong> missions ponctuelles ou engagement régulier selon dispo.</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="mt-1 text-green-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+                </svg>
+              </span>
+              <span><strong>Transparent :</strong> nous respectons la confidentialité de vos données.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-md">
+          <h3 class="text-xl font-semibold mb-3">Prêt à nous rejoindre ?</h3>
+          <p class="text-sm text-gray-600 mb-4">Remplissez le formulaire ci-contre — nous vous contacterons sous peu.</p>
+
+          <!-- summary small form for CTA on right (optional) -->
+          <div class="space-y-3">
+            <div class="text-sm text-gray-700">
+              <strong>Contact rapide :</strong>
+              <div class="mt-2">Email : <a class="text-green-600" href="mailto:ampbenin.contact@gmail.com">ampbenin.contact@gmail.com</a></div>
+              <div>Tél : <span class="font-medium">+229 47 47 14 65</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire complet -->
+      <div class="bg-white p-6 rounded-2xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4">Formulaire d'adhésion - Membres actifs</h2>
+        <form id="memberForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Row 1 -->
+          <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="fullName" class="block text-sm font-medium text-gray-700">Nom complet *</label>
+              <input id="fullName" name="fullName" type="text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700">Adresse email *</label>
+              <input id="email" name="email" type="email" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700">Téléphone / WhatsApp</label>
+            <input id="phone" name="phone" type="tel" placeholder="+229XXXXXXXX" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+          </div>
+          <div>
+            <label for="countryCity" class="block text-sm font-medium text-gray-700">Pays / Ville *</label>
+            <input id="countryCity" name="countryCity" type="text" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+          </div>
+
+          <!-- Row 3 -->
+          <div>
+            <label for="dob" class="block text-sm font-medium text-gray-700">Date de naissance</label>
+            <input id="dob" name="dob" type="date" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+          </div>
+          <div>
+            <label for="gender" class="block text-sm font-medium text-gray-700">Genre</label>
+            <select id="gender" name="gender" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary">
+              <option value="">-- Préfère ne pas dire --</option>
+              <option value="Femme">Femme</option>
+              <option value="Homme">Homme</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+
+          <!-- Organization / role -->
+          <div class="md:col-span-2">
+            <label for="organization" class="block text-sm font-medium text-gray-700">Organisation (si applicable)</label>
+            <input id="organization" name="organization" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+          </div>
+
+          <!-- Skills / role / availability -->
+          <div>
+            <label for="role" class="block text-sm font-medium text-gray-700">Profession / Compétences principales</label>
+            <input id="role" name="role" type="text" placeholder="ex: enseignement, communication, santé, gestion de projet..." class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary" />
+          </div>
+          <div>
+            <label for="availability" class="block text-sm font-medium text-gray-700">Disponibilité</label>
+            <select id="availability" name="availability" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary">
+              <option value="Occasionnelle">Occasionnelle</option>
+              <option value="Hebdomadaire">Hebdomadaire</option>
+              <option value="Mensuelle">Mensuelle</option>
+              <option value="Pleine disponibilité">Pleine disponibilité</option>
+            </select>
+          </div>
+
+          <!-- Areas of interest (checkboxes) -->
+          <div class="md:col-span-2">
+            <p class="block text-sm font-medium text-gray-700 mb-2">Domaines d'intérêt (cochez ceux qui correspondent)</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Éducation" class="h-4 w-4" />
+                Éducation
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Santé" class="h-4 w-4" />
+                Santé
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Environnement" class="h-4 w-4" />
+                Environnement
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Numérique" class="h-4 w-4" />
+                Numérique
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Entrepreneuriat" class="h-4 w-4" />
+                Entrepreneuriat
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Protection de l'enfance" class="h-4 w-4" />
+                Protection de l'enfance
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Plaidoyer" class="h-4 w-4" />
+                Plaidoyer
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="interests" value="Autre" class="h-4 w-4" />
+                Autre
+              </label>
+            </div>
+          </div>
+
+          <!-- Motivation / message -->
+          <div class="md:col-span-2">
+            <label for="motivation" class="block text-sm font-medium text-gray-700">Pourquoi souhaitez-vous rejoindre AMP BENIN ? *</label>
+            <textarea id="motivation" name="motivation" rows="5" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-primary focus:border-primary"></textarea>
+          </div>
+
+          <!-- Consent -->
+          <div class="md:col-span-2 flex items-start gap-3 mt-2">
+            <input id="consent" name="consent" type="checkbox" required class="mt-1 h-4 w-4" />
+            <label for="consent" class="text-sm text-gray-700">
+              J'autorise AMP BENIN à conserver et traiter mes données pour me contacter au sujet de mon adhésion. Voir notre <a href="/politique-confidentialite" class="text-green-600 underline">politique de confidentialité</a>.
+            </label>
+          </div>
+
+          <!-- Status and submit -->
+          <div class="md:col-span-2">
+            <p id="memberStatus" class="text-sm mb-3"></p>
+            <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:opacity-95 transition">
+              Envoyer l'adhésion
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('memberForm');
+      const status = document.getElementById('memberStatus');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Collect interests (checkbox group)
+        const interests = Array.from(form.querySelectorAll('input[name="interests"]:checked')).map(i => i.value);
+
+        // Build payload
+        const payload = {
+          fullName: form.fullName.value.trim(),
+          email: form.email.value.trim(),
+          phone: form.phone.value.trim(),
+          countryCity: form.countryCity.value.trim(),
+          dob: form.dob.value || null,
+          gender: form.gender.value || null,
+          organization: form.organization.value.trim(),
+          role: form.role.value.trim(),
+          availability: form.availability.value,
+          interests: interests,
+          motivation: form.motivation.value.trim(),
+          createdAt: new Date().toISOString()
+        };
+
+        status.style.color = 'green';
+        status.textContent = 'Envoi en cours...';
+
+        try {
+          const res = await fetch('/.netlify/functions/saveMember', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const json = await res.json();
+
+          if (res.ok && json.result === 'success') {
+            status.style.color = 'green';
+            status.textContent = 'Votre adhésion a été envoyée. Merci !';
+            form.reset();
+            // scroll to top of form to show status
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            status.style.color = 'red';
+            status.textContent = 'Erreur lors de l’envoi : ' + (json.error || res.statusText);
+          }
+        } catch (err) {
+          status.style.color = 'red';
+          status.textContent = 'Erreur réseau : ' + err.message;
+        }
+      });
+    });
+  </script>
+
+  <style>
+    /* petites animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeInUp .6s ease both; }
+  </style>
+</Layout>
