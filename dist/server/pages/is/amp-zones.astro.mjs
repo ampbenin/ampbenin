@@ -1,0 +1,32 @@
+/* empty css                                       */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../../chunks/astro/server_C4XkxFqA.mjs';
+import 'kleur/colors';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DXKGEhHV.mjs';
+export { renderers } from '../../renderers.mjs';
+
+const $$AmpZones = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "Layout", $$BaseLayout, {}, { "default": ($$result2) => renderTemplate` <title>AMP Zones – Coordination Décentralisée | AMP BENIN</title> <meta name="description" content="Découvrez AMP Zones, la coordination locale et communautaire d’AMP BENIN pour rapprocher les actions citoyennes et solidaires des populations de toutes les communes du Bénin."> ${maybeRenderHead()}<section class="py-12 px-4 md:px-10 max-w-5xl mx-auto"> <h1 class="text-3xl md:text-4xl font-bold text-center text-green-800 mb-6">AMP Zones – Coordination Décentralisée et Engagement Communautaire</h1> <p class="text-gray-700 mb-6 text-center">
+AMP Zones est la structure déconcentrée de <strong>AMP BENIN</strong>, visant à rapprocher l’organisation des populations à la base.
+      Présente dans chaque commune du Bénin, elle agit comme relais pour nos actions de mobilisation, de sensibilisation et d’engagement citoyen.
+</p> <div class="space-y-10"> <div> <h2 class="text-2xl font-semibold mb-3 text-green-700">Structure</h2> <ul class="list-disc list-inside text-gray-700 space-y-1"> <li>Chaque commune dispose d’une <strong>Coordination AMP</strong>.</li> <li>Des groupes ou réseaux communautaires affiliés à AMP sont actifs dans les localités ou quartiers.</li> </ul> </div> <div> <h2 class="text-2xl font-semibold mb-3 text-green-700">Missions</h2> <ul class="list-disc list-inside text-gray-700 space-y-1"> <li>Coordonner les actions de terrain au niveau local.</li> <li>Mobiliser les jeunes, volontaires et citoyens dans chaque commune.</li> <li>Promouvoir la paix, la cohésion sociale et le développement durable.</li> <li>Relayer les campagnes nationales et initiatives d’AMP BENIN.</li> </ul> </div> <div> <h2 class="text-2xl font-semibold mb-3 text-green-700">Fonctionnement</h2> <p class="text-gray-700 mb-2">
+Chaque AMP Zone est dirigée par une équipe composée de :
+</p> <ul class="list-disc list-inside text-gray-700 space-y-1"> <li>Un(e) Coordinateur/trice communal(e)</li> <li>Un(e) Secrétaire</li> <li>Un(e) Chargé(e) de communication</li> <li>Autres membres selon les réalités et besoins locaux</li> </ul> </div> <div> <h2 class="text-2xl font-semibold mb-3 text-green-700">Implantation</h2> <p class="text-gray-700 mb-2">
+AMP Zones sont en cours d’implantation dans les <strong>77 communes du Bénin</strong>. Exemples :
+</p> <ul class="list-disc list-inside columns-2 md:columns-3 gap-x-8 text-gray-700 text-sm"> <li>Abomey</li> <li>Abomey-Calavi</li> <li>Adjohoun</li> <li>Allada</li> <li>Aplahoué</li> <li>Banikoara</li> <li>Bassila</li> <li>Bembèrèkè</li> <li>Bohicon</li> <li>... (à compléter)</li> </ul> </div> </div> <div class="mt-10 bg-green-100 p-6 rounded-lg shadow text-center"> <h3 class="text-xl font-semibold text-green-800 mb-2">Vous souhaitez créer ou rejoindre un AMP Zone ?</h3> <p class="text-gray-700 mb-4">Contactez-nous et engagez-vous localement pour faire vivre la solidarité et l’engagement citoyen dans votre commune.</p> <a href="/contact" class="inline-block bg-green-600 text-white px-5 py-3 rounded-full shadow hover:bg-green-700 transition">
+Nous contacter
+</a> </div> </section> ` })}`;
+}, "C:/amp-benin-site/src/pages/is/amp-zones.astro", void 0);
+
+const $$file = "C:/amp-benin-site/src/pages/is/amp-zones.astro";
+const $$url = "/is/amp-zones";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$AmpZones,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };

@@ -1,0 +1,10 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import VerifyAttestation from "../../components/VerifyAttestation.jsx";
+const { id } = Astro.params; // récupère l'id depuis l'URL
+---
+
+<BaseLayout title="Vérification Attestation">
+  <VerifyAttestation id={id} client:load />
+</BaseLayout>

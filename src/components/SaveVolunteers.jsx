@@ -7,7 +7,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
     prenom: "",
     email: "",
     telephone: "",
-    statut: "", // valeur par défaut
+    statut: "Non disponible",
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -21,22 +21,57 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
     setLoading(true);
     setMessage(null);
 
-    console.log("📩 Envoi au backend:", form);
-
     try {
-      const res = await fetch("/.netlify/functions/saveVolunteers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      console.log("📩 Vérification mission:", form.titre);
+
+      const missionRes = await fetch(
+        "https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/missions/find-by-title",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titre: form.titre }),
+        }
+      );
+
+      const missionData = await missionRes.json();
+
+      if (!missionRes.ok) throw new Error(missionData.message || "Mission introuvable");
+
+      const missionId = missionData._id?.toString();
+      if (!missionId) throw new Error("Impossible de récupérer l'ID de la mission");
+
+      console.log("✅ Mission trouvée, ObjectId:", missionId);
+
+      const res = await fetch(
+        "https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/volunteers",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            titre: form.titre,
+            nom: form.nom,
+            prenom: form.prenom,
+            email: form.email,
+            telephone: form.telephone,
+            statut: form.statut,
+          }),
+        }
+      );
 
       const data = await res.json();
       console.log("📬 Réponse backend:", data);
 
-      if (!res.ok) throw new Error(data.message || "Erreur inconnue");
+      if (!res.ok) throw new Error(data.message || "Erreur lors de l'enregistrement");
 
       setMessage({ type: "success", text: data.message });
-      setForm({ ...form, nom: "", prenom: "", email: "", telephone: "", statut: "Non disponible" });
+      setForm({
+        titre: "",
+        nom: "",
+        prenom: "",
+        email: "",
+        telephone: "",
+        statut: "Non disponible",
+      });
     } catch (err) {
       console.error("❌ Erreur fetch:", err);
       setMessage({ type: "error", text: err.message });
@@ -46,10 +81,16 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
   };
 
   return (
-    <div className="max-w-md p-4 rounded-xl shadow-md bg-white">
-      <h2 className="text-lg font-bold mb-4">Ajouter un volontaire</h2>
+    <div className="max-w-md mx-auto p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-yellow-50 via-white to-yellow-50 border border-yellow-200">
+      <h2 className="text-2xl font-extrabold text-yellow-700 mb-4 text-center">
+        🌿 Ajouter un volontaire
+      </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <p className="text-center text-gray-600 mb-6">
+        Remplissez le formulaire pour inscrire un nouveau volontaire pour une mission. CET ESPACE EST RESERVE UNIQUEMENT AUX ADMINISTRATEURS TECHNIQUE ET DAF DE AMP BENIN
+      </p>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
           name="titre"
@@ -57,7 +98,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
           value={form.titre}
           onChange={handleChange}
           required
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
         <input
           type="text"
@@ -66,7 +107,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
           value={form.nom}
           onChange={handleChange}
           required
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
         <input
           type="text"
@@ -75,7 +116,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
           value={form.prenom}
           onChange={handleChange}
           required
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
         <input
           type="email"
@@ -84,7 +125,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
           value={form.email}
           onChange={handleChange}
           required
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
         <input
           type="tel"
@@ -92,16 +133,15 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
           placeholder="Téléphone"
           value={form.telephone}
           onChange={handleChange}
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
         <select
           name="statut"
           value={form.statut}
           onChange={handleChange}
           required
-          className="w-full border rounded-lg p-2"
+          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         >
-          <option value="">Sélectionner le statut</option>
           <option value="Non disponible">Non disponible</option>
           <option value="Refusé">Refusé</option>
           <option value="Mission validée">Mission validée</option>
@@ -110,7 +150,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-yellow-600 text-white font-bold py-3 rounded-xl hover:bg-yellow-700 transition-all shadow-lg disabled:opacity-50"
         >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>
@@ -118,7 +158,7 @@ export default function SaveVolunteers({ initialMissionId = "" }) {
 
       {message && (
         <div
-          className={`mt-3 text-sm font-medium ${
+          className={`mt-4 text-center font-semibold ${
             message.type === "success" ? "text-green-600" : "text-red-600"
           }`}
         >

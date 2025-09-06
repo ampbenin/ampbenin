@@ -1,0 +1,33 @@
+/* empty css                                    */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../chunks/astro/server_C4XkxFqA.mjs';
+import 'kleur/colors';
+import { $ as $$BaseLayout } from '../chunks/BaseLayout_DXKGEhHV.mjs';
+export { renderers } from '../renderers.mjs';
+
+const $$Programmes = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "Layout", $$BaseLayout, { "title": "Nos Programmes | AMP BENIN" }, { "default": ($$result2) => renderTemplate` ${maybeRenderHead()}<section class="py-16 px-6 md:px-20 bg-white text-gray-800"> <div class="max-w-5xl mx-auto text-center"> <h1 class="text-4xl font-bold mb-4 text-green-800">Nos Programmes</h1> <p class="mb-10 text-lg text-gray-600">
+AMP BENIN développe des programmes d’action concrets pour un monde plus juste, durable et pacifique.
+</p> </div> <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto"> <!-- Programme 1 --> <div class="bg-gray-50 p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"> <h2 class="text-2xl font-semibold mb-2 text-green-700">🕊️ Campagne nationale pour la paix</h2> <p class="text-gray-700 mb-4">
+Initiative de mobilisation en ligne pour la cohésion sociale, la lutte contre la désinformation et la radicalisation, lancée à l’occasion du 1er août.
+</p> <p class="text-sm text-gray-500">Période : Juillet - Août 2025</p> </div> <!-- Programme 2 --> <div class="bg-gray-50 p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"> <h2 class="text-2xl font-semibold mb-2 text-green-700">🎓 Éducation et leadership jeunesse</h2> <p class="text-gray-700 mb-4">
+Formations, clubs scolaires et mentorat pour éveiller les jeunes à l’engagement citoyen et à la réalisation des Objectifs de Développement Durable (ODD).
+</p> <p class="text-sm text-gray-500">En cours dans plusieurs établissements</p> </div> <!-- Programme 3 --> <div class="bg-gray-50 p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"> <h2 class="text-2xl font-semibold mb-2 text-green-700">👩🏾‍⚕️ Santé et bien-être</h2> <p class="text-gray-700 mb-4">
+Sensibilisation sur les violences basées sur le genre (VBG), la santé mentale, les droits sexuels et reproductifs, avec accompagnement communautaire.
+</p> <p class="text-sm text-gray-500">En partenariat avec des ONG locales</p> </div> <!-- Programme 4 --> <div class="bg-gray-50 p-6 rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition transform"> <h2 class="text-2xl font-semibold mb-2 text-green-700">🌱 Innovation & développement durable</h2> <p class="text-gray-700 mb-4">
+Projets numériques, écologiques et entrepreneuriaux portés par les jeunes pour accélérer la mise en œuvre des ODD dans les communautés.
+</p> <p class="text-sm text-gray-500">Projets pilotes en cours</p> </div> </div> </section> ` })}`;
+}, "C:/amp-benin-site/src/pages/programmes.astro", void 0);
+
+const $$file = "C:/amp-benin-site/src/pages/programmes.astro";
+const $$url = "/programmes";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$Programmes,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };
