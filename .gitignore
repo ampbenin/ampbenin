@@ -1,53 +1,26 @@
-# Local Netlify folder
-.netlify
-
-# Node.js
+# Dépendances
 node_modules/
+.pnpm-debug.log*
+package-lock.json
+
+# Build
+dist/
+.cache/
+.vite/
+
+# Astro
+.astro/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Vite cache
-node_modules/.vite/
-
-
-# Logs
-logs/
-*.log
-*.tsbuildinfo
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Editor
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-
-# Optional npm cache
-.npm
-
-# Yarn
-.yarn/*
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
-
-# Tailwind CSS
-*.css.map
-
-# Misc
-*.env.backup
+# Env
+.env
+.env.*
