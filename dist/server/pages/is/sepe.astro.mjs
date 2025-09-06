@@ -1,0 +1,31 @@
+/* empty css                                       */
+import { f as createComponent, k as renderComponent, r as renderTemplate, m as maybeRenderHead } from '../../chunks/astro/server_C4XkxFqA.mjs';
+import 'kleur/colors';
+import { $ as $$BaseLayout } from '../../chunks/BaseLayout_DXKGEhHV.mjs';
+export { renderers } from '../../renderers.mjs';
+
+const $$Sepe = createComponent(($$result, $$props, $$slots) => {
+  return renderTemplate`${renderComponent($$result, "BaseLayout", $$BaseLayout, {}, { "default": ($$result2) => renderTemplate` <title>SEPE-AMP | Éducation & Promotion de l’Enfance</title> <meta name="description" content="Découvrez la Section d’Éducation et de Promotion de l’Enfance (SEPE-AMP) d’AMP BENIN, engagée pour l’accès à l’éducation de qualité, la protection des droits de l’enfant et le bien-être des jeunes au Bénin."> ${maybeRenderHead()}<section class="bg-white text-gray-900 py-12 px-4 md:px-12"> <div class="max-w-5xl mx-auto text-center mb-10"> <h1 class="text-4xl font-bold mb-4 text-yellow-600">SEPE-AMP</h1> <p class="text-lg text-gray-700">
+La <strong>Section d’Éducation et de Promotion de l’Enfance</strong> (SEPE-AMP) agit pour la protection, le bien-être et l’épanouissement des enfants au Bénin, en favorisant leur accès à une éducation de qualité et à des environnements sûrs.
+</p> </div> <div class="grid gap-8 md:grid-cols-2 mb-16"> <div> <h2 class="text-2xl font-semibold mb-3 text-yellow-600">Nos missions</h2> <ul class="list-disc list-inside text-gray-700 space-y-2"> <li>Garantir l'accès à l'éducation pour tous les enfants, sans discrimination.</li> <li>Promouvoir les droits de l’enfant et lutter contre le travail des enfants.</li> <li>Soutenir les familles et communautés dans l’éducation des jeunes.</li> <li>Sensibiliser à la protection de l’enfant contre toutes formes de violence ou d’abus.</li> </ul> </div> <div> <h2 class="text-2xl font-semibold mb-3 text-yellow-600">Actions principales</h2> <ul class="list-disc list-inside text-gray-700 space-y-2"> <li>Distribution de kits scolaires aux enfants vulnérables.</li> <li>Organisation de clubs d’enfants pour l’éducation aux droits humains.</li> <li>Formations pour les enseignants et éducateurs communautaires.</li> <li>Création d’espaces amis des enfants dans les zones défavorisées.</li> </ul> </div> </div> <div class="text-center mb-16"> <h2 class="text-2xl font-semibold mb-4 text-yellow-600">Notre vision</h2> <p class="max-w-3xl mx-auto text-gray-800">
+Un Bénin où chaque enfant peut apprendre, jouer et grandir dans un cadre sain, protecteur et équitable.
+</p> </div> <div class="text-center"> <h2 class="text-2xl font-semibold mb-4 text-yellow-600">Agissons ensemble pour les enfants !</h2> <p class="max-w-2xl mx-auto text-gray-700 mb-4">
+La SEPE-AMP travaille avec les familles, écoles, associations et institutions pour faire de l’enfant une priorité nationale.
+</p> <a href="/contact" class="inline-block bg-yellow-500 text-white px-6 py-3 rounded-full shadow hover:bg-yellow-600 transition">
+Soutenir ou rejoindre la SEPE-AMP
+</a> </div> </section> ` })}`;
+}, "C:/amp-benin-site/src/pages/is/sepe.astro", void 0);
+
+const $$file = "C:/amp-benin-site/src/pages/is/sepe.astro";
+const $$url = "/is/sepe";
+
+const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: $$Sepe,
+  file: $$file,
+  url: $$url
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const page = () => _page;
+
+export { page };
