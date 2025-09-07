@@ -3,5 +3,5 @@
   publish = "dist"  # le dossier généré par Astro avec l'adapter Netlify
 
 [functions]
-  directory = "dist/server/functions"  # ← fonctions SSR générées par Astro
+  directory = ".netlify/functions"  # ← fonctions SSR générées par Astro
   node_bundler = "esbuild"
