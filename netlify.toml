@@ -1,8 +1,7 @@
 [build]
   command = "npm install --legacy-peer-deps && npm run build"
-  publish = "dist"
+  publish = "dist"  # le dossier généré par Astro avec l'adapter Netlify
 
 [functions]
-  directory = "netlify/functions"
+  directory = "dist/server/functions"  # ← fonctions SSR générées par Astro
   node_bundler = "esbuild"
-
