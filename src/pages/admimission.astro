@@ -1,7 +1,7 @@
 ---
 import VolunteersManager from '../components/VolunteersManager.jsx';
-//import GenerateCertificate from '../components/GenerateCertificate.jsx';
-//import SaveVolunteers from '../components/SaveVolunteers.jsx';
+import GenerateCertificate from '../components/GenerateCertificate.jsx';
+import SaveVolunteers from '../components/SaveVolunteers.jsx';
 ---
 
 <html lang="fr">
@@ -14,5 +14,7 @@ import VolunteersManager from '../components/VolunteersManager.jsx';
   <body class="bg-gray-100">
     <!-- Composant React chargé côté client -->
     <VolunteersManager client:load />
+    <GenerateCertificate client:load />
+    <SaveVolunteers client:load />
   </body>
 </html>

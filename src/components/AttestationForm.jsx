@@ -160,21 +160,21 @@ export default function AttestationForm() {
             required
           />
 
-          <input
-            type="text"
-            placeholder="Nom (nom de famille)"
-            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none uppercase"
-            value={nom}
-            maxLength={15}
-            onChange={(e) => {
-              const formatted = e.target.value
-                .toUpperCase()
-                .replace(/[^A-Z]/g, "")
-                .slice(0, 15);
-              setNom(formatted);
-            }}
-            required
-          />
+<input
+  type="text"
+  placeholder="Nom (nom de famille)"
+  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none uppercase"
+  value={nom}
+  maxLength={15}
+  onChange={(e) => {
+    const formatted = e.target.value
+      .toUpperCase()
+      .replace(/[^A-Z ]/g, "") // autorise aussi les espaces
+      .slice(0, 15);
+    setNom(formatted);
+  }}
+  required
+/>
 
           <button
             type="submit"
