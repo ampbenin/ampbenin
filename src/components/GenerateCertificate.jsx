@@ -26,6 +26,7 @@ export default function GenerateCertificate() {
       console.log("👉 [FRONT] Payload envoyé fetchVolunteers:", body);
 
       const res = await fetch("https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/certificates/fetch-volunteers", {
+      //const res = await fetch(" http://localhost:5000/api/certificates/fetch-volunteers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -76,6 +77,7 @@ export default function GenerateCertificate() {
       console.log("👉 [FRONT] Payload envoyé generateCertificate:", payload);
 
       const res = await fetch("https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/certificates/generate", {
+      //const res = await fetch("http://localhost:5000/api/certificates/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

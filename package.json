@@ -20,6 +20,8 @@
     "dotenv": "^17.2.1",
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.2",
+    "jspdf-autotable": "^5.0.2",
     "lucide-astro": "^0.539.0",
     "lucide-react": "^0.539.0",
     "mongodb": "^6.18.0",
@@ -28,7 +30,9 @@
     "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.8.2"
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.8.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.2",

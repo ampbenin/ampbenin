@@ -1,13 +1,18 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-// import Admin from '../components/Admin.jsx';               // ❌ Composant Admin désactivé pour le moment
-import SaveVolunteers from '../components/SaveVolunteers.jsx';
-// import GenerateCertificate from '../components/GenerateCertificate.jsx'; // ❌ Composant GenerateCertificate désactivé
+import VolunteersManager from '../components/VolunteersManager.jsx';
+//import GenerateCertificate from '../components/GenerateCertificate.jsx';
+//import SaveVolunteers from '../components/SaveVolunteers.jsx';
 ---
 
-<BaseLayout title="Admin Missions | AMP BENIN">
-  <!-- Hydrate uniquement le composant SaveVolunteers pour l'instant -->
-  <!-- <Admin client:load /> --> 
-  <SaveVolunteers client:load />
-  <!-- <GenerateCertificate client:load /> -->
-</BaseLayout>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Missions | AMP BENIN</title>
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body class="bg-gray-100">
+    <!-- Composant React chargé côté client -->
+    <VolunteersManager client:load />
+  </body>
+</html>
