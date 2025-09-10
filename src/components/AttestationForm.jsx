@@ -170,7 +170,7 @@ export default function AttestationForm() {
     const formatted = e.target.value
       .toUpperCase()
       .replace(/[^A-Z ]/g, "") // autorise aussi les espaces
-      .slice(0, 15);
+      .slice(0, 25);
     setNom(formatted);
   }}
   required
