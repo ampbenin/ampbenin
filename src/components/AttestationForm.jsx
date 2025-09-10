@@ -155,8 +155,8 @@ export default function AttestationForm() {
             placeholder="Email"
             className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
             value={email}
-            maxLength={30}
-            onChange={(e) => setEmail(e.target.value.slice(0, 30))}
+            maxLength={40}
+            onChange={(e) => setEmail(e.target.value.slice(0, 40))}
             required
           />
 
@@ -165,12 +165,12 @@ export default function AttestationForm() {
   placeholder="Nom (nom de famille)"
   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none uppercase"
   value={nom}
-  maxLength={15}
+  maxLength={30}
   onChange={(e) => {
     const formatted = e.target.value
       .toUpperCase()
       .replace(/[^A-Z ]/g, "") // autorise aussi les espaces
-      .slice(0, 25);
+      .slice(0, 30);
     setNom(formatted);
   }}
   required
