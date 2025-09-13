@@ -15,8 +15,8 @@ export default function AttestationForm() {
 
   const API_BASE =
     import.meta.env.MODE === "development"
-      ? "https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/certificates"
-      : "https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/certificates";
+      ? "https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates"
+      : "https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates";
 
   /**
    * Étape 1 : Vérifier volontaire

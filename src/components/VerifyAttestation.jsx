@@ -14,7 +14,7 @@ export default function VerifyAttestation({ id }) {
     console.log("📡 Vérification en cours pour l'ID :", id);
 
     // Appel de l'API backend
-    fetch(`https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/certificates/verify/${id}`)
+    fetch(`https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates/verify/${id}`)
       .then((res) => {
         console.log("📥 Réponse brute du serveur :", res);
         return res.json();

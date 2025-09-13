@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 const API_BASE =
   (import.meta?.env?.VITE_API_URL
     ? `${import.meta.env.VITE_API_URL}/api/volunteers`
-    : "https://outdoor-arlene-ampbenin-4ca9a164.koyeb.app/api/volunteers");
+    : "https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers");
 
 export default function VolunteersManager() {
   const [volunteers, setVolunteers] = useState([]);
