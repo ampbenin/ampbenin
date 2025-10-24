@@ -1,0 +1,60 @@
+---
+import Layout from "../layouts/BaseLayout.astro";
+---
+
+<Layout title="RECRUTEMENT DES STAGIAIRES - AMP BENIN">
+  <!-- Section principale -->
+  <section class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-white to-orange-100 p-6">
+
+    <!-- Effets décoratifs lumineux -->
+    <div class="absolute top-0 left-0 w-80 h-80 bg-orange-300 opacity-20 rounded-full blur-3xl animate-pulse"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-orange-200 opacity-20 rounded-full blur-3xl animate-pulse delay-500"></div>
+
+    <!-- Conteneur principal -->
+    <div class="relative z-10 max-w-4xl w-full p-8 rounded-3xl shadow-2xl border border-orange-200 bg-gradient-to-tr from-white via-orange-50 to-orange-100 backdrop-blur-sm">
+
+      <!-- Titre principal -->
+      <h2 class="text-4xl font-extrabold text-orange-700 mb-3 text-center drop-shadow-sm">
+        🧡 RECRUTEMENT DES STAGIAIRES
+      </h2>
+
+      <p class="text-center text-gray-700 mb-8 text-lg leading-relaxed max-w-2xl mx-auto">
+        Dans le cadre des <strong>16 Jours d'activisme contre les Violences Basées sur le Genre (VBG)</strong>,
+        AMP BENIN recrute des <strong>stagiaires engagés</strong> pour plusieurs postes 🌍<br />
+        Merci de remplir soigneusement le formulaire ci-dessous.<br />
+        Ensemble, faisons rayonner un <span class="text-orange-600 font-semibold">Bénin égalitaire et sans violence</span> 💪
+      </p>
+
+      <!-- Bloc du formulaire intégré -->
+      <div class="rounded-3xl overflow-hidden shadow-lg border border-orange-200 hover:shadow-orange-300 transition-all duration-300">
+        <iframe
+          src="https://docs.google.com/forms/d/e/1FAIpQLSfCdvZZUXFg-FMJaHICs60pnngI6hZSSwZ980kqVvmEn5kcZA/viewform?embedded=true"
+          width="100%"
+          height="1800"
+          frameborder="0"
+          marginheight="0"
+          marginwidth="0"
+          class="w-full rounded-3xl"
+          title="Formulaire AMP BENIN"
+        >
+          Chargement…
+        </iframe>
+      </div>
+
+      <!-- Bouton de retour -->
+      <div class="text-center mt-8">
+        <a
+          href="/"
+          class="inline-block bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 px-8 rounded-full shadow-lg hover:from-orange-600 hover:to-orange-700 transform hover:-translate-y-1 transition-all duration-300"
+        >
+          ⬅ Retour à l'accueil
+        </a>
+      </div>
+
+      <!-- Phrase inspirante -->
+      <p class="mt-6 text-center text-gray-500 italic">
+        “Chaque engagement est une voix qui s’élève contre les violences.” ✊🧡
+      </p>
+    </div>
+  </section>
+</Layout>
