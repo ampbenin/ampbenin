@@ -1,0 +1,96 @@
+---
+---
+
+<!--
+  TestimonialsSection.astro
+  Section sécurisée pour afficher des témoignages anonymisés.
+  - N'affiche jamais de détails graphiques
+  - Propose ressources et numéros d'assistance
+  - Bouton 'Lire la suite' pour déplier le témoignage (contenu limité)
+-->
+
+<section class="bg-gray-50 py-20">
+  <div class="max-w-6xl mx-auto px-6">
+    <h2 class="text-3xl font-bold text-center mb-8">Voix & Témoignages</h2>
+
+    <p class="text-center text-sm text-gray-600 mb-6">Témoignages anonymisés et sécurisés — contenus sensibles. Si vous êtes en danger, appelez immédiatement les services d'urgence ou la ligne d'assistance indiquée ci‑dessous.</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- carte témoignage -->
+      <article class="bg-white shadow-md rounded-xl p-6">
+        <header class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">A</div>
+          <div>
+            <h3 class="font-semibold">Survivante (Anonyme)</h3>
+            <p class="text-xs text-gray-500">Région : Cotonou • Âge : 28+</p>
+          </div>
+        </header>
+
+        <p class="text-gray-700 leading-relaxed testimonial-excerpt">"J'ai trouvé la force de parler et chercher de l'aide après des années de silence. Les services locaux m'ont orientée et soutenue — il y a de l'espoir."</p>
+
+        <div class="mt-4 flex items-center gap-3">
+          <button class="text-orange-600 font-semibold hover:underline read-more-btn" data-target="t1">Lire la suite</button>
+          <a href="#resources" class="text-sm text-gray-600 hover:underline">Ressources & aide</a>
+        </div>
+
+        <div class="mt-4 hidden testimonial-full text-gray-700" id="t1">
+          <p>Ce témoignage est publié avec l'accord de la personne sous forme anonymisée. Nous évitons les détails pouvant être traumatisants. Si ce contenu vous affecte, veuillez utiliser la ligne d'assistance ci‑dessous.</p>
+        </div>
+      </article>
+
+      <!-- autre témoignage -->
+      <article class="bg-white shadow-md rounded-xl p-6">
+        <header class="flex items-center gap-4 mb-4">
+          <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">B</div>
+          <div>
+            <h3 class="font-semibold">Témoignage communautaire</h3>
+            <p class="text-xs text-gray-500">Commune : Parakou</p>
+          </div>
+        </header>
+
+        <p class="text-gray-700 leading-relaxed testimonial-excerpt">"Notre association a aidé plusieurs personnes à accéder à la justice et aux soins. Le changement démarre dans nos communautés."</p>
+
+        <div class="mt-4 flex items-center gap-3">
+          <button class="text-orange-600 font-semibold hover:underline read-more-btn" data-target="t2">Lire la suite</button>
+          <a href="#partners" class="text-sm text-gray-600 hover:underline">Devenir partenaire</a>
+        </div>
+
+        <div class="mt-4 hidden testimonial-full text-gray-700" id="t2">
+          <p>Ce récit met en avant les actions communautaires et les parcours de soutien anonymisés. Pour publier un témoignage, contactez l'équipe communication.</p>
+        </div>
+      </article>
+
+      <!-- boite soutien / hotline -->
+      <aside class="md:col-span-2 bg-orange-50 border border-orange-200 rounded-xl p-6">
+        <h4 class="font-bold text-lg mb-2">Besoin d'aide immédiate ?</h4>
+        <p class="text-gray-700 mb-4">Si vous ou quelqu'un est en danger, contactez les services d'urgence locaux ou la ligne d'assistance ci‑dessous. Nous respectons la confidentialité et l'anonymat.</p>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <a href="tel:+219114" class="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold text-center">Appeler via la ligne verte : 1 1 4</a>
+          <a href="https://wa.me/+22951078888" class="px-6 py-3 bg-white border border-orange-200 rounded-lg text-orange-600 font-semibold text-center">Ecrire à l'INF via WhatsApp</a>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4">Si vous souhaitez partager un témoignage, écrivez à ampbenin.contact@gmail.com — nous proposons anonymisation et soutien psychologique.</p>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // petit script pour gérer 'Lire la suite' (accessible, non intrusif)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.read-more-btn');
+      if (!btn) return;
+      const targetId = btn.dataset.target;
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const isHidden = target.classList.contains('hidden');
+      if (isHidden) {
+        target.classList.remove('hidden');
+        btn.textContent = 'Réduire';
+      } else {
+        target.classList.add('hidden');
+        btn.textContent = 'Lire la suite';
+      }
+    });
+  </script>
+</section>

@@ -1,0 +1,77 @@
+---
+// Composant : SocialWallSection.astro
+// Mur social dynamique pour les 16 Jours d'activisme
+---
+
+<section class="py-24 bg-black text-white relative overflow-hidden">
+  <!-- Effets lumineux d'arrière-plan -->
+  <div class="absolute inset-0 bg-gradient-to-b from-purple-900/40 via-purple-700/20 to-black pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <h2 class="text-center text-4xl md:text-5xl font-extrabold mb-4">
+      Mur Social des <span class="text-purple-400">#16Jours</span>
+    </h2>
+    <p class="text-center text-gray-300 max-w-3xl mx-auto mb-12">
+      Suivez en temps réel les moments forts, actions, témoignages, photos et vidéos partagés par les participants, partenaires et communautés.
+    </p>
+
+    <!-- Grille dynamique (Masonry / Responsive) -->
+    <div class="columns-1 sm:columns-2 md:columns-3 gap-6 space-y-6">
+      <!-- Carte 1 -->
+      <div class="break-inside-avoid bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition transform duration-300">
+        <img src="https://source.unsplash.com/random/400x500?women" class="w-full object-cover" />
+        <div class="p-4">
+          <p class="text-sm text-gray-300 mb-2">Instagram • @unwomen</p>
+          <p>Mobilisation pour mettre fin aux violences faites aux femmes. 💜</p>
+        </div>
+      </div>
+
+      <!-- Carte 2 (Vidéo) -->
+      <div class="break-inside-avoid bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition transform duration-300">
+        <video src="https://cdn.coverr.co/videos/coverr-women-empowerment-1231/1080p.mp4" autoplay loop muted class="w-full"></video>
+        <div class="p-4">
+          <p class="text-sm text-gray-300 mb-2">TikTok • #16jours</p>
+          <p>Un message fort partagé par les jeunes.</p>
+        </div>
+      </div>
+
+      <!-- Carte 3 -->
+      <div class="break-inside-avoid bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-transform duration-300">
+        <img src="https://source.unsplash.com/random/400x450?community" class="w-full object-cover" />
+        <div class="p-4">
+          <p class="text-sm text-gray-300 mb-2">Facebook • AMP BENIN</p>
+          <p>Atelier de sensibilisation avec les jeunes filles. 💛</p>
+        </div>
+      </div>
+
+      <!-- Carte 4 -->
+      <div class="break-inside-avoid bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-transform duration-300">
+        <img src="https://source.unsplash.com/random/400x600?human-rights" class="w-full" />
+        <div class="p-4">
+          <p class="text-sm text-gray-300 mb-2">X • #OrangeTheWorld</p>
+          <p>Le monde se mobilise pour les droits humains.</p>
+        </div>
+      </div>
+
+      <!-- Carte 5 (texte fort) -->
+      <div class="break-inside-avoid bg-purple-800/60 p-8 rounded-xl shadow-xl border border-purple-500/30 text-center">
+        <p class="text-2xl font-bold mb-4">"Élever les voix pour briser le silence."</p>
+        <p class="text-gray-200">Chaque publication contribue à sauver une vie et changer une mentalité.</p>
+      </div>
+
+      <!-- Carte 6 -->
+      <div class="break-inside-avoid bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-[1.02] transition-transform duration-300">
+        <img src="https://source.unsplash.com/random/400x520?gender" class="w-full" />
+        <div class="p-4">
+          <p class="text-sm text-gray-300 mb-2">Instagram • @youthleaders</p>
+          <p>La jeunesse engagée pour l’égalité des genres 💫</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton voir plus -->
+    <div class="text-center mt-12">
+      <a href="/socialwall" class="px-6 py-3 text-lg font-bold bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg transition">Voir plus de publications</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,194 @@
+---
+// Apple-like motion intro + parallax + counters
+const stats = [
+  { label: "Pays couvert", value: 1, icon: "🌍" },
+  { label: "Départements où nous sommes actifs", value: 12, icon: "🧭" },
+  { label: "Communes où nous sommes engagés", value: 20, icon: "🏛️" },
+  { label: "Jeunes volontaires", value: 7000, icon: "✨" }
+];
+const bgImage = "/images/ouidah.webp";
+---
+<section class="relative overflow-hidden bg-green-500 text-white" aria-labelledby="amp-stats-title">
+  <!-- Parallax background -->
+  <div class="absolute inset-0 z-0 will-change-transform min-h-[600px]">
+    <!-- Image -->
+    <div
+      class="absolute inset-0 bg-cover bg-center parallax-layer layer-image"
+      data-speed="0.18"
+      style={`background-image: url('${bgImage}'); background-size: cover; background-position: center;`}
+      role="img"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Halos -->
+    <div class="absolute inset-0 pointer-events-none z-0">
+      <div class="parallax-layer" data-speed="0.06" style="top:6%; left:-6%; width:36rem; height:36rem;">
+        <div class="rounded-full blur-3xl opacity-25 bg-blue-500 w-full h-full"></div>
+      </div>
+      <div class="parallax-layer" data-speed="0.10" style="bottom:6%; right:-6%; width:44rem; height:44rem;">
+        <div class="rounded-full blur-3xl opacity-25 bg-purple-500 w-full h-full"></div>
+      </div>
+    </div>
+
+    <!-- Overlay léger -->
+    <div class="absolute inset-0 z-10 bg-black/20 pointer-events-none" aria-hidden="true"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="relative z-20 container mx-auto px-6 py-32 max-w-6xl text-center">
+    <h2 id="amp-stats-title" class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-4 tracking-tight text-white/95" data-anim="reveal">
+      <span class="block overflow-hidden">
+        <span class="block transform translate-y-6 reveal-piece">AMP BENIN</span>
+      </span>
+      <span class="block mt-3 text-xl md:text-2xl font-medium text-white/80 reveal-sub">— Impact, communauté et actions</span>
+    </h2>
+    <p class="mt-6 text-lg text-white/70 max-w-2xl mx-auto" data-anim="fade">
+      Découvrez notre footprint : territoires couverts, équipes engagées et la force de nos volontaires — présenté avec une intro animée, fond immersif et compteurs interactifs.
+    </p>
+    <div class="mt-8 flex justify-center gap-4">
+      <a class="inline-flex items-center gap-3 rounded-lg bg-white/10 border border-white/10 px-5 py-3 text-white/95 hover:backdrop-brightness-110 hover:scale-105 transition" href="/a-propos">
+        En savoir plus
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      {stats.map((s, i) => (
+        <article key={i} class="relative group p-6 rounded-2xl bg-gradient-to-br from-white/6 to-white/3 border border-white/6 backdrop-blur-md shadow-xl transform transition-all duration-600 will-change-transform hover:-translate-y-3 hover:scale-[1.02]" data-anim="card" aria-labelledby={`stat-${i}-label`}>
+          <div class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/6 to-purple-500/6 blur-2xl"></div>
+          </div>
+          <div class="relative z-10 text-center">
+            <div class="text-4xl mb-3" aria-hidden="true">{s.icon}</div>
+            <div class="text-3xl sm:text-4xl font-extrabold leading-none">
+              <span id={`stat-${i}`} class="stat-value" data-value={s.value}>0</span>
+            </div>
+            <p id={`stat-${i}-label`} class="mt-2 text-sm text-white/80">{s.label}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+
+  <!-- Bottom gradient -->
+  <div class="absolute inset-x-0 bottom-0 h-24 pointer-events-none bg-gradient-to-t from-black/70 to-transparent"></div>
+
+  <!-- Motion + Parallax + Counters -->
+  <script type="module">
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Parallax
+    (function(){
+      const layers = [...document.querySelectorAll('.parallax-layer')];
+      if (!layers.length || prefersReduced) return;
+      let rafId = null;
+      function onScroll(){
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+          const scrollY = window.scrollY || window.pageYOffset;
+          layers.forEach(layer => {
+            const speed = parseFloat(layer.dataset.speed) || 0;
+            layer.style.transform = `translateY(${scrollY * speed}px)`;
+          });
+          rafId = null;
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+
+    // Reveal animations
+    (function(){
+      if (prefersReduced) {
+        document.querySelectorAll('[data-anim]').forEach(el => el.style.opacity = 1);
+        document.querySelectorAll('.reveal-piece, .reveal-sub').forEach(el => el.style.transform = 'none');
+        return;
+      }
+      const revealPieces = document.querySelectorAll('.reveal-piece');
+      revealPieces.forEach((el, idx) => {
+        el.style.transition = 'transform 800ms cubic-bezier(.2,.9,.3,1), opacity 600ms ease';
+        el.style.transitionDelay = `${idx * 90}ms`;
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+
+      const revealSub = document.querySelectorAll('.reveal-sub');
+      revealSub.forEach(el => {
+        el.style.transition = 'transform 900ms cubic-bezier(.2,.9,.3,1), opacity 600ms ease';
+        el.style.transitionDelay = `200ms`;
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+
+      document.querySelectorAll('[data-anim="fade"]').forEach((el, idx) => {
+        el.style.transition = 'opacity 900ms ease, transform 900ms ease';
+        el.style.transitionDelay = `${220 + idx*80}ms`;
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+
+      document.querySelectorAll('[data-anim="card"]').forEach((el, idx) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(28px)';
+        setTimeout(() => {
+          el.style.transition = 'opacity 700ms ease, transform 700ms cubic-bezier(.2,.9,.3,1)';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, 300 + idx * 110);
+      });
+    })();
+
+    // Counters
+    (function(){
+      const elements = [...document.querySelectorAll('.stat-value')];
+      if (!elements.length) return;
+
+      function animateCount(el, to){
+        const duration = 1400, start = performance.now(), from = 0;
+        function step(now){
+          const t = Math.min(1, (now - start)/duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(from + (to - from) * eased).toLocaleString();
+          if(t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      if(prefersReduced){
+        elements.forEach(el => el.textContent = Number(el.dataset.value || el.textContent || 0).toLocaleString());
+        return;
+      }
+
+      const io = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+          if(entry.isIntersecting){
+            const el = entry.target;
+            const to = Number(el.dataset.value || 0);
+            animateCount(el,to);
+            obs.unobserve(el);
+          }
+        });
+      }, {threshold:0.4});
+
+      elements.forEach(el => io.observe(el));
+    })();
+
+    if(prefersReduced) document.documentElement.style.scrollBehavior = 'auto';
+  </script>
+
+  <style>
+    [data-anim], .reveal-piece, .reveal-sub { opacity:0; transform:translateY(12px); }
+    .reveal-piece { display:inline-block; transform:translateY(18px); }
+    .reveal-sub { display:block; transform:translateY(12px); }
+    .card { will-change: transform, opacity; }
+    @media (min-width:768px){ section{padding-bottom:6rem; padding-top:6rem;} }
+    @media (prefers-reduced-motion: reduce){
+      .reveal-piece, .reveal-sub, [data-anim], .parallax-layer{
+        transition:none !important;
+        transform:none !important;
+        opacity:1 !important;
+      }
+    }
+  </style>
+</section>

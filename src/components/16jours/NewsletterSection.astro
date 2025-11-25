@@ -1,0 +1,64 @@
+---
+// Composant : NewsletterSection.astro
+---
+
+<section class="py-24 bg-gradient-to-t from-black via-purple-900 to-purple-700 text-white">
+  <div class="max-w-5xl mx-auto px-6 text-center">
+    <h2 class="text-4xl md:text-5xl font-extrabold mb-6 uppercase tracking-wide">
+      Restez Informé Pendant les 16 Jours
+    </h2>
+    <p class="text-lg text-gray-200 max-w-3xl mx-auto mb-10">
+      Recevez chaque jour des ressources, événements, chiffres clés, témoignages et actions à poser pour lutter contre les violences basées sur le genre.
+    </p>
+
+    <!-- Formulaire Newsletter -->
+    <form action="/api/newsletter" method="POST" class="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-purple-500/20 max-w-2xl mx-auto space-y-6">
+      <div>
+        <label class="block text-left text-sm font-medium mb-2">Nom complet</label>
+        <input 
+          type="text" 
+          name="fullname"
+          required
+          class="w-full px-4 py-3 rounded-lg bg-white/20 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+          placeholder="Votre nom"
+        />
+      </div>
+
+      <div>
+        <label class="block text-left text-sm font-medium mb-2">Adresse email</label>
+        <input 
+          type="email" 
+          name="email"
+          required
+          class="w-full px-4 py-3 rounded-lg bg-white/20 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+          placeholder="exemple@gmail.com"
+        />
+      </div>
+
+      <div>
+        <label class="block text-left text-sm font-medium mb-2">Type d’alertes souhaitées</label>
+        <select
+          name="alert_type"
+          class="w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+        >
+          <option value="journalier" class="text-black">Résumé quotidien des 16 Jours</option>
+          <option value="evenements" class="text-black">Alertes d’événements et ateliers</option>
+          <option value="ressources" class="text-black">Nouvelles ressources & outils pédagogiques</option>
+          <option value="partenaires" class="text-black">Informations partenaires & institutions</option>
+        </select>
+      </div>
+
+      <button 
+        type="submit"
+        class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300 shadow-lg"
+      >
+        S'inscrire maintenant
+      </button>
+    </form>
+
+    <p class="text-sm text-gray-300 mt-6">
+      En vous inscrivant, vous acceptez de recevoir des communications durant la campagne.<br/>
+      Vos données restent confidentielles conformément à notre politique de protection.
+    </p>
+  </div>
+</section>

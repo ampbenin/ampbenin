@@ -3,6 +3,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import HeroSlider from "../components/HeroSlider.astro";
 import NewsSlider from "../components/NewsSlider.astro";
 import ISCarousel from "../components/ISCarousel.astro";
+import Stat from "../components/Stat.astro";
+import AMPStats from "../components/AMPStats.astro";
+import Accueil from "../components/Accueil.astro";
 
 const title = "AMP BENIN";
 const description = "Découvrez les actions de AMP BENIN pour un Bénin plus durable à travers des programmes communautaires et la mobilisation des jeunes.";
@@ -12,24 +15,72 @@ const image = "/og-image.png"; // place ce fichier dans /public
 
 <BaseLayout {title} {description} {url} {image}>
   <main>
+    <!-- Section Slider -->
     <section class="mb-8">
       <HeroSlider />
     </section>
 
-    <section class="px-4 md:px-12 lg:px-24 py-8 text-center">
-      <h2 class="text-3xl font-bold mb-4">Bienvenue sur AMP BENIN</h2>
-      <p class="max-w-3xl mx-auto text-gray-600">
-        L'Action Monde Productif est une organisation sociale dédiée à la promotion des Objectifs de Développement Durable (ODD) au Bénin à travers des initiatives citoyennes, des programmes d'engagement communautaire et la mobilisation des jeunes.
-      </p>
+    <!-- Section Accueil / Présentation -->
+    <section class="py-12 bg-gray-50 px-4 md:px-12 lg:px-24">
+      <Accueil />
     </section>
 
-    <section class="py-12 bg-gray-100 px-4 md:px-12 lg:px-24">
+    <!-- ⭐ Section Image + Description 16 jours d’activisme -->
+    <section class="py-12 px-4 md:px-12 lg:px-24 bg-white">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+
+        <!-- Image -->
+        <img
+          src="/images/16jours/Lancement-16jours.webp"
+          alt="Campagne 16 Jours d’activisme"
+          class="w-full rounded-xl shadow-lg object-cover"
+        />
+
+        <!-- Texte -->
+        <div>
+          <h2 class="text-3xl font-bold mb-4 text-orange-700">
+            16 Jours d’Activisme Contre les Violences Basées sur le Genre
+          </h2>
+
+          <p class="text-gray-700 text-lg leading-relaxed mb-6">
+            Les 16 Jours d’activisme sont une campagne mondiale menée pour lutter contre 
+            les violences basées sur le genre. AMP Bénin participe activement à cette 
+            mobilisation à travers des actions de sensibilisation, de plaidoyer et 
+            d’accompagnement communautaire.
+          </p>
+
+          <a 
+            href="/16jours"
+            class="inline-block px-6 py-3 bg-orange-600 text-white font-semibold rounded-full shadow 
+                   hover:bg-orange-700 transition-all duration-300"
+          >
+            En savoir plus
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 🌟 Section Statistiques -->
+    <section class="py-12 px-4 md:px-12 lg:px-24">
+      <Stat />
+    </section>
+
+    <!-- Section Dernières actualités -->
+    <section class="py-12 bg-red-100 px-4 md:px-12 lg:px-24">
       <h2 class="text-2xl font-semibold mb-4">Dernières actualités</h2>
       <NewsSlider />
     </section>
 
+    <!-- Section Institutions / Carrousel -->
     <section class="py-12 px-4 md:px-12 lg:px-24">
       <ISCarousel />
     </section>
+
+    <!-- 🌟 Section Statistiques -->
+    <section class="py-12 bg-blue-200 px-4 md:px-12 lg:px-24">
+      <AMPStats />
+    </section>
+
   </main>
 </BaseLayout>

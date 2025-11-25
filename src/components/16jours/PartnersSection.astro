@@ -1,0 +1,38 @@
+---
+// Composant : PartnersSection.astro
+// Logos partenaires défilants (marquee professionnel)
+---
+
+<section class="py-20 bg-white dark:bg-black">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-10 text-gray-900 dark:text-white">
+      Nos Partenaires Officiels
+    </h2>
+
+    <!-- Bande défilante -->
+    <div class="relative overflow-hidden">
+      <div class="animate-slide flex items-center gap-16 w-max">
+        <!-- Exemple de logos (remplacer par vos images) -->
+        <img src="/images/16jours/Logo16jours.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoMASM.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/Logo-SFPF.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoBougelabs.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoAMPBENIN.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoINF.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoUReport.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoADECK.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+        <img src="/images/16jours/LogoONUFemme.webp" class="h-16 object-contain opacity-90 hover:opacity-100 transition" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes slide {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-slide {
+    animation: slide 25s linear infinite;
+  }
+</style>

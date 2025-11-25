@@ -1,0 +1,56 @@
+---
+// SectionAccueil.astro
+---
+
+<section class="px-4 md:px-12 lg:px-24 py-16 text-center relative overflow-hidden">
+  <h2 id="welcome-title" class="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-green-900"></h2>
+  <p id="welcome-text" class="max-w-3xl mx-auto text-blue-600 text-base md:text-lg leading-relaxed"></p>
+
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const title = "Bienvenue sur AMP BENIN";
+      const description = "L'Action Monde Productif est une organisation sociale dédiée à la promotion des Objectifs de Développement Durable (ODD) au Bénin à travers des initiatives citoyennes, des programmes d'engagement communautaire et la mobilisation des jeunes.";
+
+      const titleContainer = document.getElementById("welcome-title");
+      const textContainer = document.getElementById("welcome-text");
+
+      function typeText(container, text, delay = 50, callback) {
+        container.textContent = "";
+        let i = 0;
+        const interval = setInterval(() => {
+          container.textContent += text.charAt(i);
+          i++;
+          if (i >= text.length) {
+            clearInterval(interval);
+            if (callback) callback();
+          }
+        }, delay);
+      }
+
+      // On tape d'abord le titre, puis le texte descriptif
+      typeText(titleContainer, title, 100, () => {
+        setTimeout(() => {
+          typeText(textContainer, description, 25);
+        }, 500);
+      });
+    });
+  </script>
+
+  <style>
+    #welcome-title, #welcome-text {
+      white-space: pre-wrap; /* gestion des retours à la ligne */
+    }
+
+    /* Curseur clignotant */
+    #welcome-text::after {
+      content: '|';
+      animation: blink 1s steps(1) infinite;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+  </style>
+</section>

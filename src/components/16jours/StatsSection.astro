@@ -1,0 +1,23 @@
+---
+const stats = [
+  { number: "1 sur 3", label: "Femmes victimes de violences au cours de leur vie" },
+  { number: "40%", label: "Des victimes ne reçoivent aucune aide" },
+  { number: "15-49 ans", label: "Tranche d’âge la plus touchée par les VBG" },
+  { number: "70%", label: "Des agressions commises par un proche" },
+];
+---
+
+<section class="bg-white py-20">
+  <div class="max-w-6xl mx-auto px-6 text-center">
+    <h2 class="text-3xl font-bold mb-12">Statistiques Clés sur les VBG</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {stats.map((s) => (
+        <div class="bg-orange-50 border border-orange-200 p-8 rounded-xl shadow-sm hover:shadow-md transition">
+          <p class="text-4xl font-extrabold text-orange-600">{s.number}</p>
+          <p class="mt-2 text-gray-700">{s.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

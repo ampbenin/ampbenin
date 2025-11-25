@@ -1,0 +1,90 @@
+---
+// Composant : FAQSection.astro
+// FAQ dédiée aux 16 Jours d'activisme contre les VBG au Bénin
+---
+
+<section class="py-16 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-6">
+    <h2 class="text-3xl font-bold text-center mb-12">FAQ - 16 Jours d'Activisme</h2>
+
+    <div class="space-y-6">
+      <!-- Question 1 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>Qu’est-ce que les 16 Jours d’Activisme ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          Les 16 Jours d’Activisme sont une campagne mondiale annuelle organisée du 25 novembre au 10 décembre pour sensibiliser aux violences basées sur le genre et promouvoir les droits humains.
+        </div>
+      </div>
+
+      <!-- Question 2 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>Quel est le rôle de l’Institut National de la Femme au Bénin ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          L’Institut National de la Femme coordonne des campagnes, des séances de sensibilisation, et offre un appui juridique et institutionnel aux victimes de VBG.
+        </div>
+      </div>
+
+      <!-- Question 3 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>Comment les citoyens peuvent-ils s’impliquer ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          Participer à des événements, signaler des cas de violence, partager des campagnes en ligne et soutenir les structures de prise en charge.
+        </div>
+      </div>
+
+      <!-- Question 4 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>À qui une victime peut-elle s’adresser pour obtenir de l’aide ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          À l’Institut National de la Femme, aux services de l’Observatoire de la Femme, de la Famille et de l’Enfant, et aux centres de promotion sociale locaux.
+        </div>
+      </div>
+
+      <!-- Question 5 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>Pourquoi la violence basée sur le genre persiste-t-elle encore ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          En raison des normes sociales et culturelles, de la dépendance économique, de l’impunité et de la méconnaissance des droits des femmes.
+        </div>
+      </div>
+
+      <!-- Question 6 -->
+      <div class="border rounded-lg overflow-hidden">
+        <button class="w-full text-left px-6 py-4 bg-white flex justify-between items-center faq-question">
+          <span>Que signifie le thème « Riposter et se reconstruire » ?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer hidden px-6 py-4 bg-gray-50">
+          Encourager les victimes à dénoncer les violences et offrir un soutien psychologique, juridique et social pour leur reconstruction.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    faqQuestions.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const answer = btn.nextElementSibling;
+        answer.classList.toggle('hidden');
+        btn.querySelector('.faq-icon').textContent = answer.classList.contains('hidden') ? '+' : '−';
+      });
+    });
+  </script>
+</section>
