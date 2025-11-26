@@ -2,7 +2,7 @@ import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap";
 import react from "@astrojs/react";
-import netlify from "@astrojs/netlify"; // adapter SSR officiel
+import netlify from "@astrojs/netlify"; 
 
 export default defineConfig({
   site: "https://ampbenin.netlify.app",
@@ -13,8 +13,8 @@ export default defineConfig({
     react(),
   ],
 
-  output: "server",      // ← OBLIGATOIRE pour SSR
-  adapter: netlify(),    // ← OBLIGATOIRE pour SSR + Netlify
+  output: "server",     
+  adapter: netlify(),  
 
   defaultLocale: "fr",
   locales: ["fr", "en"],
