@@ -3,3 +3,8 @@ import Stat from "../components/Stat.jsx";
 ---
 
 <Stat client:load />
+
+<!-- Fallback côté serveur pour SSR -->
+<noscript>
+  <p>Les statistiques sont disponibles après le chargement de la page.</p>
+</noscript>
