@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import HeroSlider from "../components/HeroSlider.astro";
 import NewsSlider from "../components/NewsSlider.astro";
 import ISCarousel from "../components/ISCarousel.astro";
-// import Stat from "../components/Stat.astro";
+import Stat from "../components/Stat.astro";
 import AMPStats from "../components/AMPStats.astro";
 import Accueil from "../components/Accueil.astro";
 
@@ -61,12 +61,10 @@ const image = "/og-image.png"; // place ce fichier dans /public
       </div>
     </section>
 
-    <!-- 
-    🌟 Section Statistiques 
+    <!-- 🌟 Section Statistiques -->
     <section class="py-12 px-4 md:px-12 lg:px-24">
-      <Stat />
+      <Stat client:load />
     </section>
-    -->
 
     <!-- Section Dernières actualités -->
     <section class="py-12 bg-red-100 px-4 md:px-12 lg:px-24">
@@ -81,18 +79,8 @@ const image = "/og-image.png"; // place ce fichier dans /public
 
     <!-- 🌟 Section Statistiques -->
     <section class="py-12 bg-blue-200 px-4 md:px-12 lg:px-24">
-      <AMPStats />
+      <AMPStats client:load />
     </section>
 
   </main>
 </BaseLayout>
-
-
-
-
-    <!-- 🌟 Section Statistiques -->
-    <!--
-    <section class="py-12 bg-blue-200 px-4 md:px-12 lg:px-24">
-      <AMPStats />
-    </section>
-    -->
