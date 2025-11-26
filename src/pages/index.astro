@@ -1,11 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import HeroSlider from "../components/HeroSlider.astro";
-import NewsSlider from "../components/NewsSlider.astro";
-import ISCarousel from "../components/ISCarousel.astro";
-import Stat from "../components/Stat.astro";
-import AMPStats from "../components/AMPStats.astro";
-import Accueil from "../components/Accueil.astro";
+// import HeroSlider from "../components/HeroSlider.astro";
+// import NewsSlider from "../components/NewsSlider.astro";
+// import ISCarousel from "../components/ISCarousel.astro";
+// import Stat from "../components/Stat.astro";
+// import AMPStats from "../components/AMPStats.astro";
+// import Accueil from "../components/Accueil.astro";
 
 const title = "AMP BENIN";
 const description = "Découvrez les actions de AMP BENIN pour un Bénin plus durable à travers des programmes communautaires et la mobilisation des jeunes.";
@@ -16,14 +16,18 @@ const image = "/og-image.png"; // place ce fichier dans /public
 <BaseLayout {title} {description} {url} {image}>
   <main>
     <!-- Section Slider -->
+    <!--
     <section class="mb-8">
       <HeroSlider />
     </section>
+    -->
 
     <!-- Section Accueil / Présentation -->
+    <!--
     <section class="py-12 bg-gray-50 px-4 md:px-12 lg:px-24">
       <Accueil />
     </section>
+    -->
 
     <!-- ⭐ Section Image + Description 16 jours d’activisme -->
     <section class="py-12 px-4 md:px-12 lg:px-24 bg-white">
@@ -62,25 +66,32 @@ const image = "/og-image.png"; // place ce fichier dans /public
     </section>
 
     <!-- 🌟 Section Statistiques -->
+    <!--
     <section class="py-12 px-4 md:px-12 lg:px-24">
       <Stat />
     </section>
+    -->
 
     <!-- Section Dernières actualités -->
+    <!--
     <section class="py-12 bg-red-100 px-4 md:px-12 lg:px-24">
       <h2 class="text-2xl font-semibold mb-4">Dernières actualités</h2>
       <NewsSlider />
     </section>
+    -->
 
     <!-- Section Institutions / Carrousel -->
+    <!--
     <section class="py-12 px-4 md:px-12 lg:px-24">
       <ISCarousel />
     </section>
+    -->
 
     <!-- 🌟 Section Statistiques -->
+    <!--
     <section class="py-12 bg-blue-200 px-4 md:px-12 lg:px-24">
       <AMPStats />
     </section>
-
+    -->
   </main>
 </BaseLayout>
