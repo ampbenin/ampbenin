@@ -1,10 +1,108 @@
 ---
-import Stat from "../components/Stat.jsx";
+// src/components/StatsSectionLight.astro
+const stats = [
+  { label: "Pays couvert", value: 1, icon: "🌍" },
+  { label: "Départements actifs", value: 12, icon: "🧭" },
+  { label: "Communes engagées", value: 20, icon: "🏛️" },
+  { label: "Jeunes volontaires", value: 7000, icon: "✨" }
+];
 ---
 
-<Stat client:load />
+<section aria-labelledby="stats-title" 
+         style="position:relative; padding:4rem 1rem; background:#c0f0f5; color:#1a1a1a; overflow:hidden;">
+  <h2 id="stats-title" style="text-align:center; font-size:2.5rem; margin-bottom:1.5rem;">
+    Nos Statistiques Clés
+  </h2>
+  <p style="text-align:center; margin-bottom:3rem; max-width:600px; margin-left:auto; margin-right:auto; color:#333;">
+    Découvrez l'impact de notre organisation à travers nos actions et notre communauté engagée.
+  </p>
 
-<!-- Fallback côté serveur pour SSR -->
-<noscript>
-  <p>Les statistiques sont disponibles après le chargement de la page.</p>
-</noscript>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:2rem;">
+    {stats.map((stat, i) => (
+      <div 
+        key={i} 
+        class="stat-card"
+        style="
+          position:relative; 
+          background:rgba(255,255,255,0.6); 
+          border-radius:1rem; 
+          padding:2rem 1rem; 
+          text-align:center;
+          overflow:hidden;
+          cursor:pointer;
+          transform: translateY(30px);
+          opacity:0;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        "
+        data-index={i}
+      >
+        <!-- Halo décoratif -->
+        <div style="
+          position:absolute; 
+          top:-20px; left:-20px; 
+          width:100px; height:100px; 
+          background:rgba(0,200,150,0.15); 
+          border-radius:50%;
+          filter:blur(25px);
+          z-index:0;
+        "></div>
+
+        <div style="position:relative; z-index:1;">
+          <div style="font-size:2.5rem; margin-bottom:0.5rem;">{stat.icon}</div>
+          <div class="stat-value" data-value={stat.value} style="font-size:2rem; font-weight:bold;">0</div>
+          <div style="margin-top:0.5rem; font-size:1rem; color:#333;">{stat.label}</div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Script pour animation des cards et compteurs -->
+  <script type="module">
+    document.addEventListener('DOMContentLoaded', () => {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const cards = [...document.querySelectorAll('.stat-card')];
+
+      // Animation d'apparition staggered
+      cards.forEach((card, idx) => {
+        if(prefersReduced){
+          card.style.transform = 'none';
+          card.style.opacity = 1;
+        } else {
+          setTimeout(() => {
+            card.style.transition = 'transform 0.7s cubic-bezier(.2,.9,.3,1), opacity 0.7s ease';
+            card.style.transform = 'translateY(0)';
+            card.style.opacity = 1;
+          }, idx * 150);
+        }
+      });
+
+      // Counters
+      const counterElements = [...document.querySelectorAll('.stat-value')];
+      function animateCount(el, to){
+        const duration = 1400, start = performance.now(), from = 0;
+        function step(now){
+          const t = Math.min(1, (now - start)/duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(from + (to - from) * eased).toLocaleString();
+          if(t < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      if(prefersReduced){
+        counterElements.forEach(el => el.textContent = Number(el.dataset.value).toLocaleString());
+      } else {
+        const io = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if(entry.isIntersecting){
+              animateCount(entry.target, Number(entry.target.dataset.value));
+              obs.unobserve(entry.target);
+            }
+          });
+        }, {threshold:0.4});
+
+        counterElements.forEach(el => io.observe(el));
+      }
+    });
+  </script>
+</section>
