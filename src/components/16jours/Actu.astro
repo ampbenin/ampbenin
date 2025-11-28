@@ -1,6 +1,8 @@
 ---
 /* Tu peux modifier les images ici si besoin */
 const images = [
+  "/images/16jours/1J4-16jours-25.webp",
+  "/images/16jours/2J4-16jours-25.webp",
   "/images/16jours/1J3-16jours-25.webp",
   "/images/16jours/2J3-16jours-25.webp",
   "/images/16jours/3J3-16jours-25.webp",
@@ -44,27 +46,68 @@ const images = [
     <!-- Texte -->
     <div>
       <h2 class="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-orange-700">
-        JOUR 3 : SENSIBILISATION - 16 JOURS D'ACTIVISME CONTRE LES VBG
+        JOUR 4 : SENSIBILISATION - 16 JOURS D'ACTIVISME CONTRE LES VBG
       </h2>
 
       <p class="text-base sm:text-lg md:text-lg lg:text-xl text-gray-700 leading-relaxed mb-4 sm:mb-6">
-        Les VBG en ligne prennent de l’ampleur : cyberharcèlement, menaces, diffusion non consentie d’intimité… Autant d’actes qui brisent des vies derrière les écrans. À travers la campagne des 16 jours d’activisme, AMP BENIN sensibilise, alerte et invite chacun à agir...
-        LIRE l'article du jour - 27/11/2025
+        À l’ère du numérique, les VBG se propagent aussi en ligne : chantage, insultes... Au Bénin, des milliers de femmes et de filles en sont victimes chaque année. Découvrir la réalité des VFF facilitées par le numérique au Bénin. 
+        LIRE l'article du jour - 28/11/2025
         <br><br>
         <strong>ENSEMBLE, FAISONS DU NUMÉRIQUE UN ESPACE SANS VIOLENCES.</strong>
       </p>
 
       <a 
-        href="/16jours/j3"
+        href="/16jours/j4"
         class="inline-block px-5 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white font-semibold rounded-full shadow 
                hover:bg-orange-700 transition-all duration-300"
       >
-        Lire l'article du J3
+        Lire l'article du J4
       </a>
     </div>
 
   </div>
 </section>
+
+<!-- 🟠 SECTION : Lire d'autres articles -->
+<div class="mt-6 bg-orange-50 p-6 rounded-xl shadow-md text-center">
+  <h3 class="text-lg font-semibold text-orange-700 mb-4">
+    Lire d'autres articles :
+  </h3>
+
+  <div class="flex justify-center flex-wrap gap-4">
+    
+    <!-- J3 -->
+    <a 
+      href="/16jours/j3"
+      class="w-14 h-14 flex flex-col items-center justify-center bg-orange-600 text-white 
+             font-bold rounded-full shadow hover:bg-orange-700 transition-all"
+    >
+      <span class="-mt-1">J3</span>
+    </a>
+
+    <!-- J4 -->
+    <a 
+      href="/16jours/j4"
+      class="w-14 h-14 flex flex-col items-center justify-center bg-orange-500 text-white 
+             font-bold rounded-full shadow hover:bg-orange-600 transition-all"
+    >
+      <span class="-mt-1">J4</span>
+    </a>
+
+    <!-- Plus -->
+    <a 
+      href="/actualites"
+      class="w-14 h-14 flex flex-col items-center justify-center bg-orange-400 text-white 
+             font-bold rounded-full shadow hover:bg-orange-500 transition-all"
+    >
+      <span class="-mt-1">Plus</span>
+    </a>
+
+  </div>
+</div>
+  </div>
+</div>
+
 
 <!-- SCRIPT SLIDER (côté client via Astro) -->
 <script client:load>
