@@ -1,6 +1,12 @@
 ---
 const newsItems = [
   {
+    image: "/images/16jours/Lancement16jours.webp",
+    title: "Lancement de la Campagne des 16 Jours d'activisme contre les VBG 2025",
+    date: "En cours...",
+    link: "/16jours",
+  },
+  {
     image: "/images/campagne-mycountry229-paix-benin.webp",
     title: "Lancement de la Campagne Nationale Digitale #MyCountry229",
     date: "2025-08-11",
@@ -20,42 +26,73 @@ const newsItems = [
   },
 ];
 
-// Trier par date (récentes d'abord)
-const sorted = [...newsItems].sort(
-  (a, b) => new Date(b.date) - new Date(a.date)
-);
+// Tri des actualités par date
+const sorted = [...newsItems].sort((a, b) => new Date(b.date) - new Date(a.date));
 ---
+
 <section class="relative w-full overflow-hidden">
-  <!-- Slider -->
-  <div id="slider" class="flex transition-transform duration-700 ease-in-out" style={`width: calc(100% * ${sorted.length})`}>
+  <!-- SLIDER -->
+  <div
+    id="slider"
+    class="flex transition-transform duration-700 ease-in-out will-change-transform"
+    style={`width: ${sorted.length * 100}%`}
+  >
     {sorted.map((item) => (
+      <!-- NOTE: on retire padding externe (px-2) pour éviter espaces blancs pendant la transition -->
       <a href={item.link} class="min-w-full md:min-w-1/2 lg:min-w-1/3 flex-shrink-0 block">
-        <div class="relative h-80 md:h-96 lg:h-[28rem] group overflow-hidden rounded-lg shadow-lg">
-          <img 
-            src={item.image} 
-            alt={item.title} 
-            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" 
-            loading="lazy" 
+        <div class="relative h-80 md:h-96 lg:h-[28rem] overflow-hidden rounded-xl shadow-xl bg-gray-100">
+          <!--
+            object-cover : remplit le conteneur (pas de bandes blanches)
+            remove any scale hover to prevent zoom
+            onload handler adds 'loaded' class to avoid showing placeholder while image downloads
+          -->
+          <img
+            src={item.image}
+            alt={item.title}
+            loading="lazy"
+            onload="this.closest('.relative').classList.add('loaded')"
+            class="w-full h-full object-cover object-center transition-opacity duration-300 opacity-0"
+            style="backface-visibility: hidden; -webkit-backface-visibility: hidden;"
           />
-          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-4">
-            <h3 class="text-md md:text-lg font-semibold">{item.title}</h3>
-            <p class="text-xs md:text-sm">{item.date}</p>
+
+          <!-- Placeholder (sera caché quand image chargée) -->
+          <div class="absolute inset-0 flex items-center justify-center bg-gray-200 loaded:bg-transparent">
+            <!-- petit indicateur pendant chargement -->
+            <svg class="h-8 w-8 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          </div>
+
+          <!-- Légende -->
+          <div class="absolute bottom-0 left-0 right-0 p-4 text-white bg-gradient-to-t from-black/70 to-transparent">
+            <h3 class="text-lg font-semibold leading-tight">{item.title}</h3>
+            <p class="text-sm opacity-90">{item.date}</p>
           </div>
         </div>
       </a>
     ))}
   </div>
 
-  <!-- Boutons précédent / suivant -->
-  <button id="prev" class="absolute top-1/2 left-3 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 md:p-4 rounded-full shadow-lg transition-all z-10">
+  <!-- BOUTONS -->
+  <button
+    id="prev"
+    class="absolute top-1/2 left-3 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 md:p-4 rounded-full shadow-md transition z-20"
+    aria-label="Précédent"
+  >
     ❮
   </button>
-  <button id="next" class="absolute top-1/2 right-3 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 md:p-4 rounded-full shadow-lg transition-all z-10">
+
+  <button
+    id="next"
+    class="absolute top-1/2 right-3 -translate-y-1/2 bg-black/40 hover:bg-black/70 text-white p-3 md:p-4 rounded-full shadow-md transition z-20"
+    aria-label="Suivant"
+  >
     ❯
   </button>
 
-  <!-- Pagination -->
-  <div id="dots" class="absolute bottom-3 w-full flex items-center justify-center gap-3"></div>
+  <!-- PAGINATION -->
+  <div id="dots" class="absolute bottom-4 w-full flex items-center justify-center gap-3"></div>
 </section>
 
 <script type="module">
@@ -63,11 +100,29 @@ const sorted = [...newsItems].sort(
     const slider = document.querySelector("#slider");
     const nextBtn = document.querySelector("#next");
     const prevBtn = document.querySelector("#prev");
-    const dotsContainer = document.getElementById("dots");
+    const dotsContainer = document.querySelector("#dots");
+
     const slides = slider.children.length;
     let index = 0;
 
+    // Make images visible when loaded (opacity transition)
+    document.querySelectorAll("#slider img").forEach((img) => {
+      img.addEventListener("load", () => {
+        img.style.opacity = "1";
+        // remove placeholder by toggling parent class if needed
+        const parent = img.closest('.relative');
+        if (parent) parent.classList.add('loaded');
+      });
+      // handle error fallback
+      img.addEventListener("error", () => {
+        img.style.opacity = "1";
+        img.src = "/images/placeholder.webp"; // fallback si image manquante (mettre une vraie placeholder)
+      });
+    });
+
     function updateSlider() {
+      // translate by index * (100 / numberOfSlides)% of the full container width
+      // because container width = N * 100%, moving by index*100% shows next slide perfectly
       slider.style.transform = `translateX(-${index * 100}%)`;
       updateDots();
     }
@@ -88,7 +143,8 @@ const sorted = [...newsItems].sort(
     // Création des points de pagination
     for (let i = 0; i < slides; i++) {
       const dot = document.createElement("div");
-      dot.className = "w-3 h-3 rounded-full bg-white/50 cursor-pointer hover:bg-white transition-all";
+      dot.className =
+        "w-3 h-3 rounded-full bg-white/40 cursor-pointer hover:bg-white transition-all";
       dot.onclick = () => {
         index = i;
         updateSlider();
@@ -100,13 +156,23 @@ const sorted = [...newsItems].sort(
       [...dotsContainer.children].forEach((dot, i) => {
         dot.className =
           "w-3 h-3 rounded-full transition-all " +
-          (i === index ? "bg-white scale-125 shadow-lg" : "bg-white/50");
+          (i === index ? "bg-white scale-125 shadow-lg" : "bg-white/40");
       });
     }
 
     updateDots();
 
-    // Auto-défilement toutes les 5 secondes
-    setInterval(next, 5000);
+    // Auto défilement 5s
+    let auto = setInterval(next, 5000);
+    // pause on hover
+    slider.addEventListener("mouseenter", () => clearInterval(auto));
+    slider.addEventListener("mouseleave", () => (auto = setInterval(next, 5000)));
   });
 </script>
+
+<style>
+  /* optimisation pour transitions (meilleur rendu) */
+  .will-change-transform { will-change: transform; }
+  /* placeholder hidden when loaded (class ajoutée) */
+  .relative.loaded > div.absolute.inset-0 { display: none; }
+</style>
