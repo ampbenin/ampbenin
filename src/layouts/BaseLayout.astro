@@ -3,18 +3,19 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
 
-// Générer un paramètre de version automatique basé sur la date et l'heure
-const version = new Date().toISOString().replace(/[-:.TZ]/g, ''); // Ex: 20251129101200
+// Versioning agressif basé sur timestamp + random pour casser tout cache Facebook
+const version = `${Date.now()}-${Math.floor(Math.random() * 999999)}`;
 
 const {
   title = "AMP BENIN",
   description = "Action Monde Productif - Article du jour - 16 Jours d'activisme contre les VBG.",
   url = "https://ampbenin.netlify.app",
-  imagePath = "/og-image.jpg" // chemin relatif dans ton projet
+  imagePath = "/og-image.jpg" // chemin relatif (image stockée dans /public)
 } = Astro.props;
 
-// URL complète pour réseaux sociaux avec version pour forcer le cache
+// URL complète valide
 const image = `https://ampbenin.netlify.app${imagePath}?v=${version}`;
+const fallbackPng = `https://ampbenin.netlify.app/og-image.png?v=${version}`; // Pour vider le cache des anciennes URLs
 ---
 
 <html lang="fr">
@@ -27,15 +28,21 @@ const image = `https://ampbenin.netlify.app${imagePath}?v=${version}`;
     <meta name="description" content={description} />
     <meta name="robots" content="index, follow" />
 
-    <!-- Open Graph / Facebook / WhatsApp -->
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={url} />
+
+    <!-- Image principale -->
     <meta property="og:image" content={image} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={title} />
+
+    <!-- Fallback silencieux pour forcer Facebook à vider ses anciens caches -->
+    <meta property="og:image:secure_url" content={image} />
+    <meta property="og:image" content={fallbackPng} />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -44,10 +51,9 @@ const image = `https://ampbenin.netlify.app${imagePath}?v=${version}`;
     <meta name="twitter:image" content={image} />
     <meta name="twitter:image:alt" content={title} />
 
-    <link rel="icon" href="/favicon.png" />
-
     <slot name="head" />
   </head>
+
   <body class="flex flex-col min-h-screen bg-green-100">
     <Header />
     <main class="flex-1">
