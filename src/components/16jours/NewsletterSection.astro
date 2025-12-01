@@ -12,7 +12,7 @@
     </p>
 
     <!-- Formulaire Newsletter -->
-    <form action="/api/newsletter" method="POST" class="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-purple-500/20 max-w-2xl mx-auto space-y-6">
+    <form id="newsletterForm" class="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-purple-500/20 max-w-2xl mx-auto space-y-6">
       <div>
         <label class="block text-left text-sm font-medium mb-2">Nom complet</label>
         <input 
@@ -50,15 +50,59 @@
 
       <button 
         type="submit"
-        class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300 shadow-lg"
+        id="newsletterSubmit"
+        class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300 shadow-lg flex justify-center items-center gap-2"
       >
         S'inscrire maintenant
       </button>
     </form>
 
-    <p class="text-sm text-gray-300 mt-6">
-      En vous inscrivant, vous acceptez de recevoir des communications durant la campagne.<br/>
-      Vos données restent confidentielles conformément à notre politique de protection.
-    </p>
+    <p id="newsletterMessage" class="text-sm mt-6 transition-all duration-300"></p>
   </div>
 </section>
+
+<script type="module">
+  const form = document.getElementById("newsletterForm");
+  const message = document.getElementById("newsletterMessage");
+  const submitButton = document.getElementById("newsletterSubmit");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    message.textContent = "";
+    
+    // ⚡ Indicateur de chargement
+    submitButton.disabled = true;
+    const originalText = submitButton.textContent;
+    submitButton.textContent = "Envoi…";
+
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        message.textContent = result.message;
+        message.className = "text-green-400 text-lg font-semibold mt-6";
+        form.reset();
+      } else {
+        message.textContent = result.message || "Erreur lors de l'inscription.";
+        message.className = "text-red-400 text-lg font-semibold mt-6";
+      }
+    } catch (error) {
+      console.error(error);
+      message.textContent = "Erreur serveur, veuillez réessayer plus tard.";
+      message.className = "text-red-400 text-lg font-semibold mt-6";
+    } finally {
+      // 🔄 Réactiver le bouton
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
+    }
+  });
+</script>

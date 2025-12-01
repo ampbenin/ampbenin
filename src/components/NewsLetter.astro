@@ -1,0 +1,97 @@
+<section class="py-24 bg-gradient-to-t from-black via-purple-900 to-purple-700 text-white">
+  <div class="max-w-5xl mx-auto px-6 text-center">
+    <h2 class="text-4xl md:text-5xl font-extrabold mb-6 uppercase tracking-wide">
+  Ne manquez aucune actualité d’AMP BENIN !
+</h2>
+<p class="text-lg text-gray-200 max-w-3xl mx-auto mb-10">
+  Inscrivez-vous gratuitement à notre newsletter et recevez en avant-première les projets, opportunités et événements phares d’AMP BENIN.
+</p>
+
+
+    <!-- Formulaire permanent sur la page -->
+    <form id="newsletterFormPage" class="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-xl border border-purple-500/20 max-w-2xl mx-auto space-y-4 md:space-y-6">
+      <input type="text" name="fullname" placeholder="Votre nom" required class="w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
+      <input type="email" name="email" placeholder="exemple@gmail.com" required class="w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
+      <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300 shadow-lg">
+        S'inscrire maintenant
+      </button>
+      <p id="newsletterMessagePage" class="text-sm text-gray-300 mt-4"></p>
+    </form>
+  </div>
+
+  <!-- Popup/notification pour première visite -->
+  <div id="newsletterModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 md:p-8 relative">
+      <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-xl font-bold">&times;</button>
+      <h3 class="text-2xl md:text-3xl font-bold mb-4 text-center text-purple-800">Inscrivez-vous à notre newsletter</h3>
+      <form id="newsletterFormModal" class="space-y-3 md:space-y-4">
+        <input type="text" name="fullname" placeholder="Votre nom" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+        <input type="email" name="email" placeholder="exemple@gmail.com" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+        <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300">S'inscrire</button>
+      </form>
+      <p id="newsletterMessageModal" class="text-center mt-4 text-sm text-gray-700"></p>
+    </div>
+  </div>
+</section>
+
+<script type="module">
+  const modal = document.getElementById("newsletterModal");
+  const closeBtn = document.getElementById("closeModal");
+  
+  // ⚡ Afficher le modal seulement si pas déjà vu, après 30 secondes
+  if (!localStorage.getItem("newsletterSeen")) {
+    setTimeout(() => modal.classList.remove("hidden"), 30000); // 30 secondes
+  }
+  
+  closeBtn.addEventListener("click", () => {
+    modal.classList.add("hidden");
+    localStorage.setItem("newsletterSeen", "true");
+  });
+
+  // Fonction générique pour envoyer formulaire (page ou modal)
+  async function handleNewsletterForm(e, messageEl, formEl) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector("button[type='submit']");
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Envoi…";
+
+    const data = Object.fromEntries(new FormData(formEl).entries());
+
+    try {
+      const response = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        messageEl.textContent = result.message;
+        messageEl.className = "text-green-500 mt-2 font-semibold text-center";
+        formEl.reset();
+        localStorage.setItem("newsletterSeen", "true");
+        if (formEl.id === "newsletterFormModal") modal.classList.add("hidden");
+      } else {
+        messageEl.textContent = result.message || "Erreur lors de l'inscription.";
+        messageEl.className = "text-red-500 mt-2 font-semibold text-center";
+      }
+    } catch (err) {
+      console.error(err);
+      messageEl.textContent = "Erreur serveur, veuillez réessayer plus tard.";
+      messageEl.className = "text-red-500 mt-2 font-semibold text-center";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
+
+  // Listener pour les deux formulaires
+  document.getElementById("newsletterFormPage").addEventListener("submit", e => 
+    handleNewsletterForm(e, document.getElementById("newsletterMessagePage"), e.target)
+  );
+
+  document.getElementById("newsletterFormModal").addEventListener("submit", e => 
+    handleNewsletterForm(e, document.getElementById("newsletterMessageModal"), e.target)
+  );
+</script>

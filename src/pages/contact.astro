@@ -178,62 +178,66 @@ import Layout from '../layouts/BaseLayout.astro';
     </div>
   </section>
 
-  <script is:inline>
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById('contactForm');
-      const statusMessage = document.createElement('p');
-      statusMessage.className = "mt-4 text-center text-sm text-green-600";
-      form.appendChild(statusMessage);
+<script is:inline>
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("contactForm");
+  const statusMessage = document.createElement("p");
+  statusMessage.className = "mt-4 text-center text-sm";
+  form.appendChild(statusMessage);
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const data = {
-          name: form.name.value.trim(),
-          email: form.email.value.trim(),
-          location: form.location.value.trim(),
-          whatsapp: form.whatsapp.value.trim(),
-          destination: form.destination.value,
-          institution: form.institution ? form.institution.value : '',
-          message: form.message.value.trim(),
-        };
+    const data = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      location: form.location.value.trim(),
+      whatsapp: form.whatsapp.value.trim(),
+      destination: form.destination.value,
+      institution: form.institution ? form.institution.value : "",
+      message: form.message.value.trim(),
+    };
 
+    // Message utilisateur
+    statusMessage.style.color = "gray";
+    statusMessage.textContent = "Envoi en cours...";
+
+    try {
+      const response = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (response.ok) {
         statusMessage.style.color = "green";
-        statusMessage.textContent = "Envoi en cours...";
+        statusMessage.textContent = result?.message || "Message envoyé avec succès !";
+        form.reset();
+      } else {
+        statusMessage.style.color = "red";
+        statusMessage.textContent =
+          result?.message || "Erreur lors de l'envoi. Merci de réessayer.";
+      }
+    } catch (error) {
+      statusMessage.style.color = "red";
+      statusMessage.textContent = "Impossible de contacter le serveur.";
+    }
+  });
 
-        try {
-          const response = await fetch('/.netlify/functions/saveMessage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-          });
+  // Gestion du champ institution
+  const destinationSelect = form.destination;
+  const institutionField = document.getElementById("institutionField");
 
-          const result = await response.json();
-
-          if (result.result === 'success') {
-            statusMessage.textContent = "Message envoyé avec succès, merci !";
-            form.reset();
-          } else {
-            statusMessage.style.color = "red";
-            statusMessage.textContent = "Erreur lors de l'envoi du message : " + (result.error || "erreur inconnue");
-          }
-        } catch (err) {
-          statusMessage.style.color = "red";
-          statusMessage.textContent = "Erreur réseau ou serveur : " + err.message;
-        }
-      });
-
-      // Gestion affichage champ institution selon destination
-      const destinationSelect = form.destination;
-      const institutionField = document.getElementById("institutionField");
-      destinationSelect.addEventListener("change", () => {
-        if (destinationSelect.value === "Institution Spécialisée") {
-          institutionField.classList.remove("hidden");
-        } else {
-          institutionField.classList.add("hidden");
-        }
-      });
-    });
-  </script>
+  destinationSelect.addEventListener("change", () => {
+    if (destinationSelect.value === "Institution Spécialisée") {
+      institutionField.classList.remove("hidden");
+    } else {
+      institutionField.classList.add("hidden");
+    }
+  });
+});
+</script>
 
 </Layout>
