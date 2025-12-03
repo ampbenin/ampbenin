@@ -1,0 +1,99 @@
+---
+// src/pages/admin/index.astro
+import NewsletterManager from '../../components/admin/NewsletterManager.jsx';
+import ContactManager from '../../components/admin/ContactManager.jsx';
+import MemberManager from '../../components/admin/MemberManager.jsx';
+import PartnerManager from '../../components/admin/PartnerManager.jsx';
+import VolunteerManager from '../../components/admin/VolunteerManager.jsx';
+
+const tabs = [
+  { id: 'newsletter', label: 'Newsletter' },
+  { id: 'contacts', label: 'Contacts' },
+  { id: 'members', label: 'Adhésions' },
+  { id: 'partners', label: 'Partenariats' },
+  { id: 'volunteers', label: 'Volontaires' }
+];
+---
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin — AMP BENIN</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <main class="max-w-6xl mx-auto p-6">
+      <h1 class="text-2xl font-bold mb-4">Tableau de bord admin</h1>
+
+      <div id="admin-root">
+        <div style="display:flex;gap:8px;margin-bottom:12px" role="tablist" aria-label="Admin tabs">
+          {tabs.map((t, i) => (
+            <button
+              key={t.id}
+              id={`tab-${t.id}`}
+              type="button"
+              class="px-3 py-1 border rounded"
+              data-target={t.id}
+              aria-selected={i === 0 ? "true" : "false"}
+              on:click
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div id="panels">
+          <section id="newsletter" class="admin-tab" role="tabpanel">
+            <!-- Hydrate le composant côté client -->
+            <NewsletterManager client:load serverUrl={import.meta.env.PUBLIC_API_BASE || ''} />
+          </section>
+
+          <section id="contacts" class="admin-tab" style="display:none" role="tabpanel" aria-hidden="true">
+            <ContactManager client:load serverUrl={import.meta.env.PUBLIC_API_BASE || ''} />
+          </section>
+
+          <section id="members" class="admin-tab" style="display:none" role="tabpanel" aria-hidden="true">
+            <MemberManager client:load serverUrl={import.meta.env.PUBLIC_API_BASE || ''} />
+          </section>
+
+          <section id="partners" class="admin-tab" style="display:none" role="tabpanel" aria-hidden="true">
+            <PartnerManager client:load serverUrl={import.meta.env.PUBLIC_API_BASE || ''} />
+          </section>
+
+          <section id="volunteers" class="admin-tab" style="display:none" role="tabpanel" aria-hidden="true">
+            <VolunteerManager client:load serverUrl={import.meta.env.PUBLIC_API_BASE || ''} />
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script type="module">
+      // petit script de tabs accessible (fonctionne côté client)
+      const tabs = Array.from(document.querySelectorAll('[data-target]'));
+      const panels = Array.from(document.querySelectorAll('.admin-tab'));
+
+      function showPanel(id) {
+        panels.forEach(p => {
+          if (p.id === id) {
+            p.style.display = '';
+            p.setAttribute('aria-hidden', 'false');
+          } else {
+            p.style.display = 'none';
+            p.setAttribute('aria-hidden', 'true');
+          }
+        });
+        tabs.forEach(tb => {
+          tb.setAttribute('aria-selected', tb.dataset.target === id ? 'true' : 'false');
+        });
+      }
+
+      // attacher écouteurs
+      tabs.forEach(tb => {
+        tb.addEventListener('click', () => showPanel(tb.dataset.target));
+      });
+
+      // affichage initial
+      showPanel('newsletter');
+    </script>
+  </body>
+</html>
