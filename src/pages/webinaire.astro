@@ -1,19 +1,44 @@
 ---
-/* Aucun import nécessaire */
+import BaseLayout from '../layouts/BaseLayout.astro';
 ---
+
+<BaseLayout title="WEBINAIRE 2 - AMP BENIN">
+
+<!-- SECTION INTRO WEBINAIRE -->
+<section class="bg-white py-16 px-6 md:px-20 text-center text-gray-900">
+  <h1 class="text-4xl md:text-5xl font-extrabold leading-tight">
+    WEBINAIRE II - 16 JOURS D'ACTIVISTE CONTRE LES VBG 2025
+  </h1>
+
+  <p class="mt-4 text-xl md:text-2xl font-semibold text-indigo-600">
+    Thème : « JEUNES ET NUMERIQUE SANS VBG »
+  </p>
+
+  <p class="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-gray-700 leading-relaxed">
+    Participez à notre grand webinaire interactif dédié à la protection des jeunes 
+    dans les espaces numériques. Découvrez les types de violences en ligne, les 
+    mécanismes de prévention, les leviers juridiques existants et le rôle essentiel 
+    que chacun peut jouer pour bâtir un environnement digital plus sûr.
+    <br /><br />
+    📅 <strong>Samedi 06 décembre 2025 à 16H GMT+1</strong> – Évènement gratuit, ouvert à tous.
+  </p>
+
+</section>
+
 <!-- SECTION PANELISTES + SLIDER -->
 <section class="py-16 bg-gray-50 px-4 sm:px-8 md:px-16">
-  <h2 class="text-center text-3xl font-bold mb-10">Nos Panelistes</h2>
+  <h2 class="text-center text-3xl font-extrabold mb-10 text-gray-900">
+    Nos Panelistes
+  </h2>
 
   <!-- WRAPPER DU SLIDER -->
-  <div class="relative max-w-2xl mx-auto">
+  <div class="relative max-w-xl sm:max-w-2xl mx-auto">
 
-    <!-- VRAI SLIDER HORIZONTAL -->
-    <div class="overflow-hidden rounded-xl shadow-lg">
+    <!-- SLIDER -->
+    <div class="overflow-hidden rounded-2xl shadow-xl bg-white">
       <div 
         id="paneliste-slider" 
-        class="flex transition-transform duration-700"
-        style="width: 100%;"
+        class="flex transition-transform duration-700 ease-out"
       >
         <!-- Slides injectés par JS -->
       </div>
@@ -22,21 +47,22 @@
     <!-- BOUTONS -->
     <button 
       id="panel-prev"
-      class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full shadow"
+      class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow hover:bg-white transition"
     >
       ◀
     </button>
 
     <button 
       id="panel-next"
-      class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full shadow"
+      class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 p-3 rounded-full shadow hover:bg-white transition"
     >
       ▶
     </button>
 
-    <!-- TEXTE DU PANELISTE -->
+
+    <!-- TEXTE PANELISTE -->
     <div id="panel-info" class="mt-6 text-center">
-      <h3 id="p-nom" class="text-xl font-bold"></h3>
+      <h3 id="p-nom" class="text-xl font-bold text-gray-900"></h3>
       <p id="p-titre" class="text-gray-600"></p>
       <p id="p-theme" class="mt-2 font-semibold text-indigo-600"></p>
     </div>
@@ -47,31 +73,58 @@
 
 <!-- SECTION COMPTE À REBOURS + FORMULAIRE -->
 <section class="bg-indigo-600 text-white text-center py-16 px-4">
-  <h2 class="text-3xl font-bold">Webinaire en direct</h2>
-  <p class="mt-2 text-lg">Samedi 06 décembre 2025 — 16H GMT+1 (Heure du Bénin)</p>
+  <h2 class="text-3xl font-extrabold">Webinaire en direct</h2>
+  <p class="mt-2 text-lg opacity-90">Samedi 06 décembre 2025 — 16H GMT+1 (Heure du Bénin)</p>
 
   <div id="countdown" class="text-4xl font-bold mt-6">Chargement…</div>
 
   <p class="mt-4 opacity-90">Préparez-vous, l’évènement commence bientôt…</p>
 
-  <!-- BOUTON -->
+  <!-- BOUTON AFFICHAGE FORMULAIRE -->
   <button
     id="toggle-form"
-    class="mt-6 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-gray-100"
+    class="mt-6 px-8 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow-lg hover:bg-gray-100 transition"
   >
     Me tenir informé
   </button>
 
-  <!-- FORMULAIRE MASQUÉ -->
+  <!-- FORMULAIRE -->
   <form
     id="notify-form"
-    class="hidden mt-6 bg-white text-gray-800 max-w-md mx-auto p-6 rounded-lg shadow space-y-4"
+    class="hidden mt-8 bg-white text-gray-800 max-w-md mx-auto p-6 rounded-2xl shadow-xl space-y-5"
   >
-    <input type="text" id="nom" placeholder="Nom complet" class="w-full p-3 border rounded" required />
-    <input type="email" id="email" placeholder="Email" class="w-full p-3 border rounded" required />
-    <input type="text" id="whatsapp" placeholder="Numéro WhatsApp" class="w-full p-3 border rounded" required />
+    <h3 class="text-xl font-bold text-center text-indigo-600">
+      Inscription à la notification
+    </h3>
 
-    <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700">
+    <input 
+      type="text" 
+      id="fullname" 
+      placeholder="Nom complet" 
+      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+      required 
+    />
+
+    <input 
+      type="email" 
+      id="email" 
+      placeholder="Adresse email" 
+      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+      required 
+    />
+
+    <!-- Le champ qui devient alert_type -->
+    <input 
+      type="text" 
+      id="alert_type" 
+      placeholder="Numéro WhatsApp (optionnel)" 
+      class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+    />
+
+    <button 
+      type="submit" 
+      class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+    >
       Soumettre
     </button>
 
@@ -84,41 +137,39 @@
 <script client:load>
 
   /* -----------------------------------------
-       1) LISTE PANELISTES + SLIDER HORIZONTAL
-  ----------------------------------------- */
+       1) LISTE PANELISTES + SLIDER
+  ------------------------------------------*/
   const panelistes = [
     {
       nom: "Mme Amen MAMADOU BOUBA",
-      titre: "Consultante en hygiène menstruelle",
-      theme: "Hygiène et santé des jeunes filles",
-      photo: "/images/16jours/1J9-16jours-25.webp"
+      titre: "Consultante en hygiène menstruelle et en SSR",
+      theme: "Comprende les différentes formes de VBG dans les environnements numériques",
+      photo: "/images/16jours/1-Paneliste-16jours-25.webp"
     },
     {
-      nom: "Nom Paneliste 2",
-      titre: "Titre professionnel",
-      theme: "Thème discuté",
-      photo: "/images/16jours/2J9-16jours-25.webp"
+      nom: "Mme Myrriam Hélèna CAKPO-CHICHI CHOUBADE ",
+      titre: "Présidente de l'ONG FND, Consultante en Genre et VBG, Activiste féministe",
+      theme: "Rôle et responsabilité des jeunes dans la création d'un espace numérique sûr",
+      photo: "/images/16jours/2-Paneliste-16jours-25.webp"
     },
     {
-      nom: "Nom Paneliste 3",
-      titre: "Titre professionnel",
-      theme: "Thème discuté",
-      photo: "/images/16jours/3J9-16jours-25.webp"
-    }
+      nom: "Mr Thalès DOSSOU",
+      titre: "Consultant en transformation et gouvernance numérique. Expert en cybertsécurité et protection des données en ligne",
+      theme: "Outils, lois et plateformes pour prévenir et lutter contre les VBG en ligne",
+      photo: "/images/16jours/3-Paneliste-16jours-25.webp"
+    },
   ];
 
   const slider = document.getElementById("paneliste-slider");
 
-  // Injecter les slides
   slider.innerHTML = panelistes.map((p) => `
-    <div class="min-w-full flex flex-col items-center p-6 bg-white text-center">
+    <div class="min-w-full flex flex-col items-center p-6 bg-white">
       <img src="${p.photo}" 
-        class="w-64 h-64 object-cover rounded-xl shadow-md"
+        class="w-64 h-64 object-cover rounded-2xl shadow-md"
       />
     </div>
   `).join("");
 
-  // Texte
   const pNom = document.getElementById("p-nom");
   const pTitre = document.getElementById("p-titre");
   const pTheme = document.getElementById("p-theme");
@@ -143,7 +194,6 @@
     updatePanelInfo();
   };
 
-  // Auto défilement toutes les 5 secondes
   setInterval(() => {
     pIndex = (pIndex + 1) % panelistes.length;
     updatePanelInfo();
@@ -153,8 +203,8 @@
 
 
   /* -----------------------------------------
-        2) COUNTDOWN + MODE DIRECT
-  ----------------------------------------- */
+        2) COUNTDOWN + DIRECT
+  ------------------------------------------*/
   const eventTime = new Date("2025-12-06T16:00:00+01:00").getTime();
   const countdownEl = document.getElementById("countdown");
 
@@ -191,13 +241,12 @@
     const s = Math.floor((diff % 60000) / 1000);
 
     countdownEl.textContent = `${j}j : ${h}h : ${m}m : ${s}s`;
-
   }, 1000);
 
 
   /* -----------------------------------------
         3) FORMULAIRE
-  ----------------------------------------- */
+  ------------------------------------------*/
   const form = document.getElementById("notify-form");
   const toggleBtn = document.getElementById("toggle-form");
   const msg = document.getElementById("form-message");
@@ -209,13 +258,13 @@
     msg.textContent = "Envoi en cours…";
 
     const data = {
-      nom: document.getElementById("nom").value,
-      email: document.getElementById("email").value,
-      whatsapp: document.getElementById("whatsapp").value,
+      fullname: document.getElementById("fullname").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      alert_type: document.getElementById("alert_type").value.trim(), // WhatsApp
     };
 
     try {
-      const res = await fetch("https://TON_BACKEND_URL/api/webinaire/notify", {
+      const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -225,14 +274,18 @@
 
       if (res.ok) {
         msg.textContent = "Merci ! Vous serez informé.";
+        msg.style.color = "green";
         form.reset();
       } else {
         msg.textContent = "Erreur : " + r.message;
+        msg.style.color = "red";
       }
 
     } catch (error) {
       msg.textContent = "Erreur réseau.";
+      msg.style.color = "red";
     }
   });
 
 </script>
+</BaseLayout>
