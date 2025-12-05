@@ -1,0 +1,238 @@
+---
+/* Aucun import nécessaire */
+---
+<!-- SECTION PANELISTES + SLIDER -->
+<section class="py-16 bg-gray-50 px-4 sm:px-8 md:px-16">
+  <h2 class="text-center text-3xl font-bold mb-10">Nos Panelistes</h2>
+
+  <!-- WRAPPER DU SLIDER -->
+  <div class="relative max-w-2xl mx-auto">
+
+    <!-- VRAI SLIDER HORIZONTAL -->
+    <div class="overflow-hidden rounded-xl shadow-lg">
+      <div 
+        id="paneliste-slider" 
+        class="flex transition-transform duration-700"
+        style="width: 100%;"
+      >
+        <!-- Slides injectés par JS -->
+      </div>
+    </div>
+
+    <!-- BOUTONS -->
+    <button 
+      id="panel-prev"
+      class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full shadow"
+    >
+      ◀
+    </button>
+
+    <button 
+      id="panel-next"
+      class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 px-3 py-2 rounded-full shadow"
+    >
+      ▶
+    </button>
+
+    <!-- TEXTE DU PANELISTE -->
+    <div id="panel-info" class="mt-6 text-center">
+      <h3 id="p-nom" class="text-xl font-bold"></h3>
+      <p id="p-titre" class="text-gray-600"></p>
+      <p id="p-theme" class="mt-2 font-semibold text-indigo-600"></p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- SECTION COMPTE À REBOURS + FORMULAIRE -->
+<section class="bg-indigo-600 text-white text-center py-16 px-4">
+  <h2 class="text-3xl font-bold">Webinaire en direct</h2>
+  <p class="mt-2 text-lg">Samedi 06 décembre 2025 — 16H GMT+1 (Heure du Bénin)</p>
+
+  <div id="countdown" class="text-4xl font-bold mt-6">Chargement…</div>
+
+  <p class="mt-4 opacity-90">Préparez-vous, l’évènement commence bientôt…</p>
+
+  <!-- BOUTON -->
+  <button
+    id="toggle-form"
+    class="mt-6 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-gray-100"
+  >
+    Me tenir informé
+  </button>
+
+  <!-- FORMULAIRE MASQUÉ -->
+  <form
+    id="notify-form"
+    class="hidden mt-6 bg-white text-gray-800 max-w-md mx-auto p-6 rounded-lg shadow space-y-4"
+  >
+    <input type="text" id="nom" placeholder="Nom complet" class="w-full p-3 border rounded" required />
+    <input type="email" id="email" placeholder="Email" class="w-full p-3 border rounded" required />
+    <input type="text" id="whatsapp" placeholder="Numéro WhatsApp" class="w-full p-3 border rounded" required />
+
+    <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700">
+      Soumettre
+    </button>
+
+    <p id="form-message" class="text-center text-sm mt-2"></p>
+  </form>
+</section>
+
+
+<!-- SCRIPT PANELISTES + COUNTDOWN + FORMULAIRE -->
+<script client:load>
+
+  /* -----------------------------------------
+       1) LISTE PANELISTES + SLIDER HORIZONTAL
+  ----------------------------------------- */
+  const panelistes = [
+    {
+      nom: "Mme Amen MAMADOU BOUBA",
+      titre: "Consultante en hygiène menstruelle",
+      theme: "Hygiène et santé des jeunes filles",
+      photo: "/images/16jours/1J9-16jours-25.webp"
+    },
+    {
+      nom: "Nom Paneliste 2",
+      titre: "Titre professionnel",
+      theme: "Thème discuté",
+      photo: "/images/16jours/2J9-16jours-25.webp"
+    },
+    {
+      nom: "Nom Paneliste 3",
+      titre: "Titre professionnel",
+      theme: "Thème discuté",
+      photo: "/images/16jours/3J9-16jours-25.webp"
+    }
+  ];
+
+  const slider = document.getElementById("paneliste-slider");
+
+  // Injecter les slides
+  slider.innerHTML = panelistes.map((p) => `
+    <div class="min-w-full flex flex-col items-center p-6 bg-white text-center">
+      <img src="${p.photo}" 
+        class="w-64 h-64 object-cover rounded-xl shadow-md"
+      />
+    </div>
+  `).join("");
+
+  // Texte
+  const pNom = document.getElementById("p-nom");
+  const pTitre = document.getElementById("p-titre");
+  const pTheme = document.getElementById("p-theme");
+
+  let pIndex = 0;
+
+  function updatePanelInfo() {
+    const p = panelistes[pIndex];
+    pNom.textContent = p.nom;
+    pTitre.textContent = p.titre;
+    pTheme.textContent = p.theme;
+    slider.style.transform = `translateX(-${pIndex * 100}%)`;
+  }
+
+  document.getElementById("panel-prev").onclick = () => {
+    pIndex = (pIndex - 1 + panelistes.length) % panelistes.length;
+    updatePanelInfo();
+  };
+
+  document.getElementById("panel-next").onclick = () => {
+    pIndex = (pIndex + 1) % panelistes.length;
+    updatePanelInfo();
+  };
+
+  // Auto défilement toutes les 5 secondes
+  setInterval(() => {
+    pIndex = (pIndex + 1) % panelistes.length;
+    updatePanelInfo();
+  }, 5000);
+
+  updatePanelInfo();
+
+
+  /* -----------------------------------------
+        2) COUNTDOWN + MODE DIRECT
+  ----------------------------------------- */
+  const eventTime = new Date("2025-12-06T16:00:00+01:00").getTime();
+  const countdownEl = document.getElementById("countdown");
+
+  const directBtn = document.createElement("a");
+  directBtn.textContent = "Rejoindre le webinaire";
+  directBtn.href = "https://meet.google.com/pzu-ugab-rvh";
+  directBtn.className =
+    "mt-6 inline-block bg-green-500 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-green-600 hidden";
+  countdownEl.insertAdjacentElement("afterend", directBtn);
+
+  const msgP = countdownEl.nextElementSibling;
+
+  setInterval(() => {
+    const now = Date.now();
+    const diff = eventTime - now;
+
+    if (diff <= 0) {
+      countdownEl.textContent = "Le webinaire est en cours !";
+      msgP.textContent = "Cliquez sur le bouton pour rejoindre immédiatement.";
+      directBtn.classList.remove("hidden");
+      return;
+    }
+
+    if (diff <= 45 * 60 * 1000) {
+      countdownEl.textContent = "Nous sommes bientôt en direct !";
+      msgP.textContent = "Le webinaire commence dans quelques instants.";
+      directBtn.classList.remove("hidden");
+      return;
+    }
+
+    const j = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+
+    countdownEl.textContent = `${j}j : ${h}h : ${m}m : ${s}s`;
+
+  }, 1000);
+
+
+  /* -----------------------------------------
+        3) FORMULAIRE
+  ----------------------------------------- */
+  const form = document.getElementById("notify-form");
+  const toggleBtn = document.getElementById("toggle-form");
+  const msg = document.getElementById("form-message");
+
+  toggleBtn.onclick = () => form.classList.toggle("hidden");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "Envoi en cours…";
+
+    const data = {
+      nom: document.getElementById("nom").value,
+      email: document.getElementById("email").value,
+      whatsapp: document.getElementById("whatsapp").value,
+    };
+
+    try {
+      const res = await fetch("https://TON_BACKEND_URL/api/webinaire/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const r = await res.json();
+
+      if (res.ok) {
+        msg.textContent = "Merci ! Vous serez informé.";
+        form.reset();
+      } else {
+        msg.textContent = "Erreur : " + r.message;
+      }
+
+    } catch (error) {
+      msg.textContent = "Erreur réseau.";
+    }
+  });
+
+</script>
