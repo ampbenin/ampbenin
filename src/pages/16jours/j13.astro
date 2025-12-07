@@ -1,0 +1,179 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+// Génération du tableau de 8 photos
+const photos = Array.from({ length: 8 });
+---
+
+<BaseLayout title="Bilan du Webinaire : Jeunes & Numérique sans VBG">
+  <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
+
+    <!-- HEADER -->
+    <header class="mb-10 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-orange-700 mb-4 leading-tight">
+        Bilan du Webinaire “Jeunes & Numérique sans VBG” : Une mobilisation exceptionnelle
+      </h1>
+      <p class="text-sm text-gray-600">
+        Organisé par AMP Bénin & BougeLabs - Dim 07 Dec 2025
+      </p>
+    </header>
+
+    <!-- IMAGE PRINCIPALE -->
+    <figure class="w-full mb-12">
+      <img 
+        src="/images/16jours/7.webp" 
+        alt="Webinaire Jeunes et Numérique sans VBG" 
+        class="rounded-lg shadow-md w-full object-cover" />
+    </figure>
+
+    <!-- BOUTON VERS L'ENREGISTREMENT DU WEBINAIRE -->
+    <section class="mt-8 text-center">
+      <a 
+        href="#webinaire-video"
+        class="inline-block bg-orange-700 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-orange-800 transition"
+      >
+        Suivre l'enregistrement du webinaire
+      </a>
+    </section>
+
+
+    <!-- SECTION 1 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">1️⃣ Comprendre les formes de VBG dans les environnements numériques</h2>
+      <p>Les panélistes ont présenté avec clarté les principales formes de violences en ligne :</p>
+      <ul>
+        <li>Cyberharcèlement</li>
+        <li>Sextorsion</li>
+        <li>Usurpation d’identité</li>
+        <li>Diffusion non consensuelle d’images</li>
+        <li>Messages misogynes et attaques verbales</li>
+      </ul>
+      <p>
+        Ils ont également partagé des témoignages anonymisés illustrant les conséquences : anxiété, isolement, perte d’estime de soi, voire mise en danger.
+      </p>
+      <p class="font-semibold text-orange-700">✔ Message essentiel : Une violence en ligne est une vraie violence.</p>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">2️⃣ Comment les jeunes peuvent devenir acteurs d’un numérique sans VBG</h2>
+      <ul>
+        <li>Adopter des comportements numériques éthiques</li>
+        <li>Refuser le partage de contenus violents</li>
+        <li>Devenir pairs éducateurs</li>
+        <li>Signaler les contenus abusifs</li>
+        <li>Soutenir les victimes dans leurs démarches</li>
+        <li>Promouvoir le féminisme digital comme outil d’entraide</li>
+      </ul>
+      <p class="font-semibold text-orange-700">✔ Message essentiel : Le changement commence par chacun de nous.</p>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">3️⃣ Outils, protections et lois pour lutter contre les VBG en ligne</h2>
+      <ul>
+        <li>Le cadre légal béninois protégeant les victimes</li>
+        <li>Les droits numériques des jeunes</li>
+        <li>Les méthodes de signalement : Facebook, WhatsApp, Instagram, TikTok</li>
+        <li>Les bonnes pratiques de cybersécurité</li>
+        <li>Les outils gratuits pour renforcer sa protection en ligne</li>
+      </ul>
+      <p class="font-semibold text-orange-700">✔ Message essentiel : Se protéger en ligne, c’est protéger sa vie.</p>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">4️⃣ Questions clés des participants</h2>
+      <ul>
+        <li>Comment optimiser les réseaux sociaux pour lutter contre les VBG ?</li>
+        <li>Comment les technologies peuvent soutenir les survivantes ?</li>
+        <li>Quels sont les défis actuels dans la lutte contre les VBG numériques ?</li>
+        <li>Comment éduquer les enfants au numérique responsable ?</li>
+      </ul>
+      <p>Les réponses ont été pertinentes, contextualisées et adaptées à la réalité béninoise.</p>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">5️⃣ Remerciements officiels</h2>
+
+      <p><strong>🙏 Aux panélistes :</strong></p>
+      <ul>
+        <li><strong>Mme Amen MAMADOU BOUBA</strong> — rôle des jeunes pour un numérique sans VBG</li>
+        <li><strong>Mme Hélèna Myrriam CAPO-CHICHI CHOUBADE</strong> — analyse des formes de violences numériques</li>
+        <li><strong>Mr Thalès DOSSOU</strong> — outils, lois et bonnes pratiques de prévention</li>
+      </ul>
+
+      <p><strong>🙏 Aux participants :</strong> plus de 100 en direct et plusieurs centaines en ligne.</p>
+      <p><strong>🙏 À l’équipe technique :</strong> retransmission, coordination, modération.</p>
+
+      <p class="mt-6 font-semibold text-orange-700">
+        ▶️ Découvrez l’enregistrement du webinaire ci-dessous
+      </p>
+    </section>
+
+
+    <!-- SECTION VIDEO -->
+    <section id="webinaire-video" class="mt-6 mb-12 flex justify-center">
+      <iframe 
+        src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2Fampbenin.org%2Fvideos%2F709231552252253%2F&show_text=false&width=560&t=0" 
+        width="560" 
+        height="314" 
+        style="border:none;overflow:hidden" 
+        scrolling="no" 
+        frameborder="0" 
+        allowfullscreen="true" 
+        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+      </iframe>
+    </section>
+
+
+    <!-- SECTION 6 -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold">6️⃣ Et maintenant ?</h2>
+      <p>Ce webinaire marque un point de départ.</p>
+      <ul>
+        <li>Sensibilisations dans les communautés locales</li>
+        <li>Mobilisation des volontaires comme agents de prévention</li>
+        <li>Promotion d’un usage sécurisé et responsable du numérique</li>
+        <li>Lutte continue contre toutes les formes de VBG</li>
+      </ul>
+      <p class="font-semibold text-orange-700">
+        ✔ Un Internet sans violences commence par des utilisateurs informés et solidaires.
+      </p>
+    </section>
+
+    <!-- CONCLUSION -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange pb-6">
+      <h2 class="text-orange-700 font-bold">Message de fin</h2>
+      <p>
+        Ensemble, nous avons démontré qu’il est possible de bâtir un numérique où chaque jeune peut apprendre, s’exprimer et exister sans peur.
+        Continuons à agir, à dénoncer et à sensibiliser. Le changement dépend de nous.
+      </p>
+    </section>
+
+    <!-- GALERIE DE PHOTOS -->
+    <section class="mt-12 prose prose-lg max-w-none prose-orange">
+      <h2 class="text-orange-700 font-bold mb-4">Galerie du Webinaire</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+        {photos.map((_, i) => (
+          <a 
+            href={`/images/16jours/${i + 1}.webp`}
+            data-lightbox="webinaire-gallery"
+            data-title={`Photo ${i + 1}`}
+          >
+            <img 
+              src={`/images/16jours/${i + 1}.webp`} 
+              alt={`Photo ${i + 1}`}
+              class="rounded-lg shadow-md w-full object-cover hover:opacity-90 transition"
+            />
+          </a>
+        ))}
+      </div>
+
+      <p class="mt-2 text-sm text-gray-600">Cliquez sur une photo pour naviguer dans la galerie.</p>
+    </section>
+
+  </main>
+</BaseLayout>
