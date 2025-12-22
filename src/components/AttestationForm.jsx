@@ -19,7 +19,7 @@ export default function AttestationForm() {
       : "https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates";
 
   /**
-   * Étape 1 : Vérifier volontaire
+   * Étape I : Vérifier volontaire
    */
   const checkVolontaire = async (e) => {
     e.preventDefault();
@@ -56,7 +56,7 @@ export default function AttestationForm() {
   };
 
   /**
-   * Étape 2 : Récupérer attestation
+   * Étape II : Récupérer attestation
    */
   const fetchCertificate = async () => {
     if (!selectedMission) return;
@@ -92,7 +92,7 @@ export default function AttestationForm() {
   };
 
   /**
-   * Étape 3 : Télécharger PDF et passer à l'étape 4
+   * Étape III : Télécharger PDF et passer à l'étape 4
    */
   const handleDownload = async () => {
     if (downloading) return;
@@ -147,7 +147,7 @@ export default function AttestationForm() {
         </>
       )}
 
-      {/* Étape 1 : Formulaire vérification */}
+      {/* Étape 1 : Formulaire de vérification */}
       {step === 1 && (
         <form className="space-y-4" onSubmit={checkVolontaire}>
           <input

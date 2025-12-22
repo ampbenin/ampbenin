@@ -1,7 +1,5 @@
 ---
-import VolunteersManager from '../components/VolunteersManager.jsx';
-import GenerateCertificate from '../components/GenerateCertificate.jsx';
-import SaveVolunteers from '../components/SaveVolunteers.jsx';
+import AdminDashboard from "../components/AdminDashboard.jsx";
 ---
 
 <html lang="fr">
@@ -12,9 +10,6 @@ import SaveVolunteers from '../components/SaveVolunteers.jsx';
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body class="bg-gray-100">
-    <!-- Composant React chargé côté client -->
-    <VolunteersManager client:load />
-    <GenerateCertificate client:load />
-    <SaveVolunteers client:load />
+    <AdminDashboard client:load />
   </body>
 </html>

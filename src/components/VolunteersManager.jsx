@@ -16,14 +16,11 @@ export default function VolunteersManager() {
   const [filterMission, setFilterMission] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [editingVolunteer, setEditingVolunteer] = useState(null);
-  const [assigningMission, setAssigningMission] = useState(null);
-  const [missionTitle, setMissionTitle] = useState("");
   const [detailsVolunteer, setDetailsVolunteer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const volunteersPerPage = 10;
 
@@ -33,7 +30,20 @@ export default function VolunteersManager() {
       try {
         const res = await fetch(API_BASE);
         const data = await res.json();
-        setVolunteers(Array.isArray(data) ? data : data.items || []);
+setVolunteers(
+  (
+    Array.isArray(data)
+      ? data
+      : Array.isArray(data.items)
+      ? data.items
+      : []
+  ).map((v) => ({
+    ...v,
+    missions: (v.missions || []).filter(
+      (m) => m?.missionId && typeof m.missionId === "object"
+    ),
+  }))
+);
       } catch (err) {
         console.error("Erreur chargement volontaires :", err);
       } finally {
@@ -52,37 +62,39 @@ export default function VolunteersManager() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Réinitialiser la page à 1 quand on change la recherche ou les filtres
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, filterMission, filterStatut]);
-
-  // Filtrage côté client
+  // Filtrage
   const filteredVolunteers = volunteers.filter((v) => {
     const matchSearch =
       v.nom?.toLowerCase().includes(search.toLowerCase()) ||
       v.prenom?.toLowerCase().includes(search.toLowerCase()) ||
       v.email?.toLowerCase().includes(search.toLowerCase());
 
-    const matchMission = filterMission
-      ? v.mission?.titre.toLowerCase() === filterMission.toLowerCase()
-      : true;
+    if (!filterMission) return matchSearch;
 
-    const matchStatut = filterStatut ? v.statut === filterStatut : true;
+    const mission = v.missions?.find(
+      (m) =>
+        (m.missionId?.titre || m.missionId)
+          .toLowerCase() === filterMission.toLowerCase()
+    );
 
-    return matchSearch && matchMission && matchStatut;
+    if (!mission) return false;
+
+    if (filterStatut && mission.statut !== filterStatut) return false;
+
+    return matchSearch;
   });
 
-  // Pagination - calcul index
+  // Pagination
   const indexOfLast = currentPage * volunteersPerPage;
   const indexOfFirst = indexOfLast - volunteersPerPage;
   const currentVolunteers = filteredVolunteers.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(filteredVolunteers.length / volunteersPerPage);
 
-  // suppression
+  // Suppression
   const handleDelete = async (id) => {
     if (!confirm("Voulez-vous vraiment supprimer ce volontaire ?")) return;
     try {
@@ -95,95 +107,78 @@ export default function VolunteersManager() {
     }
   };
 
-  // mise à jour
+  // Mise à jour
   const handleUpdate = async (vol) => {
     try {
-      const res = await fetch(`${API_BASE}/${vol._id}`, {
-        method: "PUT",
+      const payload = {
+        email: vol.email,
+        nom: vol.nom,
+        prenom: vol.prenom,
+        telephone: vol.telephone,
+        missions: vol.missions?.map((m) => ({
+          missionId: m.missionId?._id || m.missionId,
+          statut: m.statut || "Non disponible",
+        })) || [],
+      };
+
+      const res = await fetch(API_BASE, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vol),
+        body: JSON.stringify(payload),
       });
+
       if (!res.ok) throw new Error("Erreur mise à jour");
-      const updated = await res.json();
+
+      const data = await res.json();
+
       setVolunteers((prev) =>
-        prev.map((v) => (v._id === updated.volunteer._id ? updated.volunteer : v))
+        prev.map((v) => (v.email === data.volunteer.email ? data.volunteer : v))
       );
+
       setEditingVolunteer(null);
     } catch (err) {
       console.error(err);
-      alert("Erreur mise à jour");
+      alert(err.message);
     }
-  };
-
-  // attribuer mission
-  const handleAssignConfirm = async () => {
-    if (!assigningMission || !missionTitle.trim()) return;
-
-    if (
-      assigningMission.mission?.titre.toLowerCase() ===
-      missionTitle.trim().toLowerCase()
-    ) {
-      alert("⚠️ Ce volontaire a déjà cette mission !");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/${assigningMission._id}/assign-mission`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ missionTitre: missionTitle.trim() }),
-        }
-      );
-      if (!res.ok) throw new Error("Erreur attribution mission");
-      const updated = await res.json();
-      setVolunteers((prev) =>
-        prev.map((v) => (v._id === updated.volunteer._id ? updated.volunteer : v))
-      );
-      setAssigningMission(null);
-      setMissionTitle("");
-    } catch (err) {
-      console.error(err);
-      alert("Erreur attribution mission");
-    }
-  };
-
-  // Export Excel
-  const exportExcel = () => {
-    const data = filteredVolunteers.map((v) => ({
-      Nom: v.nom,
-      Prénom: v.prenom,
-      Email: v.email,
-      Téléphone: v.telephone,
-      Mission: v.mission?.titre || "-",
-      Statut: v.statut,
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Volontaires");
-    XLSX.writeFile(workbook, "volontaires.xlsx");
   };
 
   // Export PDF
   const exportPDF = () => {
     const doc = new jsPDF();
     doc.text("Liste des volontaires", 14, 16);
-
     autoTable(doc, {
-      head: [["Nom", "Prénom", "Email", "Téléphone", "Mission", "Statut"]],
+      head: [["Nom", "Prénom", "Email", "Téléphone", "Missions"]],
       body: filteredVolunteers.map((v) => [
         v.nom,
         v.prenom,
         v.email,
-        v.telephone,
-        v.mission?.titre || "-",
-        v.statut,
+        v.telephone || "-",
+        v.missions
+          ?.map((m) => `${m.missionId?.titre || m.missionId} (${m.statut})`)
+          .join(", ") || "-",
       ]),
       startY: 20,
     });
-
     doc.save("volontaires.pdf");
+  };
+
+  // Export Excel
+  const exportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      filteredVolunteers.map((v) => ({
+        Nom: v.nom,
+        Prénom: v.prenom,
+        Email: v.email,
+        Téléphone: v.telephone || "-",
+        Missions:
+          v.missions
+            ?.map((m) => `${m.missionId?.titre || m.missionId} (${m.statut})`)
+            .join(", ") || "-",
+      }))
+    );
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Volontaires");
+    XLSX.writeFile(workbook, "volontaires.xlsx");
   };
 
   if (loading) return <p className="text-center">Chargement...</p>;
@@ -191,7 +186,7 @@ export default function VolunteersManager() {
   return (
     <div className="p-6 bg-gradient-to-br from-green-50 via-blue-50 to-violet-50 min-h-screen rounded-lg shadow-md">
       <h1 className="text-3xl font-extrabold mb-6 text-center text-violet-700">
-        🌍 Gestion des Volontaires
+        🌍 GESTION DES VOLONTAIRES - AMP BENIN
       </h1>
 
       {/* Recherche et filtres */}
@@ -210,27 +205,30 @@ export default function VolunteersManager() {
           className="border px-3 py-2 rounded focus:ring-2 focus:ring-green-400"
         >
           <option value="">🎯 Toutes les missions</option>
-          {[...new Set(volunteers.map((v) => v.mission?.titre).filter(Boolean))].map(
-            (mission) => (
-              <option key={mission} value={mission}>
-                {mission}
-              </option>
+          {[...new Set(
+            volunteers.flatMap((v) =>
+              v.missions?.map((m) => m.missionId?.titre || m.missionId).filter(Boolean)
             )
-          )}
+          )].map((mission) => (
+            <option key={mission} value={mission}>
+              {mission}
+            </option>
+          ))}
         </select>
 
         <select
+          disabled={!filterMission}
           value={filterStatut}
           onChange={(e) => setFilterStatut(e.target.value)}
           className="border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400"
         >
           <option value="">📌 Tous statuts</option>
-          <option value="Non disponible">Non disponible</option>
-          <option value="Refusé">Refusé</option>
-          <option value="Mission validée">Mission validée</option>
+          <option>Non disponible</option>
+          <option>Refusé</option>
+          <option>Mission validée</option>
         </select>
 
-        {/* Menu déroulant Export */}
+        {/* Export Menu */}
         <div className="relative inline-block text-left">
           <button
             onClick={(e) => {
@@ -241,7 +239,9 @@ export default function VolunteersManager() {
           >
             📤 Export
             <FiChevronDown
-              className={`w-4 h-4 ml-1 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`}
+              className={`w-4 h-4 ml-1 transition-transform ${
+                exportMenuOpen ? "rotate-180" : ""
+              }`}
             />
           </button>
 
@@ -281,39 +281,85 @@ export default function VolunteersManager() {
               <th className="py-3 px-4">Nom complet</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Téléphone</th>
-              <th className="py-3 px-4">Mission</th>
-              <th className="py-3 px-4">Statut</th>
+              <th className="py-3 px-4">Missions</th>
               <th className="py-3 px-4">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentVolunteers.length === 0 && (
               <tr>
-                <td colSpan="6" className="text-center py-4 text-gray-500">
+                <td colSpan="5" className="text-center py-4 text-gray-500">
                   Aucun volontaire trouvé.
                 </td>
               </tr>
             )}
             {currentVolunteers.map((v) => (
               <tr
-                key={v._id}
+                key={v._id || Math.random()}
                 className="odd:bg-violet-50 even:bg-blue-50 border-t hover:bg-green-100 transition"
               >
                 <td className="px-4 py-2">{v.fullName || `${v.nom} ${v.prenom}`}</td>
                 <td className="px-4 py-2">{v.email}</td>
                 <td className="px-4 py-2">{v.telephone || "-"}</td>
-                <td className="px-4 py-2">{v.mission?.titre || "-"}</td>
-                <td className="px-4 py-2">{v.statut}</td>
+                <td className="px-4 py-2">
+                  {v.missions && v.missions.length > 0 ? (
+                    <>
+                      <span className="text-xs text-gray-500 mb-1 block">
+                        {v.missions.length} mission(s)
+                      </span>
+                      <ol className="space-y-1 text-sm">
+                        {(v.showAllMissions ? v.missions : v.missions.slice(0, 2)).map(
+                          (m, index) => (
+                            <li key={m.missionId?._id || index} className="flex items-center gap-2">
+                              <span className="font-bold text-violet-600 w-5">
+                                {index + 1}.
+                              </span>
+                              <span className="font-medium truncate max-w-[140px]">
+                                {m.missionId?.titre || m.missionId}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                  m.statut === "Mission validée"
+                                    ? "bg-green-100 text-green-700"
+                                    : m.statut === "Refusé"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {m.statut || "Non disponible"}
+                              </span>
+                            </li>
+                          )
+                        )}
+                      </ol>
+                      {v.missions.length > 2 && (
+                        <button
+                          onClick={() =>
+                            setVolunteers((prev) =>
+                              prev.map((vol) =>
+                                vol._id === v._id
+                                  ? { ...vol, showAllMissions: !vol.showAllMissions }
+                                  : vol
+                              )
+                            )
+                          }
+                          className="mt-1 text-xs text-blue-600 hover:underline"
+                        >
+                          {v.showAllMissions ? "Masquer" : "Afficher plus"}
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 italic">—</span>
+                  )}
+                </td>
+
                 <td className="px-4 py-2 relative">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       const rect = e.currentTarget.getBoundingClientRect();
-                      setMenuOpen({
-                        id: v._id,
-                        x: rect.right,
-                        y: rect.bottom,
-                      });
+                      setMenuOpen({ id: v._id, x: rect.right, y: rect.bottom });
                     }}
                     className="p-2 rounded hover:bg-violet-200"
                   >
@@ -322,6 +368,7 @@ export default function VolunteersManager() {
 
                   {menuOpen?.id === v._id && (
                     <div
+                      ref={menuRef}
                       className="fixed w-50 bg-yellow-200 border rounded-lg shadow-xl z-50"
                       style={{
                         top: menuOpen.y - 120 + "px",
@@ -349,16 +396,10 @@ export default function VolunteersManager() {
                       </button>
                       <button
                         onClick={() => {
-                          setAssigningMission(v);
+                          handleDelete(v._id);
                           setMenuOpen(null);
                         }}
-                        className="block w-full text-left px-4 py-2 hover:bg-violet-100"
-                      >
-                        🎯 Attribuer mission
-                      </button>
-                      <button
-                        onClick={() => handleDelete(v._id)}
-                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
+                        className="block w-full text-left px-4 py-2 hover:bg-red-100"
                       >
                         🗑 Supprimer
                       </button>
@@ -394,17 +435,35 @@ export default function VolunteersManager() {
         </button>
       </div>
 
-      {/* Modal Détails */}
+      {/* Modals Détails et Modification */}
       {detailsVolunteer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl mb-4 font-bold text-violet-700">Détails du volontaire</h2>
-            <p><b>Nom :</b> {detailsVolunteer.nom}</p>
-            <p><b>Prénom :</b> {detailsVolunteer.prenom}</p>
-            <p><b>Email :</b> {detailsVolunteer.email}</p>
-            <p><b>Téléphone :</b> {detailsVolunteer.telephone}</p>
-            <p><b>Statut :</b> {detailsVolunteer.statut}</p>
-            <p><b>Mission :</b> {detailsVolunteer.mission?.titre || "-"}</p>
+            <h2 className="text-xl mb-4 font-bold text-violet-700">
+              Détails du volontaire
+            </h2>
+            <p>
+              <b>Nom :</b> {detailsVolunteer.nom}
+            </p>
+            <p>
+              <b>Prénom :</b> {detailsVolunteer.prenom}
+            </p>
+            <p>
+              <b>Email :</b> {detailsVolunteer.email}
+            </p>
+            <p>
+              <b>Téléphone :</b> {detailsVolunteer.telephone}
+            </p>
+            <div>
+              <b>Missions :</b>
+              <ul>
+                {detailsVolunteer.missions?.map((m) => (
+                  <li key={m.missionId?._id || m.missionId}>
+                    {m.missionId?.titre || m.missionId} ({m.statut || "Non disponible"})
+                  </li>
+                )) || "-"}
+              </ul>
+            </div>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setDetailsVolunteer(null)}
@@ -417,11 +476,13 @@ export default function VolunteersManager() {
         </div>
       )}
 
-      {/* Modal Modification */}
       {editingVolunteer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl mb-4 font-bold text-blue-600">Modifier volontaire</h2>
+            <h2 className="text-xl mb-4 font-bold text-blue-600">
+              Modifier volontaire
+            </h2>
+
             <input
               type="text"
               value={editingVolunteer.nom}
@@ -430,90 +491,78 @@ export default function VolunteersManager() {
               }
               className="border px-3 py-2 mb-2 w-full rounded"
             />
+
             <input
               type="text"
               value={editingVolunteer.prenom}
               onChange={(e) =>
-                setEditingVolunteer({ ...editingVolunteer, prenom: e.target.value })
+                setEditingVolunteer({
+                  ...editingVolunteer,
+                  prenom: e.target.value,
+                })
               }
               className="border px-3 py-2 mb-2 w-full rounded"
             />
+
             <input
               type="email"
               value={editingVolunteer.email}
               onChange={(e) =>
-                setEditingVolunteer({ ...editingVolunteer, email: e.target.value })
+                setEditingVolunteer({
+                  ...editingVolunteer,
+                  email: e.target.value,
+                })
               }
               className="border px-3 py-2 mb-2 w-full rounded"
             />
+
             <input
               type="text"
-              value={editingVolunteer.telephone}
+              value={editingVolunteer.telephone || ""}
               onChange={(e) =>
-                setEditingVolunteer({ ...editingVolunteer, telephone: e.target.value })
+                setEditingVolunteer({
+                  ...editingVolunteer,
+                  telephone: e.target.value,
+                })
               }
               className="border px-3 py-2 mb-2 w-full rounded"
             />
-            <select
-              value={editingVolunteer.statut}
-              onChange={(e) =>
-                setEditingVolunteer({ ...editingVolunteer, statut: e.target.value })
-              }
-              className="border px-3 py-2 mb-4 w-full rounded"
-            >
-              <option>Non disponible</option>
-              <option>Refusé</option>
-              <option>Mission validée</option>
-            </select>
-            <div className="flex justify-end gap-2">
+
+            {/* Missions */}
+            <div className="mt-2">
+              <p className="font-bold mb-1">Missions :</p>
+              {editingVolunteer.missions?.map((m, index) => (
+                <div key={m.missionId?._id || index} className="mb-2 flex gap-2 items-center">
+                  <span className="flex-1">{m.missionId?.titre || m.missionId}</span>
+                  <select
+                    value={m.statut || "Non disponible"}
+                    onChange={(e) => {
+                      const missions = [...editingVolunteer.missions];
+                      missions[index] = { ...missions[index], statut: e.target.value };
+                      setEditingVolunteer({ ...editingVolunteer, missions });
+                    }}
+                    className="border px-2 py-1 rounded"
+                  >
+                    <option value="Non disponible">Non disponible</option>
+                    <option value="Refusé">Refusé</option>
+                    <option value="Mission validée">Mission validée</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setEditingVolunteer(null)}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
+                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
               >
                 Annuler
               </button>
               <button
                 onClick={() => handleUpdate(editingVolunteer)}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
               >
                 Sauvegarder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Attribution Mission */}
-      {assigningMission && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h2 className="text-xl mb-4 font-bold text-green-600">
-              Attribuer une mission à{" "}
-              {assigningMission.fullName ||
-                `${assigningMission.nom} ${assigningMission.prenom}`}
-            </h2>
-            <input
-              type="text"
-              value={missionTitle}
-              onChange={(e) => setMissionTitle(e.target.value)}
-              placeholder="Titre de la mission"
-              className="border px-3 py-2 mb-4 w-full rounded"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => {
-                  setAssigningMission(null);
-                  setMissionTitle("");
-                }}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleAssignConfirm}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              >
-                Attribuer
               </button>
             </div>
           </div>

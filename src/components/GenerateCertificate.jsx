@@ -1,15 +1,28 @@
-// src/components/GenerateCertificate.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function GenerateCertificate() {
   const [titreMission, setTitreMission] = useState("");
   const [mode, setMode] = useState("Tous les volontaires"); // "Tous les volontaires" ou "Un volontaire"
   const [email, setEmail] = useState("");
   const [volunteers, setVolunteers] = useState([]);
+  const [missions, setMissions] = useState([]); // 🔹 Nouveau state
   const [notification, setNotification] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Étape 1 : récupérer les volontaires selon la sélection
+  // 🔹 Récupérer les missions au chargement
+  useEffect(() => {
+    const fetchMissions = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/missions"); // adapter selon ton API
+        const data = await res.json();
+        setMissions(data.missions || data || []);
+      } catch (err) {
+        console.error("Erreur chargement missions :", err);
+      }
+    };
+    fetchMissions();
+  }, []);
+
   const handleFetchVolunteers = async () => {
     if (!titreMission) {
       setNotification("Veuillez renseigner le titre de la mission.");
@@ -23,19 +36,13 @@ export default function GenerateCertificate() {
       const body = { titre: titreMission };
       if (mode === "Un volontaire" && email) body.email = email;
 
-      console.log("👉 [FRONT] Payload envoyé fetchVolunteers:", body);
-
-      const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates/fetch-volunteers", {
-      //const res = await fetch(" http://localhost:5000/api/certificates/fetch-volunteers", {
+      const res = await fetch("http://localhost:3000/api/certificates/fetch-volunteers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      console.log("👉 [FRONT] Status réponse fetchVolunteers:", res.status);
-
       const data = await res.json();
-      console.log("👉 [FRONT] Réponse backend fetchVolunteers:", data);
 
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
@@ -49,14 +56,13 @@ export default function GenerateCertificate() {
         setNotification("Aucun volontaire trouvé avec le statut 'Mission validée' et sans attestation.");
       }
     } catch (err) {
-      console.error("❌ [FRONT] Erreur handleFetchVolunteers:", err);
+      console.error(err);
       setNotification(err.message || "Erreur lors de la récupération des volontaires.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Étape 2 : générer les attestations pour les volontaires récupérés
   const handleGenerateCertificates = async () => {
     if (volunteers.length === 0) {
       setNotification("Aucun volontaire à traiter.");
@@ -68,25 +74,19 @@ export default function GenerateCertificate() {
 
     try {
       const payload = {
-        titre: titreMission,               // 🔹 Titre obligatoire pour le backend
-        mode: mode,                        // 🔹 Mode: "Tous les volontaires" ou "Un volontaire"
+        titre: titreMission,
+        mode: mode,
         email: mode === "Un volontaire" ? email : undefined,
-        volunteers,                        // 🔹 Liste des volontaires récupérés
+        volunteers,
       };
 
-      console.log("👉 [FRONT] Payload envoyé generateCertificate:", payload);
-
-      const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates/generate", {
-      //const res = await fetch("http://localhost:5000/api/certificates/generate", {
+      const res = await fetch("http://localhost:3000/api/certificates/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      console.log("👉 [FRONT] Status réponse generateCertificate:", res.status);
-
       const data = await res.json();
-      console.log("👉 [FRONT] Réponse backend generateCertificate:", data);
 
       if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
@@ -95,7 +95,7 @@ export default function GenerateCertificate() {
       setEmail("");
       setTitreMission("");
     } catch (err) {
-      console.error("❌ [FRONT] Erreur handleGenerateCertificates:", err);
+      console.error(err);
       setNotification(err.message || "Erreur lors de la génération des attestations.");
     } finally {
       setLoading(false);
@@ -107,15 +107,22 @@ export default function GenerateCertificate() {
       <h2 className="text-lg font-bold mb-4">Générer les attestations</h2>
 
       <div className="space-y-3">
-        <input
-          type="text"
-          placeholder="Titre de la mission"
+        {/* Liste déroulante missions */}
+        <select
           className="w-full p-2 border rounded-lg"
           value={titreMission}
           onChange={(e) => setTitreMission(e.target.value)}
           required
-        />
+        >
+          <option value="">-- Sélectionner une mission --</option>
+          {missions.map((mission) => (
+            <option key={mission._id} value={mission.titre}>
+              {mission.titre}
+            </option>
+          ))}
+        </select>
 
+        {/* Mode */}
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value)}
@@ -138,7 +145,7 @@ export default function GenerateCertificate() {
 
         <button
           onClick={handleFetchVolunteers}
-          disabled={loading}
+          disabled={loading || !titreMission}
           className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           {loading ? "Chargement..." : "Suivant"}
@@ -155,7 +162,11 @@ export default function GenerateCertificate() {
         )}
 
         {notification && (
-          <div className={`mt-3 text-sm font-medium ${volunteers.length > 0 ? "text-green-600" : "text-red-600"}`}>
+          <div
+            className={`mt-3 text-sm font-medium ${
+              volunteers.length > 0 ? "text-green-600" : "text-red-600"
+            }`}
+          >
             {notification}
           </div>
         )}

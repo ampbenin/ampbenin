@@ -1,170 +1,268 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-export default function SaveVolunteers({ initialMissionId = "" }) {
+const STATUTS = ["Non disponible", "Refusé", "Mission validée"];
+
+export default function SaveVolunteers() {
+  const [email, setEmail] = useState("");
   const [form, setForm] = useState({
-    titre: "",
     nom: "",
     prenom: "",
-    email: "",
     telephone: "",
-    statut: "Non disponible",
+    missions: [], // { missionId, statut }
   });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [allMissions, setAllMissions] = useState([]);
+  const [assignedMissions, setAssignedMissions] = useState([]);
+  const [volunteerId, setVolunteerId] = useState(null);
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  /* ===================== FETCH MISSIONS ===================== */
+  useEffect(() => {
+    fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/missions")
+      .then((res) => res.json())
+      .then(setAllMissions)
+      .catch(console.error);
+  }, []);
+
+  /* ===================== AUTOCOMPLETE EMAIL ===================== */
+  useEffect(() => {
+    if (email.length < 2) return;
+
+    const delay = setTimeout(async () => {
+      const res = await fetch(
+        `https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers?search=${email}`
+      );
+      const data = await res.json();
+      if (data.success) {
+        setSuggestions(data.items);
+        setShowSuggestions(true);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [email]);
+
+  /* ===================== SELECT VOLUNTEER ===================== */
+  const handleSelectVolunteer = (volunteer) => {
+    setEmail(volunteer.email);
+    setVolunteerId(volunteer._id);
+
+    setForm({
+      nom: volunteer.nom || "",
+      prenom: volunteer.prenom || "",
+      telephone: volunteer.telephone || "",
+      missions: [],
+    });
+
+    setAssignedMissions(volunteer.missions || []);
+    setShowSuggestions(false);
   };
 
+  /* ===================== MISSIONS ===================== */
+  const toggleMission = (missionId) => {
+    setForm((prev) => {
+      const exists = prev.missions.find((m) => m.missionId === missionId);
+      if (exists) {
+        return {
+          ...prev,
+          missions: prev.missions.filter((m) => m.missionId !== missionId),
+        };
+      }
+      return {
+        ...prev,
+        missions: [...prev.missions, { missionId, statut: "Non disponible" }],
+      };
+    });
+  };
+
+  const updateMissionStatut = (missionId, statut) => {
+    setForm((prev) => ({
+      ...prev,
+      missions: prev.missions.map((m) =>
+        m.missionId === missionId ? { ...m, statut } : m
+      ),
+    }));
+  };
+
+  /* ===================== SUBMIT ===================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
 
     try {
-      console.log("📩 Vérification mission:", form.titre);
+      const payload = {
+        email,
+        nom: form.nom,
+        prenom: form.prenom,
+        telephone: form.telephone,
+        missions: form.missions,
+      };
 
-      const missionRes = await fetch(
-        "https://potential-rafa-amp1-00541efa.koyeb.app/api/missions/find-by-title",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ titre: form.titre }),
-        }
-      );
-
-      const missionData = await missionRes.json();
-
-      if (!missionRes.ok) throw new Error(missionData.message || "Mission introuvable");
-
-      const missionId = missionData._id?.toString();
-      if (!missionId) throw new Error("Impossible de récupérer l'ID de la mission");
-
-      console.log("✅ Mission trouvée, ObjectId:", missionId);
-
-      const res = await fetch(
-        "https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titre: form.titre,
-            nom: form.nom,
-            prenom: form.prenom,
-            email: form.email,
-            telephone: form.telephone,
-            statut: form.statut,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      console.log("📬 Réponse backend:", data);
-
-      if (!res.ok) throw new Error(data.message || "Erreur lors de l'enregistrement");
-
-      setMessage({ type: "success", text: data.message });
-      setForm({
-        titre: "",
-        nom: "",
-        prenom: "",
-        email: "",
-        telephone: "",
-        statut: "Non disponible",
+      const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
+      if (!res.ok) throw new Error("Erreur lors de l’enregistrement");
+
+      setMessage({
+        type: "success",
+        text: volunteerId
+          ? "Volontaire mis à jour"
+          : "Volontaire créé avec succès",
+      });
+
+      setEmail("");
+      setForm({ nom: "", prenom: "", telephone: "", missions: [] });
+      setAssignedMissions([]);
+      setVolunteerId(null);
     } catch (err) {
-      console.error("❌ Erreur fetch:", err);
       setMessage({ type: "error", text: err.message });
     } finally {
       setLoading(false);
     }
   };
 
+  /* ===================== UI ===================== */
   return (
-    <div className="max-w-md mx-auto p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-yellow-50 via-white to-yellow-50 border border-yellow-200">
-      <h2 className="text-2xl font-extrabold text-yellow-700 mb-4 text-center">
-        🌿 Ajouter un volontaire
+    <div className="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow">
+      <h2 className="text-xl font-bold mb-4 text-center">
+        Ajouter / Mettre à jour un volontaire
       </h2>
 
-      <p className="text-center text-gray-600 mb-6">
-        Remplissez le formulaire pour inscrire un nouveau volontaire pour une mission. CET ESPACE EST RESERVE UNIQUEMENT AUX ADMINISTRATEURS TECHNIQUE ET DAF DE AMP BENIN
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="titre"
-          placeholder="Titre de la MISSION"
-          value={form.titre}
-          onChange={handleChange}
-          required
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        />
-        <input
-          type="text"
-          name="nom"
-          placeholder="Nom"
-          value={form.nom}
-          onChange={handleChange}
-          required
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        />
-        <input
-          type="text"
-          name="prenom"
-          placeholder="Prénom"
-          value={form.prenom}
-          onChange={handleChange}
-          required
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        />
-        <input
-          type="tel"
-          name="telephone"
-          placeholder="Téléphone"
-          value={form.telephone}
-          onChange={handleChange}
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        />
-        <select
-          name="statut"
-          value={form.statut}
-          onChange={handleChange}
-          required
-          className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
-        >
-          <option value="Non disponible">Non disponible</option>
-          <option value="Refusé">Refusé</option>
-          <option value="Mission validée">Mission validée</option>
-        </select>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-yellow-600 text-white font-bold py-3 rounded-xl hover:bg-yellow-700 transition-all shadow-lg disabled:opacity-50"
-        >
-          {loading ? "Enregistrement..." : "Enregistrer"}
-        </button>
-      </form>
-
       {message && (
-        <div
-          className={`mt-4 text-center font-semibold ${
+        <p
+          className={`text-center mb-4 ${
             message.type === "success" ? "text-green-600" : "text-red-600"
           }`}
         >
           {message.text}
-        </div>
+        </p>
       )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* EMAIL */}
+        <div className="relative">
+          <input
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setAssignedMissions([]);
+              setVolunteerId(null);
+            }}
+            type="email"
+            placeholder="Email"
+            className="w-full border p-3 rounded-xl"
+            required
+          />
+
+          {showSuggestions && (
+            <ul className="absolute w-full bg-white border rounded-xl shadow">
+              {suggestions.map((v) => (
+                <li
+                  key={v._id}
+                  onClick={() => handleSelectVolunteer(v)}
+                  className="p-2 cursor-pointer hover:bg-yellow-100"
+                >
+                  {v.email}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <input
+          placeholder="Nom"
+          className="w-full border p-3 rounded-xl"
+          value={form.nom}
+          onChange={(e) => setForm({ ...form, nom: e.target.value })}
+        />
+        <input
+          placeholder="Prénom"
+          className="w-full border p-3 rounded-xl"
+          value={form.prenom}
+          onChange={(e) => setForm({ ...form, prenom: e.target.value })}
+        />
+        <input
+          placeholder="Téléphone"
+          className="w-full border p-3 rounded-xl"
+          value={form.telephone}
+          onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+        />
+
+        {/* TABLE MISSIONS */}
+        <table className="w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2">Mission</th>
+              <th className="border p-2">Statut de la mission</th>
+            </tr>
+          </thead>
+          <tbody>
+            {allMissions.map((mission) => {
+              const assigned = assignedMissions.find(
+                (m) => m.missionId?._id === mission._id
+              );
+              const selected = form.missions.find(
+                (m) => m.missionId === mission._id
+              );
+
+              return (
+                <tr key={mission._id}>
+                  <td className="border p-2">
+                    <input
+                      type="checkbox"
+                      disabled={!!assigned}
+                      checked={!!selected}
+                      onChange={() => toggleMission(mission._id)}
+                    />{" "}
+                    {mission.titre}
+                  </td>
+                  <td className="border p-2">
+                    {assigned ? (
+                      <span className="font-semibold">
+                        {assigned.statut}
+                      </span>
+                    ) : selected ? (
+                      <select
+                        value={selected.statut}
+                        onChange={(e) =>
+                          updateMissionStatut(
+                            mission._id,
+                            e.target.value
+                          )
+                        }
+                        className="border rounded p-1"
+                      >
+                        {STATUTS.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <button
+          disabled={loading}
+          className="w-full bg-yellow-600 text-white py-3 rounded-xl font-bold"
+        >
+          {loading ? "Enregistrement..." : "Enregistrer"}
+        </button>
+      </form>
     </div>
   );
 }
