@@ -1,0 +1,86 @@
+---
+/**
+ * Layout principal de l'espace AMP
+ * Utilisé par ADMIN, EC et IS
+ */
+
+const { title = "AMP BENIN" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+  </head>
+
+  <body>
+    <!-- HEADER -->
+    <header class="amp-header">
+      <div class="logo">
+        <strong>AMP BENIN</strong>
+      </div>
+
+      <nav class="amp-nav">
+        <a href="/gestionamp/dashboard/admin">Dashboard</a>
+        <a href="/gestionamp/dashboard/ec">EC</a>
+        <a href="/gestionamp/dashboard/is">IS</a>
+      </nav>
+
+      <div class="actions">
+        <!-- Bouton logout React -->
+        <slot name="logout" />
+      </div>
+    </header>
+
+    <!-- CONTENU -->
+    <main class="amp-content">
+      <slot />
+    </main>
+
+    <!-- FOOTER SIMPLE -->
+    <footer class="amp-footer">
+      <small>© AMP BENIN — Plateforme de suivi</small>
+    </footer>
+  </body>
+</html>
+
+<style>
+  body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #f5f7fa;
+  }
+
+  .amp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: #0f172a;
+    color: white;
+  }
+
+  .amp-nav a {
+    color: white;
+    margin-right: 1rem;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .amp-nav a:hover {
+    text-decoration: underline;
+  }
+
+  .amp-content {
+    padding: 2rem;
+  }
+
+  .amp-footer {
+    text-align: center;
+    padding: 1rem;
+    background: #e5e7eb;
+    font-size: 0.8rem;
+  }
+</style>

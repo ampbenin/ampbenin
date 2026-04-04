@@ -2,7 +2,8 @@ import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import sitemap from "@astrojs/sitemap";
 import react from "@astrojs/react";
-import netlify from "@astrojs/netlify"; 
+import netlify from "@astrojs/netlify";
+import path from "path";
 
 export default defineConfig({
   site: "https://ampbenin.netlify.app",
@@ -13,8 +14,8 @@ export default defineConfig({
     react(),
   ],
 
-  output: "server",     
-  adapter: netlify(),  
+  output: "server",
+  adapter: netlify(),
 
   defaultLocale: "fr",
   locales: ["fr", "en"],
@@ -23,5 +24,14 @@ export default defineConfig({
       escapeValue: false,
     },
     fallbackLng: "fr",
+  },
+
+  // ✅ AJOUT SANS IMPACT
+  vite: {
+    resolve: {
+      alias: {
+        "@": path.resolve("./src"),
+      },
+    },
   },
 });

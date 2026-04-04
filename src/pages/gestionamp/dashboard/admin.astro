@@ -1,0 +1,15 @@
+---
+/**
+ * Dashboard ADMIN - AMP BENIN
+ * Supervision nationale & validation
+ */
+
+import Layout from "../../../layouts/GestionAMPLayout.astro";
+
+// Composant racine ADMIN (protégé côté React)
+import AdminDashboard from "@/components/gestionamp/dashboard/admin/AdminDashboard.jsx";
+---
+
+<Layout title="Dashboard National | AMP BENIN">
+  <AdminDashboard client:load />
+</Layout>

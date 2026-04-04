@@ -1,0 +1,52 @@
+---
+/**
+ * Dashboard Émissaire Communautaire (EC)
+ * AMP BENIN
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+
+// Composants React EC
+import ECStats from "@/components/gestionamp/dashboard/ec/ECStats.jsx";
+import ActivitiesTable from "@/components/gestionamp/dashboard/ec/ActivitiesTable.jsx";
+import FinanceSummary from "@/components/gestionamp/dashboard/ec/FinanceSummary.jsx";
+import AddActivityForm from "@/components/gestionamp/dashboard/ec/AddActivityForm.jsx";
+import AddFinanceForm from "@/components/gestionamp/dashboard/ec/AddFinanceForm.jsx";
+
+// Sécurité & redirection
+import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+---
+
+<!-- Protection de la page -->
+<script>
+  authRedirectAMP(["EC"]);
+</script>
+
+<Layout title="Dashboard Coordination Communale | AMP BENIN">
+  <main class="dashboard ec-dashboard">
+    <!-- En-tête -->
+    <header class="dashboard-header">
+      <h1>Dashboard — Coordination Communale</h1>
+      <p>Suivi des activités et finances de votre coordination</p>
+    </header>
+
+    <!-- Statistiques -->
+    <section class="dashboard-section">
+      <ECStats client:load />
+    </section>
+
+    <!-- Activités -->
+    <section class="dashboard-section">
+      <h2>Activités</h2>
+      <AddActivityForm client:load />
+      <ActivitiesTable client:load />
+    </section>
+
+    <!-- Finances -->
+    <section class="dashboard-section">
+      <h2>Finances</h2>
+      <AddFinanceForm client:load />
+      <FinanceSummary client:load />
+    </section>
+  </main>
+</Layout>

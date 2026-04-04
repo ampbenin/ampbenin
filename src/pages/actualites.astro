@@ -3,8 +3,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 const articles = [
     {
-    title: "CAMPGNE DES 16 Jours d'activisme contre les VBG - 2025",
+    title: "Lancement du projet NumSAL - 2026",
     date: "En cours...",
+    excerpt: "AMP BENIN, à travers sa section SNIE, lance officiellement le projet NumSAL pour former les jeunes et promouvoir l’entrepreneuriat numérique. Projet soutenu par le programme FP2E / NexT Impact (Sèmè City) et financé par la Banque mondiale.",
+    image: "/images/numsal/Lancement-numsal.jpeg",
+    link: "/actualites/numsal-tori-bossito"
+  },
+    {
+    title: "CAMPGNE DES 16 Jours d'activisme contre les VBG - 2025",
+    date: "Du 25 Novembre au 10 Decembre 2025",
     excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme s'est engagée pour l'élimination des VBG dans nos communauté.",
     image: "/images/16jours/Lancement-16jours.webp",
     link: "/16jours"
@@ -47,7 +54,7 @@ const articles = [
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
       {articles.map(article => (
         <a href={article.link} class="block bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
-          <img src={article.image} alt={article.title} class="w-full h-56 object-cover" loading="lazy" />
+          <img src={article.image} alt={article.title} class="w-full h-ull object-cover" loading="lazy" />
           <div class="p-6">
             <h2 class="text-2xl font-semibold text-primary mb-2">{article.title}</h2>
             <p class="text-sm text-gray-500 mb-2">{article.date}</p>

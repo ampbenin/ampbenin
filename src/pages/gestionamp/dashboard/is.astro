@@ -1,0 +1,52 @@
+---
+/**
+ * Dashboard Institution Spécialisée (IS)
+ * AMP BENIN
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+
+// Composants React IS
+import ISStats from "@/components/gestionamp/dashboard/is/ISStats.jsx";
+import InstitutionActivitiesTable from "@/components/gestionamp/dashboard/is/InstitutionActivitiesTable.jsx";
+import InstitutionFinanceSummary from "@/components/gestionamp/dashboard/is/InstitutionFinanceSummary.jsx";
+import AddInstitutionActivityForm from "@/components/gestionamp/dashboard/is/AddInstitutionActivityForm.jsx";
+import AddInstitutionFinanceForm from "@/components/gestionamp/dashboard/is/AddInstitutionFinanceForm.jsx";
+
+// Sécurité & redirection
+import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+---
+
+<!-- Protection de la page -->
+<script>
+  authRedirectAMP(["IS"]);
+</script>
+
+<Layout title="Dashboard Institution Spécialisée | AMP BENIN">
+  <main class="dashboard is-dashboard">
+    <!-- En-tête -->
+    <header class="dashboard-header">
+      <h1>Dashboard — Institution Spécialisée</h1>
+      <p>Suivi des activités et finances institutionnelles</p>
+    </header>
+
+    <!-- Statistiques -->
+    <section class="dashboard-section">
+      <ISStats client:load />
+    </section>
+
+    <!-- Activités -->
+    <section class="dashboard-section">
+      <h2>Activités institutionnelles</h2>
+      <AddInstitutionActivityForm client:load />
+      <InstitutionActivitiesTable client:load />
+    </section>
+
+    <!-- Finances -->
+    <section class="dashboard-section">
+      <h2>Finances institutionnelles</h2>
+      <AddInstitutionFinanceForm client:load />
+      <InstitutionFinanceSummary client:load />
+    </section>
+  </main>
+</Layout>
