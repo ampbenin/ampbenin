@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import JobsCarousel from '../components/JobsCarousel.jsx';
+---
+
+<BaseLayout title="Recrutement et opportunité - AMP BENIN">
+
+  <!-- Section Intro -->
+  <section class="bg-gradient-to-r from-blue-600 to-green-500 text-white py-12 px-4">
+    <div class="max-w-5xl mx-auto text-center">
+      
+      <h1 class="text-3xl md:text-4xl font-bold mb-4">
+        Recrutements et opportunités
+      </h1>
+
+      <p class="text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+        Bienvenue sur la page officielle des recrutements et opportunités de <strong>AMP BENIN</strong>.
+        Consultez les offres disponibles et prenez part à nos initiatives en faveur du développement,
+        de l’innovation et de l’autonomisation des jeunes.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- Section contenu -->
+  <main class="max-w-6xl mx-auto px-4 py-12">
+
+    <div class="mb-8 text-center">
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Veuillez consulter la liste des offres disponibles ci-dessous et accéder aux termes de référence (TDR).
+        Chaque opportunité représente une occasion de contribuer activement à nos projets.
+      </p>
+    </div>
+
+    <JobsCarousel client:load />
+
+  </main>
+
+</BaseLayout>
