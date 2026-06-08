@@ -1,11 +1,29 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AttestationForm from '../components/AttestationForm.jsx';
+
+const title = "Mon Attestation de Volontariat | AMP BENIN";
+const description = "Téléchargez votre attestation de volontariat AMP BENIN. Vérifiez votre identité, sélectionnez votre mission et obtenez votre certificat de volontaire au format PDF.";
 ---
 
+<BaseLayout
+  title={title}
+  description={description}
+  url="https://ampbenin.netlify.app/monattestation"
+  keywords="attestation volontariat AMP BENIN, certificat volontaire, télécharger attestation Bénin"
+>
 
-<BaseLayout title="Mon Attestation">
-  <section class="bg-white text-gray-800 py-12 px-4 md:px-12">
-    <AttestationForm client:load />
+  <section class="bg-white text-gray-800 py-12 px-4 md:px-12" aria-labelledby="attest-page-title">
+    <div class="max-w-2xl mx-auto text-center mb-8">
+      <h1 id="attest-page-title" class="text-3xl font-bold text-primary mb-3">
+        Espace Volontaires
+      </h1>
+      <p class="text-gray-600">
+        Téléchargez votre attestation de mission AMP BENIN en quelques étapes.
+      </p>
+    </div>
+    <!-- client:visible : hydraté seulement quand visible dans le viewport -->
+    <AttestationForm client:visible />
   </section>
+
 </BaseLayout>

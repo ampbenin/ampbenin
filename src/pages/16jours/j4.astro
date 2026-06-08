@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Internet & VBG au Bénin : consentement, parole et respect en ligne">
+<BaseLayout
+  title="Internet & VBG au Bénin : consentement, parole et respect en ligne | AMP BENIN"
+  description="Jour 4 des 16 Jours d'activisme AMP BENIN 2025 : consentement, parole et respect en ligne. Sensibilisation aux VBG liées à Internet au Bénin."
+  url="https://ampbenin.netlify.app/16jours/j4"
+  keywords="consentement en ligne Bénin, VBG internet, 16 jours activisme jour 4, AMP BENIN 2025"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 4", "item": "https://ampbenin.netlify.app/16jours/j4" }
+    ]
+  }
+  </script>
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
     <!-- HEADER -->
@@ -18,7 +35,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <!-- IMAGE 1 -->
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/1J4-16jours-25.webp"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903925/ong-site/images/16jours/1J4-16jours-25.webp"
         alt="Violences numériques et consentement au Bénin"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -106,7 +123,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 -->
       <figure class="w-full my-10">
         <img 
-          src="/images/16jours/2J4-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903927/ong-site/images/16jours/2J4-16jours-25.webp"
           alt="Cyberharcèlement et violences verbales"
           class="rounded-lg shadow-md w-full object-cover"
         />

@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="16 Jours d’activisme – Jour 5 : Liberté numérique et violences invisibles dans les foyers béninois">
+<BaseLayout
+  title="16 Jours d’activisme – Jour 5 : Liberté numérique et violences invisibles | AMP BENIN"
+  description="Jour 5 des 16 Jours d’activisme AMP BENIN 2025 : liberté numérique et violences invisibles dans les foyers béninois. Comment le numérique cache des violences domestiques."
+  url="https://ampbenin.netlify.app/16jours/j5"
+  keywords="violences domestiques numériques Bénin, liberté numérique, 16 jours activisme jour 5, VBG foyers"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d’Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 5", "item": "https://ampbenin.netlify.app/16jours/j5" }
+    ]
+  }
+  </script>
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
     <!-- HEADER -->
@@ -18,7 +35,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <!-- INTRO IMAGE -->
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/Logo16jours.webp"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_300/v1780903880/ong-site/images/16jours/Logo16jours.webp"
         alt="Violences numériques dans les foyers béninois"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -71,7 +88,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <figure class="w-full my-8">
         <img 
-          src="/images/16jours/2J5-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903929/ong-site/images/16jours/2J5-16jours-25.webp"
           alt="Surveillance du téléphone dans le couple"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -119,7 +136,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <figure class="w-full my-8">
         <img 
-          src="/images/16jours/3J5-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903930/ong-site/images/16jours/3J5-16jours-25.webp"
           alt="Restriction numérique des femmes"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -162,7 +179,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <figure class="w-full my-8">
         <img 
-          src="/images/16jours/1J5-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903928/ong-site/images/16jours/1J5-16jours-25.webp"
           alt="Consentement numérique au Bénin"
           class="rounded-lg shadow-md w-full object-cover"
         />

@@ -1,4 +1,8 @@
 User-agent: *
-Disallow:
+Allow: /
 
-Sitemap: https://ampbenin.netlify.app/sitemap-0.xml
+# Bloquer les zones d'administration
+Disallow: /gestionamp/
+Disallow: /admin/
+
+Sitemap: https://ampbenin.netlify.app/sitemap-index.xml

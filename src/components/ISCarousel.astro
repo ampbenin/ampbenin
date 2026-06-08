@@ -1,34 +1,205 @@
 ---
+// Import identique — aucune donnée modifiée
 import { IS_LIST } from '../data/is.js';
 ---
 
-<section class="py-12 bg-gray-100">
-  <div class="container mx-auto px-4">
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-8 text-green-800">
-      Nos Institutions Spécialisées
-    </h2>
+<section class="is-carousel section-py" aria-labelledby="is-carousel-title">
+  <div class="container">
+    <div class="is-carousel__head fade-up">
+      <span class="section-label section-label--green">Nos divisions</span>
+      <h2 id="is-carousel-title" class="is-carousel__heading">
+        Institutions Spécialisées
+      </h2>
+      <p class="is-carousel__intro">
+        Six sections thématiques pour agir sur tous les enjeux du développement durable au Bénin.
+      </p>
+    </div>
+  </div>
 
-    <div class="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory">
-      {IS_LIST.map((is) => (
+  <!-- Marquee conteneur — overflow masqué en dehors du .container -->
+  <div class="is-marquee-outer" aria-label="Défilement des institutions spécialisées">
+    <div class="is-marquee-track">
+      <!-- Liste originale + doublon pour le scroll infini sans JS -->
+      {[...IS_LIST, ...IS_LIST].map((is, i) => (
         <a
           href={`/is/${is.slug}`}
+          class="is-card"
           aria-label={`Voir la page de ${is.name}`}
-          class="inline-block snap-start w-72 flex-shrink-0 bg-white rounded-xl shadow-md hover:shadow-lg hover:scale-105 transition-transform duration-300"
+          tabindex={i >= IS_LIST.length ? -1 : 0}
+          aria-hidden={i >= IS_LIST.length ? "true" : "false"}
         >
-          <img
-            src={is.image}
-            alt={`Illustration de ${is.name}`}
-            loading="lazy"
-            class="w-full h-40 object-cover rounded-t-xl"
-          />
-          <div class="p-4">
-            <h3 class="text-lg font-semibold mb-2 text-green-700">
-              {is.name}
-            </h3>
-            <p class="text-sm text-gray-600">{is.description}</p>
+          <div class="is-card__img-wrap">
+            <img
+              src={is.image}
+              alt={`Illustration de ${is.name}`}
+              loading="lazy"
+              class="is-card__img"
+            />
+          </div>
+          <div class="is-card__body">
+            <h3 class="is-card__name">{is.name}</h3>
+            <p class="is-card__desc">{is.description}</p>
+            <span class="is-card__cta">Découvrir →</span>
           </div>
         </a>
       ))}
     </div>
   </div>
 </section>
+
+<style>
+  .is-carousel {
+    background: var(--col-surface);
+    overflow: hidden;
+  }
+
+  .is-carousel__head {
+    text-align: center;
+    margin-bottom: var(--sp-14);
+  }
+  .is-carousel__heading {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 4vw, var(--text-5xl));
+    color: var(--col-primary);
+    line-height: 1.15;
+    margin-bottom: var(--sp-3);
+  }
+  .is-carousel__intro {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: var(--col-text-sec);
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  /* Marquee outer — défile sur toute la largeur de la fenêtre */
+  .is-marquee-outer {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    overflow: hidden;
+    /* masques en fondu aux bords */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 8%,
+      black 92%,
+      transparent 100%
+    );
+  }
+
+  /* Piste — dupliquée pour boucle infinie */
+  .is-marquee-track {
+    display: flex;
+    gap: var(--sp-6);
+    width: max-content;
+    animation: is-marquee 32s linear infinite;
+  }
+
+  /* Pause quand le curseur est dessus */
+  .is-marquee-outer:hover .is-marquee-track,
+  .is-marquee-outer:focus-within .is-marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes is-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Respect de la préférence de mouvement réduit */
+  @media (prefers-reduced-motion: reduce) {
+    .is-marquee-track { animation: none; }
+    .is-marquee-outer {
+      -webkit-mask-image: none;
+      mask-image: none;
+      overflow-x: auto;
+    }
+  }
+
+  /* Carte */
+  .is-card {
+    flex-shrink: 0;
+    width: 280px;
+    background: var(--col-white);
+    border-radius: var(--r-2xl);
+    overflow: hidden;
+    box-shadow: var(--sh-sm);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    transition:
+      transform var(--tr-base),
+      box-shadow var(--tr-base);
+    border: 1px solid var(--col-border-light);
+  }
+  .is-card:hover,
+  .is-card:focus-visible {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: var(--sh-lg);
+    outline: none;
+  }
+  .is-card:focus-visible {
+    outline: 2px solid var(--col-primary);
+    outline-offset: 3px;
+  }
+
+  /* Image en niveaux de gris → couleur au hover */
+  .is-card__img-wrap {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+  }
+  .is-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(1) brightness(0.92);
+    transition: filter var(--tr-slow), transform var(--tr-slow);
+  }
+  .is-card:hover .is-card__img,
+  .is-card:focus-visible .is-card__img {
+    filter: grayscale(0) brightness(1);
+    transform: scale(1.05);
+  }
+
+  .is-card__body {
+    padding: var(--sp-5) var(--sp-5) var(--sp-6);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .is-card__name {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-base);
+    color: var(--col-primary);
+    line-height: 1.35;
+    margin-bottom: var(--sp-2);
+  }
+  .is-card__desc {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    line-height: 1.6;
+    flex: 1;
+  }
+  .is-card__cta {
+    display: inline-block;
+    margin-top: var(--sp-4);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-accent);
+    transition: color var(--tr-base);
+  }
+  .is-card:hover .is-card__cta { color: var(--col-primary); }
+</style>

@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="VBG Numériques au Bénin : le web, miroir des violences sociales">
+<BaseLayout
+  title="VBG Numériques – Jour 8 : le web, miroir des violences sociales | AMP BENIN"
+  description="Jour 8 des 16 Jours d'activisme AMP BENIN 2025 : impact des violences numériques sur les femmes et les filles béninoises. Témoignages et pistes de solutions."
+  url="https://ampbenin.netlify.app/16jours/j8"
+  keywords="VBG numériques Bénin, violences femmes en ligne, 16 jours activisme jour 8, AMP BENIN"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 8", "item": "https://ampbenin.netlify.app/16jours/j8" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -20,7 +37,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v8.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903914/ong-site/images/16jours/og-image-v8.jpg"
         alt="VBG numériques au Bénin - visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -61,7 +78,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 (placeholder pour visuel thématique 1) -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/3J8-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903940/ong-site/images/16jours/3J8-16jours-25.webp"
           alt="Visuel — Surveillance abusive au travail"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -116,7 +133,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 3 (placeholder pour visuel thématique 2) -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/2J8-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903939/ong-site/images/16jours/2J8-16jours-25.webp"
           alt="Visuel — Intrusion dans les outils numériques de travail"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -172,7 +189,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 4 (placeholder pour visuel thématique 3) -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/1J8-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903938/ong-site/images/16jours/1J8-16jours-25.webp"
           alt="Visuel — Discrimination digitale au travail"
           class="rounded-lg shadow-md w-full object-cover"
         />

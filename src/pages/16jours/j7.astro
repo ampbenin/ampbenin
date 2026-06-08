@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="VBG Numériques au Bénin : le web, miroir des violences sociales">
+<BaseLayout
+  title="VBG Numériques – Jour 7 : le web, miroir des violences sociales | AMP BENIN"
+  description="Jour 7 des 16 Jours d'activisme AMP BENIN 2025 : le web comme miroir des violences basées sur le genre au Bénin. Analyse des violences numériques dans le contexte social béninois."
+  url="https://ampbenin.netlify.app/16jours/j7"
+  keywords="VBG numériques Bénin, violences sociales en ligne, 16 jours activisme jour 7, AMP BENIN"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 7", "item": "https://ampbenin.netlify.app/16jours/j7" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -20,7 +37,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v7.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903913/ong-site/images/16jours/og-image-v7.jpg"
         alt="VBG numériques au Bénin - visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -54,7 +71,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 - Religion -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/1J7-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903935/ong-site/images/16jours/1J7-16jours-25.webp"
           alt="Violences numériques et religion"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -97,7 +114,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 3 - Réputation -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/2J7-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903936/ong-site/images/16jours/2J7-16jours-25.webp"
           alt="Violences numériques et réputation"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -143,7 +160,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 4 - Tenue vestimentaire -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/3J7-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903937/ong-site/images/16jours/3J7-16jours-25.webp"
           alt="Violences numériques et tenue vestimentaire"
           class="rounded-lg shadow-md w-full object-cover"
         />

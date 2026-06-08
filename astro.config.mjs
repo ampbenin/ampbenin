@@ -17,16 +17,14 @@ export default defineConfig({
   output: "server",
   adapter: netlify(),
 
-  defaultLocale: "fr",
-  locales: ["fr", "en"],
-  i18nextOptions: {
-    interpolation: {
-      escapeValue: false,
+  i18n: {
+    defaultLocale: "fr",
+    locales: ["fr", "en", "es", "ar"],
+    routing: {
+      prefixDefaultLocale: false,
     },
-    fallbackLng: "fr",
   },
 
-  // ✅ AJOUT SANS IMPACT
   vite: {
     resolve: {
       alias: {

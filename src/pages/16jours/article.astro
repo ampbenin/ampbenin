@@ -4,7 +4,24 @@ import Article16jours from "../../components/16jours/Article16jours.jsx";
 ---
 
 
-<BaseLayout title="16 Jours d'activisme 2024 -AMP BENIN">
+<BaseLayout
+  title="16 Jours d'activisme 2024 — Articles & Bilans | AMP BENIN"
+  description="Retrouvez tous les articles et bilans de la campagne 16 Jours d'activisme 2024 d'AMP BENIN contre les violences basées sur le genre (VBG) au Bénin."
+  url="https://ampbenin.netlify.app/16jours/article"
+  keywords="16 jours activisme 2024 AMP BENIN, articles VBG Bénin, bilans campagne violences genre"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Articles 2024", "item": "https://ampbenin.netlify.app/16jours/article" }
+    ]
+  }
+  </script>
   <section class="bg-white text-gray-800 py-12 px-4 md:px-12">
     <Article16jours client:load />
   </section>

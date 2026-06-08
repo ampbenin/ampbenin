@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="16 Jours d’activisme – Jour 3 : Lutter contre les violences en ligne">
+<BaseLayout
+  title="16 Jours d’activisme – Jour 3 : Lutter contre les violences en ligne | AMP BENIN"
+  description="AMP BENIN explore les cyberviolences dans le cadre des 16 Jours d’activisme 2025 contre les VBG : violences en ligne, harcèlement numérique et protection des victimes au Bénin."
+  url="https://ampbenin.netlify.app/16jours/j3"
+  keywords="violences en ligne Bénin, cyberviolences VBG, 16 jours activisme jour 3, AMP BENIN 2025"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d’Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 3", "item": "https://ampbenin.netlify.app/16jours/j3" }
+    ]
+  }
+  </script>
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
     <!-- HEADER -->
@@ -18,7 +35,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <!-- INTRO IMAGE -->
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/1J3-16jours-25.webp"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903922/ong-site/images/16jours/1J3-16jours-25.webp"
         alt="Campagne contre les violences numériques"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -51,7 +68,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <figure class="w-full my-8">
         <img 
-          src="/images/16jours/2J3-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903923/ong-site/images/16jours/2J3-16jours-25.webp"
           alt="Lutter contre le cyberharcèlement"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -108,7 +125,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       <figure class="w-full my-8">
         <img 
-          src="/images/16jours/3J3-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903924/ong-site/images/16jours/3J3-16jours-25.webp"
           alt="Sensibilisation contre la diffusion d'intimité"
           class="rounded-lg shadow-md w-full object-cover"
         />

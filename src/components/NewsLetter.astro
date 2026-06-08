@@ -1,60 +1,98 @@
-<section class="py-24 bg-gradient-to-t from-black via-purple-900 to-purple-700 text-white">
-  <div class="max-w-5xl mx-auto px-6 text-center">
-    <h2 class="text-4xl md:text-5xl font-extrabold mb-6 uppercase tracking-wide">
-  Ne manquez aucune actualité d’AMP BENIN !
-</h2>
-<p class="text-lg text-gray-200 max-w-3xl mx-auto mb-10">
-  Inscrivez-vous gratuitement à notre newsletter et recevez en avant-première les projets, opportunités et événements phares d’AMP BENIN.
-</p>
+---
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
+---
 
+<section
+  class="nl section-py"
+  aria-labelledby="nl-title"
+  data-nl-error={t('newsletter', 'errorSubscription')}
+  data-nl-server-error={t('newsletter', 'errorServer')}
+  data-nl-sending={t('newsletter', 'sending')}
+>
 
-    <!-- Formulaire permanent sur la page -->
-    <form id="newsletterFormPage" class="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-xl border border-purple-500/20 max-w-2xl mx-auto space-y-4 md:space-y-6">
-      <input type="text" name="fullname" placeholder="Votre nom" required class="w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
-      <input type="email" name="email" placeholder="exemple@gmail.com" required class="w-full px-4 py-3 rounded-lg bg-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-400" />
-      <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300 shadow-lg">
-        S'inscrire maintenant
-      </button>
-      <p id="newsletterMessagePage" class="text-sm text-gray-300 mt-4"></p>
-    </form>
+  <div class="nl__bg-deco" aria-hidden="true">
+    <div class="nl__bg-circle nl__bg-circle--1"></div>
+    <div class="nl__bg-circle nl__bg-circle--2"></div>
   </div>
 
-  <!-- Popup/notification pour première visite -->
-  <div id="newsletterModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 md:p-8 relative">
-      <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-900 text-xl font-bold">&times;</button>
-      <h3 class="text-2xl md:text-3xl font-bold mb-4 text-center text-purple-800">Inscrivez-vous à notre newsletter</h3>
-      <form id="newsletterFormModal" class="space-y-3 md:space-y-4">
-        <input type="text" name="fullname" placeholder="Votre nom" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-        <input type="email" name="email" placeholder="exemple@gmail.com" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-        <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition duration-300">S'inscrire</button>
-      </form>
-      <p id="newsletterMessageModal" class="text-center mt-4 text-sm text-gray-700"></p>
+  <div class="container nl__inner">
+
+    <div class="nl__header fade-up">
+      <span class="section-label section-label--white">{t('newsletter', 'label')}</span>
+      <h2 id="nl-title" class="nl__title" set:html={t('newsletter', 'title').replace('!', '!<br />')}></h2>
+      <p class="nl__subtitle">{t('newsletter', 'subtitle')}</p>
     </div>
+
+    <form id="newsletterFormPage" class="nl__form fade-up" style="transition-delay:0.1s" novalidate>
+      <div class="nl__field">
+        <input type="text" id="nl-name" name="fullname" placeholder=" " required class="nl__input" autocomplete="name" />
+        <label for="nl-name" class="nl__label">{t('newsletter', 'namePlaceholder')}</label>
+      </div>
+      <div class="nl__field">
+        <input type="email" id="nl-email" name="email" placeholder=" " required class="nl__input" autocomplete="email" />
+        <label for="nl-email" class="nl__label">{t('newsletter', 'emailPlaceholder')}</label>
+      </div>
+      <button type="submit" class="nl__btn btn--lg">
+        <span>{t('newsletter', 'btnSubscribe')}</span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <p id="newsletterMessagePage" class="nl__msg" role="status" aria-live="polite"></p>
+    </form>
+
   </div>
 </section>
 
+<!-- Modal newsletter -->
+<div id="newsletterModal" class="nl-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="nl-modal-title">
+  <div class="nl-modal">
+    <button id="closeModal" class="nl-modal__close" aria-label={t('newsletter', 'modalClose')}>&times;</button>
+    <div class="nl-modal__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </div>
+    <h3 id="nl-modal-title" class="nl-modal__title">{t('newsletter', 'modalTitle')}</h3>
+    <p class="nl-modal__desc">{t('newsletter', 'modalDesc')}</p>
+    <form id="newsletterFormModal" class="nl-modal__form" novalidate>
+      <input type="text"  name="fullname" placeholder={t('newsletter', 'modalNamePlaceholder')}  required class="nl-modal__input" autocomplete="name" />
+      <input type="email" name="email"    placeholder={t('newsletter', 'modalEmailPlaceholder')} required class="nl-modal__input" autocomplete="email" />
+      <button type="submit" class="nl-modal__btn">{t('newsletter', 'modalBtn')}</button>
+    </form>
+    <p id="newsletterMessageModal" class="nl-modal__msg" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
 <script type="module">
-  const modal = document.getElementById("newsletterModal");
+  const modal    = document.getElementById("newsletterModal");
   const closeBtn = document.getElementById("closeModal");
-  
-  // ⚡ Afficher le modal seulement si pas déjà vu, après 30 secondes
+  const nlSection = document.querySelector('.nl[data-nl-error]');
+  const i18n = {
+    error:       nlSection?.dataset.nlError       || 'Erreur lors de l\'inscription.',
+    serverError: nlSection?.dataset.nlServerError || 'Erreur serveur, veuillez réessayer plus tard.',
+    sending:     nlSection?.dataset.nlSending     || 'Envoi…',
+  };
+
   if (!localStorage.getItem("newsletterSeen")) {
-    setTimeout(() => modal.classList.remove("hidden"), 30000); // 30 secondes
+    setTimeout(() => modal.classList.remove("hidden"), 30000);
   }
-  
   closeBtn.addEventListener("click", () => {
     modal.classList.add("hidden");
     localStorage.setItem("newsletterSeen", "true");
   });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.add("hidden");
+      localStorage.setItem("newsletterSeen", "true");
+    }
+  });
 
-  // Fonction générique pour envoyer formulaire (page ou modal)
   async function handleNewsletterForm(e, messageEl, formEl) {
     e.preventDefault();
-    const submitBtn = e.target.querySelector("button[type='submit']");
+    const submitBtn = formEl.querySelector("button[type='submit']");
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = "Envoi…";
+    submitBtn.textContent = i18n.sending;
 
     const data = Object.fromEntries(new FormData(formEl).entries());
 
@@ -68,30 +106,285 @@
 
       if (response.ok) {
         messageEl.textContent = result.message;
-        messageEl.className = "text-green-500 mt-2 font-semibold text-center";
+        messageEl.dataset.state = "success";
         formEl.reset();
         localStorage.setItem("newsletterSeen", "true");
         if (formEl.id === "newsletterFormModal") modal.classList.add("hidden");
       } else {
-        messageEl.textContent = result.message || "Erreur lors de l'inscription.";
-        messageEl.className = "text-red-500 mt-2 font-semibold text-center";
+        messageEl.textContent = result.message || i18n.error;
+        messageEl.dataset.state = "error";
       }
     } catch (err) {
       console.error(err);
-      messageEl.textContent = "Erreur serveur, veuillez réessayer plus tard.";
-      messageEl.className = "text-red-500 mt-2 font-semibold text-center";
+      messageEl.textContent = i18n.serverError;
+      messageEl.dataset.state = "error";
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
     }
   }
 
-  // Listener pour les deux formulaires
-  document.getElementById("newsletterFormPage").addEventListener("submit", e => 
+  document.getElementById("newsletterFormPage").addEventListener("submit", e =>
     handleNewsletterForm(e, document.getElementById("newsletterMessagePage"), e.target)
   );
-
-  document.getElementById("newsletterFormModal").addEventListener("submit", e => 
+  document.getElementById("newsletterFormModal").addEventListener("submit", e =>
     handleNewsletterForm(e, document.getElementById("newsletterMessageModal"), e.target)
   );
 </script>
+
+<style>
+  .nl {
+    position: relative;
+    background: linear-gradient(135deg, var(--col-primary-dark) 0%, var(--col-primary) 50%, var(--col-primary-light) 100%);
+    color: var(--col-white);
+    overflow: hidden;
+  }
+
+  .nl__bg-deco { position: absolute; inset: 0; pointer-events: none; }
+  .nl__bg-circle {
+    position: absolute;
+    border-radius: var(--r-full);
+    filter: blur(60px);
+  }
+  .nl__bg-circle--1 {
+    top: -6rem; inset-inline-end: -6rem;
+    width: 30rem; height: 30rem;
+    background: radial-gradient(circle, rgba(201,144,58,0.18) 0%, transparent 70%);
+  }
+  .nl__bg-circle--2 {
+    bottom: -8rem; inset-inline-start: -4rem;
+    width: 26rem; height: 26rem;
+    background: radial-gradient(circle, rgba(82,183,136,0.14) 0%, transparent 70%);
+  }
+
+  .nl__inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-12);
+  }
+
+  .nl__header { text-align: center; }
+  .nl__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 5vw, var(--text-5xl));
+    color: var(--col-white);
+    line-height: 1.12;
+    margin-bottom: var(--sp-4);
+  }
+  .nl__subtitle {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.72);
+    max-width: 42rem;
+    margin-inline: auto;
+    line-height: 1.7;
+  }
+
+  .nl__form {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(12px);
+    border-radius: var(--r-2xl);
+    padding: var(--sp-8);
+    width: 100%;
+    max-width: 36rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+  }
+
+  .nl__field { position: relative; }
+  .nl__input {
+    width: 100%;
+    padding: var(--sp-4) var(--sp-4) var(--sp-2);
+    background: rgba(255, 255, 255, 0.10);
+    border: 1.5px solid rgba(255, 255, 255, 0.20);
+    border-radius: var(--r-lg);
+    color: var(--col-white);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    outline: none;
+    transition: border-color var(--tr-base), box-shadow var(--tr-base), background var(--tr-base);
+    caret-color: var(--col-accent);
+  }
+  .nl__input::placeholder { color: transparent; }
+  .nl__input:focus {
+    border-color: var(--col-accent);
+    box-shadow: 0 0 0 3px rgba(201, 144, 58, 0.25);
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .nl__label {
+    position: absolute;
+    inset-inline-start: var(--sp-4);
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: rgba(255, 255, 255, 0.55);
+    pointer-events: none;
+    transition: top var(--tr-base), transform var(--tr-base), font-size var(--tr-base), color var(--tr-base);
+  }
+  .nl__input:not(:placeholder-shown) ~ .nl__label,
+  .nl__input:focus ~ .nl__label {
+    top: var(--sp-2);
+    transform: translateY(0);
+    font-size: var(--text-xs);
+    color: var(--col-accent-light);
+  }
+
+  .nl__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    width: 100%;
+    padding: var(--sp-4) var(--sp-6);
+    background: var(--col-accent);
+    color: var(--col-white);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-base);
+    border: none;
+    border-radius: var(--r-lg);
+    cursor: pointer;
+    transition: background var(--tr-base), transform var(--tr-base), box-shadow var(--tr-base);
+    box-shadow: 0 4px 18px rgba(201, 144, 58, 0.40);
+  }
+  .nl__btn svg { width: 1.1rem; height: 1.1rem; }
+  .nl__btn:hover {
+    background: #b8812e;
+    transform: scale(1.03);
+    box-shadow: 0 6px 24px rgba(201, 144, 58, 0.50);
+  }
+  .nl__btn:focus-visible { outline: 2px solid var(--col-accent-light); outline-offset: 3px; }
+  .nl__btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .nl__msg {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    text-align: center;
+    font-weight: 600;
+    min-height: 1.2rem;
+  }
+  .nl__msg[data-state="success"] { color: #86efac; }
+  .nl__msg[data-state="error"]   { color: #fca5a5; }
+
+  .nl-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: var(--sp-4);
+    backdrop-filter: blur(4px);
+  }
+  .nl-modal-backdrop.hidden { display: none; }
+
+  .nl-modal {
+    background: var(--col-white);
+    border-radius: var(--r-2xl);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    padding: var(--sp-10) var(--sp-8);
+    width: 100%;
+    max-width: 26rem;
+    position: relative;
+    text-align: center;
+  }
+
+  .nl-modal__close {
+    position: absolute;
+    top: var(--sp-4);
+    inset-inline-end: var(--sp-4);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--col-text-muted);
+    cursor: pointer;
+    padding: var(--sp-1);
+    border-radius: var(--r-sm);
+    transition: color var(--tr-fast), background var(--tr-fast);
+  }
+  .nl-modal__close:hover { color: var(--col-primary); background: var(--col-surface); }
+  .nl-modal__close:focus-visible { outline: 2px solid var(--col-primary); }
+
+  .nl-modal__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: var(--col-primary-bg);
+    border-radius: var(--r-full);
+    margin: 0 auto var(--sp-4);
+    color: var(--col-primary);
+  }
+  .nl-modal__icon svg { width: 1.5rem; height: 1.5rem; }
+
+  .nl-modal__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-2xl);
+    color: var(--col-primary);
+    margin-bottom: var(--sp-2);
+  }
+  .nl-modal__desc {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    margin-bottom: var(--sp-6);
+    line-height: 1.6;
+  }
+
+  .nl-modal__form { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .nl-modal__input {
+    width: 100%;
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--col-bg);
+    border: 1.5px solid var(--col-border);
+    border-radius: var(--r-lg);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: var(--col-text);
+    outline: none;
+    transition: border-color var(--tr-base), box-shadow var(--tr-base);
+  }
+  .nl-modal__input::placeholder { color: var(--col-text-muted); }
+  .nl-modal__input:focus {
+    border-color: var(--col-primary);
+    box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.15);
+  }
+  .nl-modal__btn {
+    width: 100%;
+    padding: var(--sp-3) var(--sp-6);
+    background: var(--col-primary);
+    color: var(--col-white);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-base);
+    border: none;
+    border-radius: var(--r-lg);
+    cursor: pointer;
+    transition: background var(--tr-base), transform var(--tr-base);
+  }
+  .nl-modal__btn:hover { background: var(--col-primary-light); transform: scale(1.02); }
+  .nl-modal__btn:focus-visible { outline: 2px solid var(--col-primary); outline-offset: 3px; }
+  .nl-modal__btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .nl-modal__msg {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: center;
+    margin-top: var(--sp-3);
+    min-height: 1.2rem;
+  }
+  .nl-modal__msg[data-state="success"] { color: var(--col-primary); }
+  .nl-modal__msg[data-state="error"]   { color: #dc2626; }
+</style>

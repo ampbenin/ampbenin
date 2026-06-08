@@ -1,39 +1,55 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import JobsCarousel from '../components/JobsCarousel.jsx';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
 ---
 
-<BaseLayout title="Recrutement et opportunité - AMP BENIN">
+<BaseLayout
+  title={t('meta', 'recrutementTitle')}
+  description={t('meta', 'recrutementDesc')}
+  url="https://ampbenin.netlify.app/recrutement"
+  keywords="recrutement AMP BENIN, opportunités ONG Bénin, TDR consultance, emploi développement"
+>
+
+  <!-- JSON-LD BreadcrumbList -->
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Recrutement", "item": "https://ampbenin.netlify.app/recrutement" }
+    ]
+  }
+  </script>
 
   <!-- Section Intro -->
-  <section class="bg-gradient-to-r from-blue-600 to-green-500 text-white py-12 px-4">
+  <section class="bg-gradient-to-r from-blue-600 to-green-500 text-white py-12 px-4" aria-labelledby="recru-title">
     <div class="max-w-5xl mx-auto text-center">
-      
-      <h1 class="text-3xl md:text-4xl font-bold mb-4">
+      <h1 id="recru-title" class="text-3xl md:text-4xl font-bold mb-4">
         Recrutements et opportunités
       </h1>
-
       <p class="text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
         Bienvenue sur la page officielle des recrutements et opportunités de <strong>AMP BENIN</strong>.
         Consultez les offres disponibles et prenez part à nos initiatives en faveur du développement,
-        de l’innovation et de l’autonomisation des jeunes.
+        de l'innovation et de l'autonomisation des jeunes.
       </p>
-
     </div>
   </section>
 
   <!-- Section contenu -->
-  <main class="max-w-6xl mx-auto px-4 py-12">
-
+  <section class="max-w-6xl mx-auto px-4 py-12" aria-label="Offres disponibles">
     <div class="mb-8 text-center">
       <p class="text-gray-600 max-w-2xl mx-auto">
         Veuillez consulter la liste des offres disponibles ci-dessous et accéder aux termes de référence (TDR).
         Chaque opportunité représente une occasion de contribuer activement à nos projets.
       </p>
     </div>
-
-    <JobsCarousel client:load />
-
-  </main>
+    <!-- client:visible : hydraté seulement quand le composant est dans le viewport -->
+    <JobsCarousel client:visible />
+  </section>
 
 </BaseLayout>

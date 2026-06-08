@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="VBG Numériques au Bénin : le web, miroir des violences sociales">
+<BaseLayout
+  title="VBG Numériques – Jour 9 : le web, miroir des violences sociales | AMP BENIN"
+  description="Jour 9 des 16 Jours d'activisme AMP BENIN 2025 : comment les réseaux sociaux amplifient les violences basées sur le genre au Bénin et comment agir."
+  url="https://ampbenin.netlify.app/16jours/j9"
+  keywords="réseaux sociaux VBG Bénin, violences numériques, 16 jours activisme jour 9, AMP BENIN"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 9", "item": "https://ampbenin.netlify.app/16jours/j9" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -20,7 +37,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v9.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903915/ong-site/images/16jours/og-image-v9.jpg"
         alt="VBG numériques au Bénin - visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -49,7 +66,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/1J9-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903941/ong-site/images/16jours/1J9-16jours-25.webp"
           alt="Attaques numériques contre les femmes sans enfants"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -83,7 +100,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 3 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/2J9-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903942/ong-site/images/16jours/2J9-16jours-25.webp"
           alt="Critiques numériques contre les femmes célibataires plus âgées"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -117,7 +134,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 4 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/3J9-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903943/ong-site/images/16jours/3J9-16jours-25.webp"
           alt="Violences digitales contre les femmes mariées"
           class="rounded-lg shadow-md w-full object-cover"
         />

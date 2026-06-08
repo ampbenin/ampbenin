@@ -1,8 +1,28 @@
 ---
 import Layout from "../layouts/BaseLayout.astro";
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
 ---
 
-<Layout title="Devenir Volontaire - AMP BENIN">
+<Layout
+  title={t('meta', 'volontairesTitle')}
+  description={t('meta', 'volontairesDesc')}
+  url="https://ampbenin.netlify.app/volontaires"
+  keywords="volontaire AMP BENIN, sympathisant ONG Bénin, bénévolat Bénin, engagement citoyen, jeunesse Bénin"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Devenir Volontaire", "item": "https://ampbenin.netlify.app/volontaires" }
+    ]
+  }
+  </script>
   <section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 p-6">
     <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-8 animate-fade-in">
       
@@ -151,7 +171,7 @@ import Layout from "../layouts/BaseLayout.astro";
           Envoyer ma candidature
         </button>
 
-        <p id="formMessage" class="text-center mt-4 text-sm text-gray-600"></p>
+        <p id="formMessage" class="text-center mt-4 text-sm text-gray-600" role="status" aria-live="polite"></p>
 
       </form>
     </div>

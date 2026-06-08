@@ -1,0 +1,811 @@
+---
+// src/pages/actualites/mycountry229-lutte-desinformation-gogounou.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BandePartenaires from '../../components/BandePartenaires.astro';
+import ArticlePhotoGallery from "../../components/ArticlePhotoGallery.jsx";
+import ArticleStats from "../../components/ArticleStats.jsx";
+
+const title =
+  "MyCountry229 à Gogounou : Les jeunes mobilisés contre la désinformation numérique | AMP Bénin";
+const description =
+  "Retour sur le projet MyCountry229 mené par AMP BENIN et DG Partners ONG à Gogounou (Bénin) : 34 jeunes en focus groupe, 20 relais communautaires formés, lutte contre la désinformation et promotion des contenus numériques fiables en Afrique de l'Ouest.";
+const canonicalUrl =
+  "https://www.ampbenin.org/actualites/mycountry229-lutte-desinformation-gogounou";
+const publishedDate = "2026-05-23";
+const modifiedDate = "2026-06-06";
+const authorName = "AMP BENIN – Action Monde Productif";
+const imageOg = "https://www.ampbenin.org/images/mycountry229/photo-1.jpg";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  headline:
+    "Gogounou : Le projet MyCountry229 mobilise les jeunes contre la désinformation",
+  description,
+  image: [imageOg],
+  datePublished: publishedDate,
+  dateModified: modifiedDate,
+  author: {
+    "@type": "Organization",
+    name: "AMP BENIN – Action Monde Productif",
+    url: "https://www.ampbenin.org",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "AMP BENIN",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://www.ampbenin.org/logo.png",
+    },
+  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+  keywords:
+    "désinformation, Bénin, Gogounou, MyCountry229, citoyenneté numérique, jeunes, AMP BENIN, ABCA, fausses informations, réseaux sociaux, Afrique de l'Ouest",
+  articleSection: "Actualités / Projets",
+  inLanguage: "fr-BJ",
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  url={canonicalUrl}
+  image={imageOg}
+  type="article"
+  keywords="MyCountry229, désinformation Bénin, Gogounou, jeunes numériques, AMP BENIN, ABCA, DG Partners ONG, fausses informations, citoyenneté numérique, Afrique francophone, lutte désinformation"
+>
+  <Fragment slot="head">
+    <!-- Lora (DM Sans déjà chargé par BaseLayout) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Article Open Graph -->
+    <meta property="article:published_time" content={publishedDate} />
+    <meta property="article:modified_time" content={modifiedDate} />
+    <meta property="article:section" content="Projets" />
+    <meta property="article:tag" content="désinformation" />
+    <meta property="article:tag" content="jeunes" />
+    <meta property="article:tag" content="numérique" />
+    <meta property="article:tag" content="Bénin" />
+    <meta property="article:tag" content="Gogounou" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: "https://www.ampbenin.org" },
+        { "@type": "ListItem", position: 2, name: "Actualités", item: "https://www.ampbenin.org/actualites" },
+        { "@type": "ListItem", position: 3, name: "MyCountry229 – Gogounou", item: canonicalUrl },
+      ],
+    })} />
+  </Fragment>
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-tags fade-up fade-up-1">
+        <span class="hero-tag hero-tag--accent">Actualité projet</span>
+        <span class="hero-tag">🇧🇯 Bénin · Gogounou</span>
+        <span class="hero-tag">Citoyenneté numérique</span>
+        <span class="hero-tag">Mai – Juillet 2026</span>
+      </div>
+      <h1 class="fade-up fade-up-2">
+        MyCountry229 mobilise les jeunes<br />
+        <em>contre la désinformation</em> à Gogounou
+      </h1>
+      <p class="hero-lead fade-up fade-up-3">
+        AMP BENIN, en consortium avec DG Partners ONG et l'ABCA, déploie à Gogounou un projet ambitieux
+        de lutte contre les fausses informations : 34 jeunes en concertation, 20 relais communautaires formés,
+        et un objectif d'atteindre plus de 300 jeunes dans la commune.
+      </p>
+      <div class="hero-meta fade-up fade-up-4">
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+          <time datetime={publishedDate}>Publié le 23 mai 2026</time>
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          Lecture 6 min
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+          Commune de Gogounou, Alibori, Bénin
+        </div>
+      </div>
+      <div class="hero-orgs fade-up fade-up-4">
+        <span class="hero-orgs-label">Porteurs :</span>
+        <span class="hero-org-badge">AMP BENIN</span>
+        <span class="hero-org-badge">DG Partners ONG</span>
+        <span class="hero-org-badge">ABCA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARTICLE CONTENT ── -->
+  <div class="article-wrap">
+
+    <ArticlePhotoGallery client:load />
+    <ArticleStats client:visible />
+
+    <p class="intro-callout">
+      Dans un contexte où la désinformation fragilise la cohésion sociale au Bénin et en Afrique de l'Ouest,
+      le projet <strong>MyCountry229</strong> fait le pari des jeunes : former des relais communautaires capables
+      d'identifier, de déconstruire et de combattre les fausses informations à la source.
+    </p>
+
+    <div class="article-body">
+
+      <h2>La désinformation : un défi croissant pour les communautés béninoises</h2>
+      <p>
+        À l'ère du numérique, les réseaux sociaux sont devenus des espaces privilégiés d'information et d'échange.
+        Ils constituent cependant aussi des canaux de diffusion rapide de contenus erronés, manipulés ou sortis
+        de leur contexte. Cette situation favorise la propagation de rumeurs, de discours trompeurs et d'informations
+        non vérifiées qui peuvent avoir des conséquences importantes sur la cohésion sociale, la confiance citoyenne
+        et la stabilité des communautés.
+      </p>
+      <p>
+        Dans plusieurs localités du Bénin, les jeunes sont à la fois les principales cibles et les principaux
+        vecteurs de diffusion de l'information numérique. Face à cette réalité, il devient essentiel de leur
+        fournir les outils nécessaires pour identifier les contenus trompeurs, développer leur esprit critique
+        et adopter des comportements responsables en ligne.
+      </p>
+
+      <div class="pull-quote">
+        <p>
+          « Le projet MyCountry229 place les jeunes au cœur de la lutte contre la désinformation
+          en les transformant en relais communautaires capables d'agir positivement dans leurs milieux de vie. »
+        </p>
+      </div>
+
+      <hr class="section-divider" />
+
+      <h2>Focus groupe participatif : 34 jeunes au cœur de la réflexion</h2>
+
+      <div class="event-block">
+        <div class="event-block-header">
+          <div class="event-block-icon" aria-hidden="true">💬</div>
+          <div>
+            <div class="event-block-title">Focus groupe en ligne</div>
+            <div class="event-block-date">📅 18 – 20 mai 2026 · En ligne · Gogounou</div>
+          </div>
+        </div>
+        <p style="font-size:0.93rem;color:var(--text-mid);margin:0">
+          Du 18 au 20 mai 2026, un focus groupe en ligne a réuni <strong>34 jeunes participants</strong>
+          issus de différents horizons de la commune de Gogounou. Pendant trois jours, ils ont partagé
+          leurs expériences et analysé les réalités observées dans leurs communautés.
+        </p>
+      </div>
+
+      <p>Les discussions ont porté sur plusieurs thématiques essentielles :</p>
+      <ul>
+        <li>La compréhension de la notion de désinformation et ses différentes formes</li>
+        <li>Les mécanismes de propagation des rumeurs et les facteurs favorisants</li>
+        <li>L'impact des contenus trompeurs sur les populations et la cohésion sociale</li>
+        <li>Les bonnes pratiques de vérification de l'information (fact-checking)</li>
+        <li>Les stratégies communautaires de sensibilisation et de plaidoyer</li>
+      </ul>
+      <p>
+        Cette phase participative a également servi de cadre pour identifier des pistes d'action concrètes
+        et élaborer les premières orientations d'un document de plaidoyer destiné aux autorités locales.
+      </p>
+
+      <hr class="section-divider" />
+
+      <h2>Activité de terrain à Sori : renforcer les capacités des jeunes leaders</h2>
+
+      <div class="event-block">
+        <div class="event-block-header">
+          <div class="event-block-icon" aria-hidden="true">🏘️</div>
+          <div>
+            <div class="event-block-title">Activité communautaire de terrain</div>
+            <div class="event-block-date">📅 23 mai 2026 · Arrondissement de Sori, Gogounou</div>
+          </div>
+        </div>
+        <p style="font-size:0.93rem;color:var(--text-mid);margin:0">
+          Après la phase de réflexion, une activité communautaire a réuni <strong>20 participants sélectionnés</strong>,
+          accompagnés de l'équipe de mise en œuvre : le coordonnateur du projet, deux collaborateurs terrain
+          et deux formateurs spécialisés.
+        </p>
+      </div>
+
+      <p>
+        Les participants ont bénéficié de sessions interactives, d'études de cas, d'exercices pratiques
+        et d'échanges d'expériences leur permettant de mieux comprendre les enjeux liés à l'information numérique,
+        à la citoyenneté numérique et à l'utilisation responsable des réseaux sociaux.
+      </p>
+
+      <hr class="section-divider" />
+
+      <h2>Des formateurs experts pour transmettre des compétences pratiques</h2>
+      <p>
+        Les sessions de formation ont été animées par deux personnes ressources expérimentées dont les
+        interventions complémentaires ont permis aux jeunes de développer des compétences concrètes
+        réinvestissables dans leurs activités communautaires.
+      </p>
+
+      <div class="formateurs-grid">
+        <div class="formateur-card">
+          <div class="formateur-avatar" aria-hidden="true">👨‍💻</div>
+          <div class="formateur-name">M. Fiacre TCHISSOU</div>
+          <div class="formateur-role">Expert en gouvernance numérique & protection des données</div>
+          <p class="formateur-desc">
+            A conduit une session consacrée à la <strong>compréhension de la désinformation</strong> :
+            identifier les formes de manipulation de l'information, reconnaître les signes d'un contenu
+            douteux, et utiliser des méthodes simples de vérification des sources avant toute diffusion.
+          </p>
+        </div>
+        <div class="formateur-card">
+          <div class="formateur-avatar" aria-hidden="true">🎤</div>
+          <div class="formateur-name">M. Adolphe GNONLONFOUN</div>
+          <div class="formateur-role">Formateur en communication & plaidoyer communautaire</div>
+          <p class="formateur-desc">
+            A animé une session portant sur la <strong>promotion des contenus numériques fiables</strong>,
+            l'utilisation responsable des réseaux sociaux et les techniques de plaidoyer communautaire,
+            sensibilisant les jeunes à leur rôle de citoyens numériques responsables.
+          </p>
+        </div>
+      </div>
+
+      <hr class="section-divider" />
+
+      <h2>Des jeunes désormais prêts à devenir des relais communautaires</h2>
+      <p>
+        L'une des principales forces du projet réside dans son approche fondée sur le leadership des jeunes.
+        Les 20 participants sélectionnés ont été identifiés pour leur engagement communautaire et leur
+        capacité à influencer positivement leur entourage.
+      </p>
+      <p>
+        À l'issue des activités, les participants ont exprimé leur satisfaction et leur engagement à
+        poursuivre les actions de sensibilisation dans leurs localités respectives. Ils se sont engagés à :
+      </p>
+      <ul>
+        <li>Promouvoir les bonnes pratiques numériques au quotidien</li>
+        <li>Encourager la vérification systématique des informations avant tout partage</li>
+        <li>Lutter activement contre la diffusion des contenus trompeurs dans leurs réseaux</li>
+      </ul>
+
+      <div class="whatsapp-band">
+        <span class="whatsapp-band-icon" aria-hidden="true">💬</span>
+        <p class="whatsapp-band-text">
+          <strong>Groupe WhatsApp de suivi mis en place</strong> — Un espace numérique dédié permet aux
+          participants de partager leurs expériences, mutualiser les bonnes pratiques et coordonner les
+          actions futures, assurant la continuité du projet après la formation.
+        </p>
+      </div>
+
+      <p>
+        Grâce à cette stratégie de relais communautaires, le projet ambitionne d'atteindre indirectement
+        <strong>plus de 300 jeunes</strong> au sein des différentes communautés de la commune de Gogounou.
+      </p>
+
+      <hr class="section-divider" />
+
+      <h2>Vers un plaidoyer communautaire durable contre la désinformation</h2>
+
+      <div class="cta-box">
+        <span class="cta-box-icon" aria-hidden="true">📄</span>
+        <div>
+          <div class="cta-box-title">Document de plaidoyer communautaire en cours</div>
+          <p class="cta-box-text">
+            Au-delà des formations, le projet prévoit la finalisation d'un document de plaidoyer élaboré
+            de manière participative. Il rassemblera les préoccupations identifiées et des recommandations
+            destinées aux autorités locales, acteurs communautaires et organisations de la société civile,
+            pour prévenir la désinformation et renforcer l'éducation aux médias à Gogounou.
+          </p>
+        </div>
+      </div>
+
+      <p>
+        L'objectif est de promouvoir des actions durables permettant de prévenir la désinformation,
+        de renforcer l'éducation aux médias et de favoriser un environnement numérique plus sûr pour les
+        jeunes au Bénin et en Afrique francophone de l'Ouest.
+      </p>
+
+      <hr class="section-divider" />
+
+      <h2>Une initiative porteuse d'espoir pour la citoyenneté numérique</h2>
+      <p>
+        À travers le projet MyCountry229, <strong>AMP BENIN</strong>, <strong>DG Partners ONG</strong>
+        et l'<strong>ABCA</strong> démontrent qu'il est possible de mobiliser les jeunes autour des enjeux
+        de la citoyenneté numérique et de la lutte contre la désinformation.
+      </p>
+      <p>
+        Les résultats obtenus témoignent de l'intérêt croissant des jeunes pour ces questions et de leur
+        volonté de s'impliquer activement dans la construction de communautés mieux informées, plus résilientes
+        face aux fausses informations et davantage engagées dans la promotion d'un espace numérique responsable.
+      </p>
+      <p>
+        Le projet constitue ainsi une contribution importante à la consolidation de la cohésion sociale,
+        au renforcement de la participation citoyenne et à la promotion d'une culture de vérification
+        de l'information dans les communautés béninoises.
+      </p>
+
+    </div>
+
+    <!-- TAGS -->
+    <div class="article-tags" aria-label="Mots-clés">
+      <span class="article-tags-label">🏷️ Tags :</span>
+      <a href="/actualites?tag=mycountry229" class="article-tag-item">#MyCountry229</a>
+      <a href="/actualites?tag=desinformation" class="article-tag-item">#Désinformation</a>
+      <a href="/actualites?tag=jeunes" class="article-tag-item">#Jeunes</a>
+      <a href="/actualites?tag=numerique" class="article-tag-item">#Numérique</a>
+      <a href="/actualites?tag=benin" class="article-tag-item">#Bénin</a>
+      <a href="/actualites?tag=gogounou" class="article-tag-item">#Gogounou</a>
+      <a href="/actualites?tag=abca" class="article-tag-item">#ABCA</a>
+      <a href="/actualites?tag=citoyennete" class="article-tag-item">#CitoyennetéNumérique</a>
+    </div>
+
+    <!-- SHARE BAR -->
+    <div class="share-bar" aria-label="Partager l'article">
+      <span class="share-label">Partager :</span>
+      <a
+        href={`https://twitter.com/intent/tweet?text=MyCountry229+à+Gogounou+%3A+les+jeunes+mobilisés+contre+la+désinformation+%23MyCountry229+%23Benin&url=${canonicalUrl}`}
+        class="share-btn share-btn--tw"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Partager sur Twitter/X"
+      >𝕏 Twitter</a>
+      <a
+        href={`https://www.facebook.com/sharer/sharer.php?u=${canonicalUrl}`}
+        class="share-btn share-btn--fb"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Partager sur Facebook"
+      >f Facebook</a>
+      <a
+        href={`https://wa.me/?text=MyCountry229+à+Gogounou+%3A+les+jeunes+mobilisés+contre+la+désinformation+${canonicalUrl}`}
+        class="share-btn share-btn--wa"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Partager sur WhatsApp"
+      >📱 WhatsApp</a>
+      <button
+        class="share-btn share-btn--copy"
+        id="copy-link-btn"
+        aria-label="Copier le lien"
+        onclick={`navigator.clipboard.writeText('${canonicalUrl}').then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)})`}
+      >🔗 Copier</button>
+    </div>
+
+  </div>
+
+  <BandePartenaires />
+
+</BaseLayout>
+
+<style is:global>
+  :root {
+    --green-900: #0f2e0f;
+    --green-800: #1a4a1a;
+    --green-700: #1e6b1e;
+    --green-600: #2a8a2a;
+    --green-500: #3aaa3a;
+    --green-200: #b8e4b8;
+    --green-100: #e8f5e8;
+    --green-50:  #f4fbf4;
+    --gold:      #c8960a;
+    --gold-light:#f5e6b0;
+    --text-dark: #1a2a1a;
+    --text-mid:  #3a4a3a;
+    --text-light:#5a6a5a;
+    --border:    #d4e8d4;
+    --white:     #ffffff;
+    --font-serif: 'Lora', Georgia, serif;
+    --font-sans:  'DM Sans', system-ui, sans-serif;
+    --max-w: 820px;
+    --side-pad: clamp(1rem, 5vw, 2rem);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(160deg, var(--green-900) 0%, #1a3d0a 55%, #2d5c12 100%);
+    padding: 4rem var(--side-pad) 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(58,170,58,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(200,150,10,0.08) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .hero-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+    color: var(--green-200);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .hero-tag--accent {
+    background: var(--gold);
+    color: #1a1a00;
+    border-color: transparent;
+  }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--green-200);
+  }
+  .hero-lead {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,0.8);
+    max-width: 660px;
+    line-height: 1.65;
+    margin-bottom: 1.75rem;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--green-200);
+  }
+  .hero-meta-item svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .hero-orgs {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .hero-orgs-label {
+    font-size: 0.72rem;
+    color: var(--green-200);
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 0.2rem;
+  }
+  .hero-org-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .article-wrap {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 2.5rem var(--side-pad) 4rem;
+  }
+
+  /* ── INTRO CALLOUT ── */
+  .intro-callout {
+    background: var(--green-50);
+    border-left: 4px solid var(--green-600);
+    border-radius: 0 10px 10px 0;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+    font-size: 1.05rem;
+    color: var(--text-mid);
+    font-style: italic;
+    font-family: var(--font-serif);
+    line-height: 1.65;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .article-body h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 3vw, 1.55rem);
+    font-weight: 700;
+    color: var(--green-900);
+    margin: 2.8rem 0 0.9rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+    line-height: 1.3;
+  }
+  .article-body h3 {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--green-800);
+    margin: 1.8rem 0 0.6rem;
+  }
+  .article-body p {
+    margin-bottom: 1.1rem;
+    font-size: 1rem;
+    color: var(--text-dark);
+    line-height: 1.8;
+  }
+  .article-body ul {
+    margin: 0.5rem 0 1.25rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .article-body li {
+    font-size: 0.97rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+    padding-left: 0.25rem;
+  }
+  .article-body li::marker { color: var(--green-600); }
+
+  /* ── SECTION DIVIDER ── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  /* ── FOCUS GROUPE BLOCK ── */
+  .event-block {
+    background: var(--green-50);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .event-block-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+  }
+  .event-block-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--green-700);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .event-block-title {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--green-900);
+  }
+  .event-block-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── FORMATEURS CARDS ── */
+  .formateurs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0 2rem;
+  }
+  .formateur-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .formateur-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--green-600), var(--green-500));
+  }
+  .formateur-avatar {
+    width: 2.8rem;
+    height: 2.8rem;
+    background: var(--green-100);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    border: 2px solid var(--border);
+  }
+  .formateur-name {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: var(--green-900);
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+  .formateur-role {
+    font-size: 0.75rem;
+    color: var(--green-700);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .formateur-desc {
+    font-size: 0.88rem;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  /* ── QUOTE ── */
+  .pull-quote {
+    border-left: 5px solid var(--gold);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    background: var(--gold-light);
+    border-radius: 0 8px 8px 0;
+  }
+  .pull-quote p {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--text-dark);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ── CTA BOX ── */
+  .cta-box {
+    background: linear-gradient(135deg, var(--green-800) 0%, var(--green-900) 100%);
+    border-radius: 14px;
+    padding: 2rem 2rem;
+    color: #fff;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin: 2.5rem 0;
+  }
+  .cta-box-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+  .cta-box-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+  .cta-box-text {
+    font-size: 0.92rem;
+    color: var(--green-200);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  /* ── WHATSAPP BAND ── */
+  .whatsapp-band {
+    background: #e8f8e8;
+    border: 1px solid #b8e4b8;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .whatsapp-band-icon { font-size: 1.6rem; flex-shrink: 0; }
+  .whatsapp-band-text {
+    font-size: 0.9rem;
+    color: var(--text-mid);
+    line-height: 1.5;
+  }
+  .whatsapp-band-text strong { color: var(--green-800); }
+
+  /* ── TAGS SECTION ── */
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .article-tags-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-light);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-right: 0.25rem;
+  }
+  .article-tag-item {
+    font-size: 0.78rem;
+    background: var(--green-100);
+    color: var(--green-800);
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .article-tag-item:hover { background: var(--green-200); }
+
+  /* ── SHARE BAR ── */
+  .share-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .share-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    border: none;
+  }
+  .share-btn:hover { opacity: 0.85; }
+  .share-btn--tw  { background: #1da1f2; color: #fff; }
+  .share-btn--fb  { background: #1877f2; color: #fff; }
+  .share-btn--wa  { background: #25d366; color: #fff; }
+  .share-btn--copy { background: var(--green-100); color: var(--green-800); border: 1px solid var(--border); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up   { animation: fadeUp 0.55s ease both; }
+  .fade-up-1 { animation-delay: 0.05s; }
+  .fade-up-2 { animation-delay: 0.12s; }
+  .fade-up-3 { animation-delay: 0.20s; }
+  .fade-up-4 { animation-delay: 0.28s; }
+</style>

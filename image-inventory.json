@@ -1,0 +1,744 @@
+[
+  {
+    "localPath": "/images/Logo.png",
+    "usedIn": ["src/components/Header.astro", "src/components/Footer.astro"],
+    "type": "local",
+    "altText": "Logo AMP BENIN",
+    "category": "logo"
+  },
+  {
+    "localPath": "/og-image-v16.jpg",
+    "usedIn": ["src/layouts/BaseLayout.astro"],
+    "type": "local",
+    "altText": "AMP BENIN — ONG Bénin",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/Logo16jours.webp",
+    "usedIn": ["src/components/16jours/HeroHeader.astro", "src/components/16jours/PartnersSection.astro", "src/pages/16jours/j5.astro"],
+    "type": "local",
+    "altText": "Logo 16 Jours d'Activisme",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/Logo-SFPF.webp",
+    "usedIn": ["src/components/16jours/HeroHeader.astro", "src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo SFPF-AMP",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoMASM.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo MASM",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoBougelabs.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo BougeLabs",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoAMPBENIN.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo AMP BENIN",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoINF.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo INF",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoUReport.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo UReport",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoADECK.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo ADECK",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/16jours/LogoONUFemme.webp",
+    "usedIn": ["src/components/16jours/PartnersSection.astro"],
+    "type": "local",
+    "altText": "Logo ONU Femme",
+    "category": "logo"
+  },
+  {
+    "localPath": "/images/impact-positif-ODD.webp",
+    "usedIn": ["src/components/HeroSlider.astro"],
+    "type": "local",
+    "altText": "Environnement, Climat et Promotion des ODD",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/forum-jeunesse.webp",
+    "usedIn": ["src/components/HeroSlider.astro"],
+    "type": "local",
+    "altText": "Engagement, Cohésion Sociale et Droits Humains",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/innovation.webp",
+    "usedIn": ["src/components/HeroSlider.astro"],
+    "type": "local",
+    "altText": "Innovation, Entrepreneuriat Social et Numérique",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/sante-bienetre-social.webp",
+    "usedIn": ["src/components/HeroSlider.astro"],
+    "type": "local",
+    "altText": "Éducation, Santé et Promotion de l'Enfance",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/ouidah.webp",
+    "usedIn": ["src/components/AMPStats.astro"],
+    "type": "local",
+    "altText": "",
+    "category": "background"
+  },
+  {
+    "localPath": "/images/is/sfpf.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SFPF-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/is/sepe.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SEPE-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/is/spea.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SPEA-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/is/snie.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SNIE-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/is/sccs.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SCCS-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/is/sbsc.webp",
+    "usedIn": ["src/data/is.js", "src/components/ISCarousel.astro", "src/pages/is/index.astro"],
+    "type": "local",
+    "altText": "SBSC-AMP — Institution Spécialisée AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/numsal/Lancement-numsal.jpeg",
+    "usedIn": ["src/pages/actualites.astro", "src/pages/actualites/numsal-tori-bossito.astro"],
+    "type": "local",
+    "altText": "Cérémonie de lancement du projet NumSAL à Tori-Bossito",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/numsal/numsal-maire-tori.jpeg",
+    "usedIn": ["src/pages/actualites/numsal-tori-bossito.astro"],
+    "type": "local",
+    "altText": "Rencontre avec le maire de Tori-Bossito pour le projet NumSAL",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/campagne-mycountry229-paix-benin.png",
+    "usedIn": ["src/pages/actualites.astro", "src/pages/actualites/campagne-mycountry229-paix-benin.astro"],
+    "type": "local",
+    "altText": "Jeunes mobilisés pour la campagne MyCountry229",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/Lancement-16jours.webp",
+    "usedIn": ["src/pages/actualites.astro", "src/pages/index.astro", "src/pages/16jours.astro"],
+    "type": "local",
+    "altText": "Lancement de la campagne 16 Jours d'Activisme AMP BENIN",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/16jours/atelier1.webp",
+    "usedIn": ["src/pages/actualites.astro"],
+    "type": "local",
+    "altText": "Atelier 16 Jours d'Activisme AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/news2.webp",
+    "usedIn": ["src/pages/actualites.astro"],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J16-16jours-25.webp",
+    "usedIn": ["src/components/NewsSlider.astro", "src/pages/actualites.astro", "src/pages/16jours/j16.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 16",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J15-16jours-25.webp",
+    "usedIn": ["src/components/NewsSlider.astro", "src/pages/actualites.astro", "src/pages/16jours/j15.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 15",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J14-16jours-25.webp",
+    "usedIn": ["src/components/NewsSlider.astro", "src/pages/actualites.astro", "src/pages/16jours/j14.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 14",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v7.jpg",
+    "usedIn": ["src/pages/16jours/j7.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 7",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v8.jpg",
+    "usedIn": ["src/pages/16jours/j8.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 8",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v9.jpg",
+    "usedIn": ["src/pages/16jours/j9.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 9",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v10.jpg",
+    "usedIn": ["src/pages/16jours/j10.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 10",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v11.jpg",
+    "usedIn": ["src/pages/16jours/j11.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 11",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v12.jpg",
+    "usedIn": ["src/pages/16jours/j12.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 12",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v14.jpg",
+    "usedIn": ["src/pages/16jours/j14.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 14",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v15.jpg",
+    "usedIn": ["src/pages/16jours/j15.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 15",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/og-image-v16.jpg",
+    "usedIn": ["src/pages/16jours/j16.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme AMP BENIN — Jour 16",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J3-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j3.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 3 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J3-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j3.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 3 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J3-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j3.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 3 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J4-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j4.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 4 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J4-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j4.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 4 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J5-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j5.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 5 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J5-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j5.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 5 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J5-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j5.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 5 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J6-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j6.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 6 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J6-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j6.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 6 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J6-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j6.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 6 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J7-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j7.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 7 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J7-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j7.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 7 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J7-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j7.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 7 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J8-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j8.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 8 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J8-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j8.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 8 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J8-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j8.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 8 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J9-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j9.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 9 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J9-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j9.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 9 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J9-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j9.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 9 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J10-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j10.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 10 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J11-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j11.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 11 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2J11-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j11.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 11 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3J11-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j11.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 11 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1J12-16jours-25.webp",
+    "usedIn": ["src/pages/16jours/j12.astro"],
+    "type": "local",
+    "altText": "16 Jours d'Activisme — Jour 12 AMP BENIN",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/1-Paneliste-16jours-25.webp",
+    "usedIn": ["src/pages/@@@.astro"],
+    "type": "local",
+    "altText": "Panéliste 1 — Webinaire 16 Jours d'Activisme AMP BENIN",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/16jours/2-Paneliste-16jours-25.webp",
+    "usedIn": ["src/pages/@@@.astro"],
+    "type": "local",
+    "altText": "Panéliste 2 — Webinaire 16 Jours d'Activisme AMP BENIN",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/16jours/3-Paneliste-16jours-25.webp",
+    "usedIn": ["src/pages/@@@.astro"],
+    "type": "local",
+    "altText": "Panéliste 3 — Webinaire 16 Jours d'Activisme AMP BENIN",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/16jours/1.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 1 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/2.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 2 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/3.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 3 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/4.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 4 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/5.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 5 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/6.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 6 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/7.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Webinaire Jeunes et Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/8.webp",
+    "usedIn": ["src/pages/16jours/j13.astro"],
+    "type": "local",
+    "altText": "Photo 8 — Webinaire Jeunes & Numérique sans VBG",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/df.jpg",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/droits-hummains.jpg",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/IIII.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/bootcamp.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/news3.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/mycountry229-2.png",
+    "usedIn": [],
+    "type": "local",
+    "altText": "Atelier numérique MyCountry229",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/campagne-mycountry229-paix-benin.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/Lancement16jours.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/01-16jours-25.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/02-16jours-25.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/03-16jours-25.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/04-16jours-25.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/05-16jours-25.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/campagnedigitale.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours/atelier2.webp",
+    "usedIn": [],
+    "type": "local",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/ecoute-jeunes.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/16jours.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/mycountry.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/sweed1.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/ars3.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/espace-jeunesse.jpg",
+    "usedIn": ["src/components/NosActions.jsx"],
+    "type": "missing",
+    "altText": "",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/mycountry229-1.png",
+    "usedIn": ["src/pages/actualites/campagne-mycountry229-paix-benin.astro"],
+    "type": "missing",
+    "altText": "Volontaires MyCountry229 partageant un message de paix",
+    "category": "content"
+  },
+  {
+    "localPath": "/images/vol1.png",
+    "usedIn": ["src/pages/actualites/mycountry229-2025.astro"],
+    "type": "missing",
+    "altText": "Alice HOUNTONDJI — Volontaire MyCountry229",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/vol2.png",
+    "usedIn": ["src/pages/actualites/mycountry229-2025.astro"],
+    "type": "missing",
+    "altText": "Jean KOUASSI — Volontaire MyCountry229",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/vol3.png",
+    "usedIn": ["src/pages/actualites/mycountry229-2025.astro"],
+    "type": "missing",
+    "altText": "Mariam ISSA — Volontaire MyCountry229",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/vol4.png",
+    "usedIn": ["src/pages/actualites/mycountry229-2025.astro"],
+    "type": "missing",
+    "altText": "Dieudonné AHOUANSOU — Volontaire MyCountry229",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/vol5.png",
+    "usedIn": ["src/pages/actualites/mycountry229-2025.astro"],
+    "type": "missing",
+    "altText": "Clémentine ADJOVI — Volontaire MyCountry229",
+    "category": "thumbnail"
+  },
+  {
+    "localPath": "/images/campagne-16-jours-ampbenin.png",
+    "usedIn": ["src/pages/actualites/16jours.astro"],
+    "type": "missing",
+    "altText": "Campagne 16 jours AMP BENIN",
+    "category": "hero"
+  },
+  {
+    "localPath": "/images/social-16jours-ampbenin.png",
+    "usedIn": ["src/pages/actualites/16jours.astro"],
+    "type": "missing",
+    "altText": "AMP BENIN 16 Jours d'Activisme 2025",
+    "category": "content"
+  },
+  {
+    "localPath": "/maps/benin.svg",
+    "usedIn": ["src/components/16jours/MapSection.astro"],
+    "type": "missing",
+    "altText": "Carte du Bénin",
+    "category": "content"
+  }
+]

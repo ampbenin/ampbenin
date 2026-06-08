@@ -1,8 +1,32 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import NosActions from "../components/NosActions.jsx";
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
 ---
 
-<BaseLayout title="Nos Actions - AMP BENIN">
-  <NosActions client:load />
+<BaseLayout
+  title={t('meta', 'actionsTitle')}
+  description={t('meta', 'actionsDesc')}
+  url="https://ampbenin.netlify.app/nos-actions"
+  keywords="actions AMP BENIN, projets VBG, SSR Bénin, mobilisation citoyenne, autonomisation femmes, jeunes"
+>
+
+  <!-- JSON-LD BreadcrumbList -->
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Nos actions", "item": "https://ampbenin.netlify.app/nos-actions" }
+    ]
+  }
+  </script>
+
+  <!-- client:visible : hydraté seulement quand visible dans le viewport -->
+  <NosActions client:visible />
+
 </BaseLayout>

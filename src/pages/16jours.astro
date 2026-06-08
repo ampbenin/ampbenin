@@ -14,21 +14,45 @@ import SocialWallSection from "../components/16jours/SocialWallSection.astro";
 import PartnersSection from "../components/16jours/PartnersSection.astro";
 import FAQSection from "../components/16jours/FAQSection.astro";
 import MapSection from "../components/16jours/MapSection.astro";
+
+const title = "16 Jours d'Activisme Contre les VBG — AMP BENIN 2025";
+const description = "AMP BENIN s'engage pour les 16 Jours d'activisme contre les violences basées sur le genre (VBG) 2025 : sensibilisation, plaidoyer et mobilisation au Bénin. #OrangezLeMonde";
+const keywords = "16 jours activisme, VBG Bénin, violences basées sur le genre, campagne sensibilisation, AMP BENIN, OrangezLeMonde";
 ---
 
-<BaseLayout>
-    <HeroHeader />
-    <Actu />
-    <AboutSection />
-    <EngagementsSection />
-    <StatsSection />
-    <TimelineSection />
-    <GallerySection />
-    <TestimonialsSection />
-    <ActionsSection />
-    <NewsletterSection />
-    <SocialWallSection />
-    <PartnersSection />
-    <FAQSection />
-    <MapSection />
+<BaseLayout
+  title={title}
+  description={description}
+  url="https://ampbenin.netlify.app/16jours"
+  imagePath="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903906/ong-site/images/16jours/Lancement-16jours.webp"
+  keywords={keywords}
+>
+
+  <!-- JSON-LD BreadcrumbList -->
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" }
+    ]
+  }
+  </script>
+
+  <HeroHeader />
+  <Actu />
+  <AboutSection />
+  <EngagementsSection />
+  <StatsSection />
+  <TimelineSection />
+  <GallerySection />
+  <TestimonialsSection />
+  <ActionsSection />
+  <NewsletterSection />
+  <SocialWallSection />
+  <PartnersSection />
+  <FAQSection />
+  <MapSection />
+
 </BaseLayout>

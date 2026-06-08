@@ -1,67 +1,97 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
 
 const articles = [
-    {
+  {
     title: "Lancement du projet NumSAL - 2026",
-    date: "En cours...",
-    excerpt: "AMP BENIN, à travers sa section SNIE, lance officiellement le projet NumSAL pour former les jeunes et promouvoir l’entrepreneuriat numérique. Projet soutenu par le programme FP2E / NexT Impact (Sèmè City) et financé par la Banque mondiale.",
-    image: "/images/numsal/Lancement-numsal.jpeg",
+    date: "En cours…",
+    excerpt: "AMP BENIN, à travers sa section SNIE, lance officiellement le projet NumSAL pour former les jeunes et promouvoir l'entrepreneuriat numérique. Projet soutenu par le programme FP2E / NexT Impact (Sèmè City) et financé par la Banque mondiale.",
+    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903903/ong-site/images/numsal/Lancement-numsal.jpg",
     link: "/actualites/numsal-tori-bossito"
   },
-    {
-    title: "CAMPGNE DES 16 Jours d'activisme contre les VBG - 2025",
-    date: "Du 25 Novembre au 10 Decembre 2025",
-    excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme s'est engagée pour l'élimination des VBG dans nos communauté.",
-    image: "/images/16jours/Lancement-16jours.webp",
+  {
+    title: "Campagne des 16 Jours d'activisme contre les VBG — 2025",
+    date: "Du 25 novembre au 10 décembre 2025",
+    excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme, s'est engagée pour l'élimination des VBG dans nos communautés.",
+    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903906/ong-site/images/16jours/Lancement-16jours.webp",
     link: "/16jours"
   },
   {
     title: "Lancement de la campagne MYCOUNTRY229 pour la paix",
-    date: "Du 11 au 24 Août 2025",
+    date: "Du 11 au 24 août 2025",
     excerpt: "AMP BENIN mobilise les jeunes à travers tout le pays pour promouvoir la paix et la cohésion sociale.",
-    image: "/images/campagne-mycountry229-paix-benin.png",
+    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903905/ong-site/images/campagne-mycountry229-paix-benin.png",
     link: "/actualites/campagne-mycountry229-paix-benin"
   },
-    {
+  {
     title: "Rapport de fin des 16 Jours d'activisme 2024",
-    date: "Du 25 Nov au 25 Dec 2024",
-    excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme s'est engagée pour l'élimination des VBG dans nos communauté.",
-    image: "/images/16jours/atelier1.webp",
+    date: "Du 25 novembre au 25 décembre 2024",
+    excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme, s'est engagée pour l'élimination des VBG dans nos communautés.",
+    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903907/ong-site/images/16jours/atelier1.webp",
     link: "/16jours/article"
   },
   {
     title: "Forum des jeunes pour le développement durable",
-    date: "15 Juin 2024",
+    date: "15 juin 2024",
     excerpt: "Une centaine de jeunes se sont réunis à Cotonou pour échanger sur les enjeux des ODD au Bénin.",
-    image: "/images/news2.webp",
+    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903909/ong-site/images/news2.webp",
     link: "/actualites/forum-jeunesse-odd"
   }
 ];
 ---
 
-<BaseLayout title="Actualités AMP BENIN">
+<BaseLayout
+  title={t('meta', 'actusTitle')}
+  description={t('meta', 'actusDesc')}
+  url={Astro.url.href}
+  keywords="actualités AMP BENIN, projets ONG Bénin, campagne VBG, NumSAL, forum jeunesse"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Actualités", "item": "https://ampbenin.netlify.app/actualites" }
+    ]
+  }
+  </script>
+
   <section class="bg-white py-16 px-4">
     <div class="max-w-6xl mx-auto text-center mb-10">
-      <h1 class="text-4xl font-bold text-primary mb-4">Nos Actualités</h1>
+      <h1 class="text-4xl font-bold text-primary mb-4">{t('meta', 'actusHeading')}</h1>
       <p class="text-lg text-gray-600 max-w-3xl mx-auto">
-        Suivez toutes les actions, projets et temps forts de AMP BENIN à travers le pays et à l’international.
+        {t('meta', 'actusSubtitle')}
       </p>
     </div>
   </section>
 
-  <section class="bg-gray-100 py-16 px-4">
+  <section class="bg-gray-100 py-16 px-4" aria-label="Liste des actualités">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
       {articles.map(article => (
         <a href={article.link} class="block bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
-          <img src={article.image} alt={article.title} class="w-full h-ull object-cover" loading="lazy" />
+          <img
+            src={article.image}
+            alt={article.title}
+            class="w-full h-56 object-cover"
+            loading="lazy"
+            decoding="async"
+          />
           <div class="p-6">
-            <h2 class="text-2xl font-semibold text-primary mb-2">{article.title}</h2>
-            <p class="text-sm text-gray-500 mb-2">{article.date}</p>
+            <h2 class="text-xl font-semibold text-primary mb-2">{article.title}</h2>
+            <p class="text-sm text-gray-500 mb-2">
+              <time>{article.date}</time>
+            </p>
             <p class="text-gray-600">{article.excerpt}</p>
           </div>
         </a>
       ))}
     </div>
   </section>
+
 </BaseLayout>

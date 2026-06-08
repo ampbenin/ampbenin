@@ -1,108 +1,243 @@
 ---
-// src/components/StatsSectionLight.astro
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
+
 const stats = [
-  { label: "Pays couvert", value: 1, icon: "🌍" },
-  { label: "Départements actifs", value: 12, icon: "🧭" },
-  { label: "Communes engagées", value: 20, icon: "🏛️" },
-  { label: "Jeunes volontaires", value: 7000, icon: "✨" }
+  {
+    label: t('impact', 'country'),
+    value: 1,
+    suffix: "",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+  },
+  {
+    label: t('impact', 'departments'),
+    value: 12,
+    suffix: "",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`
+  },
+  {
+    label: t('impact', 'municipalities'),
+    value: 20,
+    suffix: "",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`
+  },
+  {
+    label: t('impact', 'volunteers'),
+    value: 7000,
+    suffix: "+",
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
+  }
 ];
 ---
 
-<section aria-labelledby="stats-title" 
-         style="position:relative; padding:4rem 1rem; background:#c0f0f5; color:#1a1a1a; overflow:hidden;">
-  <h2 id="stats-title" style="text-align:center; font-size:2.5rem; margin-bottom:1.5rem;">
-    Nos Statistiques Clés
-  </h2>
-  <p style="text-align:center; margin-bottom:3rem; max-width:600px; margin-left:auto; margin-right:auto; color:#333;">
-    Découvrez l'impact de notre organisation à travers nos actions et notre communauté engagée.
-  </p>
+<section class="impact section-py" aria-labelledby="impact-title">
+  <div class="container">
 
-  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:2rem;">
-    {stats.map((stat, i) => (
-      <div 
-        key={i} 
-        class="stat-card"
-        style="
-          position:relative; 
-          background:rgba(255,255,255,0.6); 
-          border-radius:1rem; 
-          padding:2rem 1rem; 
-          text-align:center;
-          overflow:hidden;
-          cursor:pointer;
-          transform: translateY(30px);
-          opacity:0;
-          box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        "
-        data-index={i}
-      >
-        <!-- Halo décoratif -->
-        <div style="
-          position:absolute; 
-          top:-20px; left:-20px; 
-          width:100px; height:100px; 
-          background:rgba(0,200,150,0.15); 
-          border-radius:50%;
-          filter:blur(25px);
-          z-index:0;
-        "></div>
+    <div class="impact__header fade-up">
+      <span class="section-label section-label--white">{t('impact', 'label')}</span>
+      <h2 id="impact-title" class="impact__title">{t('impact', 'title')}</h2>
+      <p class="impact__subtitle">{t('impact', 'subtitle')}</p>
+    </div>
 
-        <div style="position:relative; z-index:1;">
-          <div style="font-size:2.5rem; margin-bottom:0.5rem;">{stat.icon}</div>
-          <div class="stat-value" data-value={stat.value} style="font-size:2rem; font-weight:bold;">0</div>
-          <div style="margin-top:0.5rem; font-size:1rem; color:#333;">{stat.label}</div>
-        </div>
-      </div>
-    ))}
+    <div class="impact__grid">
+      {stats.map((s, i) => (
+        <article
+          class="impact__card fade-up"
+          style={`transition-delay:${i * 0.1}s`}
+          aria-label={`${s.label} : ${s.value}${s.suffix}`}
+        >
+          <div class="impact__card-icon" set:html={s.icon} />
+          <div class="impact__card-body">
+            <div class="impact__card-num">
+              <span class="stat-counter" data-value={s.value}>0</span>
+              <span class="impact__card-suffix">{s.suffix}</span>
+            </div>
+            <p class="impact__card-label">{s.label}</p>
+          </div>
+          <div class="impact__card-glow" aria-hidden="true"></div>
+        </article>
+      ))}
+    </div>
+
   </div>
+</section>
 
-  <!-- Script pour animation des cards et compteurs -->
-  <script type="module">
-    document.addEventListener('DOMContentLoaded', () => {
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const cards = [...document.querySelectorAll('.stat-card')];
+<script type="module">
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const counters = [...document.querySelectorAll('.stat-counter')];
 
-      // Animation d'apparition staggered
-      cards.forEach((card, idx) => {
-        if(prefersReduced){
-          card.style.transform = 'none';
-          card.style.opacity = 1;
-        } else {
-          setTimeout(() => {
-            card.style.transition = 'transform 0.7s cubic-bezier(.2,.9,.3,1), opacity 0.7s ease';
-            card.style.transform = 'translateY(0)';
-            card.style.opacity = 1;
-          }, idx * 150);
+  function animateCount(el, target) {
+    const duration = 1500;
+    const start    = performance.now();
+    function step(now) {
+      const t      = Math.min(1, (now - start) / duration);
+      const eased  = 1 - Math.pow(1 - t, 3);
+      const value  = Math.round(target * eased);
+      el.textContent = value.toLocaleString('fr-FR');
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  if (prefersReduced) {
+    counters.forEach(el => {
+      el.textContent = Number(el.dataset.value).toLocaleString('fr-FR');
+    });
+  } else {
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCount(entry.target, Number(entry.target.dataset.value));
+          obs.unobserve(entry.target);
         }
       });
+    }, { threshold: 0.5 });
 
-      // Counters
-      const counterElements = [...document.querySelectorAll('.stat-value')];
-      function animateCount(el, to){
-        const duration = 1400, start = performance.now(), from = 0;
-        function step(now){
-          const t = Math.min(1, (now - start)/duration);
-          const eased = 1 - Math.pow(1 - t, 3);
-          el.textContent = Math.round(from + (to - from) * eased).toLocaleString();
-          if(t < 1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-      }
+    counters.forEach(el => io.observe(el));
+  }
+</script>
 
-      if(prefersReduced){
-        counterElements.forEach(el => el.textContent = Number(el.dataset.value).toLocaleString());
-      } else {
-        const io = new IntersectionObserver((entries, obs) => {
-          entries.forEach(entry => {
-            if(entry.isIntersecting){
-              animateCount(entry.target, Number(entry.target.dataset.value));
-              obs.unobserve(entry.target);
-            }
-          });
-        }, {threshold:0.4});
+<style>
+  .impact {
+    background: var(--col-primary);
+    color: var(--col-white);
+    position: relative;
+    overflow: hidden;
+  }
 
-        counterElements.forEach(el => io.observe(el));
-      }
-    });
-  </script>
-</section>
+  .impact::before {
+    content: '';
+    position: absolute;
+    top: -6rem;
+    inset-inline-end: -6rem;
+    width: 32rem;
+    height: 32rem;
+    border-radius: var(--r-full);
+    background: radial-gradient(circle, rgba(201,144,58,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .impact::after {
+    content: '';
+    position: absolute;
+    bottom: -8rem;
+    inset-inline-start: -4rem;
+    width: 28rem;
+    height: 28rem;
+    border-radius: var(--r-full);
+    background: radial-gradient(circle, rgba(82,183,136,0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .impact__header {
+    text-align: center;
+    margin-bottom: var(--sp-16);
+    position: relative;
+    z-index: 2;
+  }
+  .impact__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 4vw, var(--text-5xl));
+    color: var(--col-white);
+    margin-bottom: var(--sp-4);
+    line-height: 1.15;
+  }
+  .impact__subtitle {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.70);
+    max-width: 42rem;
+    margin-inline: auto;
+    line-height: 1.6;
+  }
+
+  .impact__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-5);
+    position: relative;
+    z-index: 2;
+  }
+  @media (min-width: 1024px) {
+    .impact__grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .impact__card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: var(--r-xl);
+    padding: var(--sp-8) var(--sp-6);
+    text-align: center;
+    overflow: hidden;
+    transition: transform var(--tr-base), background var(--tr-base), box-shadow var(--tr-base);
+  }
+  .impact__card:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: var(--sh-accent);
+  }
+
+  .impact__card-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--r-xl);
+    background: radial-gradient(circle at 50% 0%, rgba(201,144,58,0.18), transparent 60%);
+    opacity: 0;
+    transition: opacity var(--tr-base);
+    pointer-events: none;
+  }
+  .impact__card:hover .impact__card-glow { opacity: 1; }
+
+  .impact__card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: rgba(201, 144, 58, 0.15);
+    border-radius: var(--r-lg);
+    margin: 0 auto var(--sp-5);
+    color: var(--col-accent-light);
+    position: relative;
+    z-index: 1;
+  }
+  .impact__card-icon :global(svg) { width: 1.75rem; height: 1.75rem; }
+
+  .impact__card-body { position: relative; z-index: 1; }
+
+  .impact__card-num {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+    margin-bottom: var(--sp-2);
+  }
+  .stat-counter {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-4xl), 5vw, var(--text-6xl));
+    color: var(--col-white);
+    line-height: 1;
+  }
+  .impact__card-suffix {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-3xl);
+    color: var(--col-accent);
+  }
+  .impact__card-label {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 479px) {
+    .impact__grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -2,11 +2,24 @@
 import Layout from '../../layouts/BaseLayout.astro';
 ---
 
-<Layout>
-  <head>
-    <title>AMP Zones – Coordination Décentralisée | AMP BENIN</title>
-    <meta name="description" content="Découvrez AMP Zones, la coordination locale et communautaire d’AMP BENIN pour rapprocher les actions citoyennes et solidaires des populations de toutes les communes du Bénin." />
-  </head>
+<Layout
+  title="AMP Zones — Coordination Décentralisée & Engagement Communautaire | AMP BENIN"
+  description="Découvrez AMP Zones, la coordination locale et communautaire d’AMP BENIN pour rapprocher les actions citoyennes et solidaires des populations de toutes les communes du Bénin."
+  url="https://ampbenin.netlify.app/is/amp-zones"
+  keywords="AMP Zones Bénin, coordination communautaire, engagement citoyen, communes Bénin, décentralisation"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Institutions Spécialisées", "item": "https://ampbenin.netlify.app/is" },
+      { "@type": "ListItem", "position": 3, "name": "AMP Zones", "item": "https://ampbenin.netlify.app/is/amp-zones" }
+    ]
+  }
+  </script>
 
   <section class="py-12 px-4 md:px-10 max-w-5xl mx-auto">
     <h1 class="text-3xl md:text-4xl font-bold text-center text-green-800 mb-6">AMP Zones – Coordination Décentralisée et Engagement Communautaire</h1>

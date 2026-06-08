@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="VBG Numériques au Bénin : le web, miroir des violences sociales">
+<BaseLayout
+  title="VBG Numériques – Jour 14 : le web, miroir des violences sociales | AMP BENIN"
+  description="Jour 14 des 16 Jours d'activisme AMP BENIN 2025 : convergence des actions et plaidoyer final contre les violences numériques basées sur le genre au Bénin."
+  url="https://ampbenin.netlify.app/16jours/j14"
+  keywords="plaidoyer VBG numérique Bénin, 16 jours activisme jour 14, AMP BENIN violences basées sur le genre"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 14", "item": "https://ampbenin.netlify.app/16jours/j14" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -21,7 +38,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v14.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903919/ong-site/images/16jours/og-image-v14.jpg"
         alt="VBG numériques au Bénin - visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -73,7 +90,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 -->
       <figure class="w-full mb-10">
         <img 
-          src="/images/16jours/1J14-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903912/ong-site/images/16jours/1J14-16jours-25.webp"
           alt="Signaler et dénoncer les violences basées sur le genre"
           class="rounded-lg shadow-md w-full object-cover"
         />

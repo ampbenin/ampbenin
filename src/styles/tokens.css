@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════
+   Design Tokens — AMP BENIN
+   Les polices sont chargées via <link> dans BaseLayout.astro
+   ═══════════════════════════════════════════════ */
+
+:root {
+  /* ── Palette primaire (forêt verte profonde) ── */
+  --col-primary:        #1B4332;
+  --col-primary-light:  #2D6A4F;
+  --col-primary-xlight: #52B788;
+  --col-primary-dark:   #0F2A1E;
+  --col-primary-bg:     #E8F5EF;
+
+  /* ── Accent chaleureux (or ambré) ── */
+  --col-accent:         #C9903A;
+  --col-accent-light:   #E8C47A;
+  --col-accent-dark:    #A87028;
+  --col-accent-xdark:   #7A5018;
+  --col-accent-bg:      #FDF4E7;
+
+  /* ── Fonds et surfaces ── */
+  --col-bg:             #FAFAF8;
+  --col-surface:        #F5F0E8;
+  --col-surface2:       #EDE8DC;
+  --col-border:         #DDD8CE;
+  --col-border-light:   #EEEAE3;
+
+  /* ── Texte ── */
+  --col-text:           #1A1A1A;
+  --col-text-sec:       #4A4A4A;
+  --col-text-muted:     #7A7A7A;
+  --col-text-inverted:  #FFFFFF;
+
+  /* ── Utilitaires ── */
+  --col-white:          #FFFFFF;
+  --col-dark:           #111111;
+  --col-footer-bg:      #131F17;
+
+  --col-success:        #40916C;
+  --col-success-bg:     #D8F3E3;
+  --col-warning:        #F59E0B;
+  --col-error:          #C1121F;
+  --col-error-bg:       #FFE8EA;
+
+  /* ── Typographie ── */
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:    'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ── Échelle typographique ── */
+  --text-xs:   0.75rem;    /* 12px */
+  --text-sm:   0.875rem;   /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.25rem;    /* 20px */
+  --text-2xl:  1.5rem;     /* 24px */
+  --text-3xl:  1.875rem;   /* 30px */
+  --text-4xl:  2.25rem;    /* 36px */
+  --text-5xl:  3rem;       /* 48px */
+  --text-6xl:  3.75rem;    /* 60px */
+  --text-7xl:  4.5rem;     /* 72px */
+
+  /* ── Espacements (multiples de 4px) ── */
+  --sp-1:  0.25rem;   /* 4px  */
+  --sp-2:  0.5rem;    /* 8px  */
+  --sp-3:  0.75rem;   /* 12px */
+  --sp-4:  1rem;      /* 16px */
+  --sp-5:  1.25rem;   /* 20px */
+  --sp-6:  1.5rem;    /* 24px */
+  --sp-8:  2rem;      /* 32px */
+  --sp-10: 2.5rem;    /* 40px */
+  --sp-12: 3rem;      /* 48px */
+  --sp-16: 4rem;      /* 64px */
+  --sp-20: 5rem;      /* 80px */
+  --sp-24: 6rem;      /* 96px */
+  --sp-32: 8rem;      /* 128px */
+
+  /* ── Padding section (min 80px vertical) ── */
+  --section-py: clamp(5rem, 8vw, 6rem);
+
+  /* ── Border-radius cohérent ── */
+  --r-sm:   4px;
+  --r-md:   8px;
+  --r-lg:   16px;
+  --r-xl:   24px;
+  --r-2xl:  32px;
+  --r-full: 9999px;
+
+  /* ── Shadows tintées (jamais noires) ── */
+  --sh-xs:     0 1px 3px  rgba(27, 67, 50, 0.06);
+  --sh-sm:     0 2px 8px  rgba(27, 67, 50, 0.09);
+  --sh-md:     0 4px 20px rgba(27, 67, 50, 0.12);
+  --sh-lg:     0 8px 40px rgba(27, 67, 50, 0.16);
+  --sh-xl:     0 16px 60px rgba(27, 67, 50, 0.20);
+  --sh-accent: 0 4px 24px rgba(201, 144, 58, 0.28);
+  --sh-white:  0 4px 20px rgba(255, 255, 255, 0.15);
+
+  /* ── Transitions ── */
+  --tr-fast: 150ms ease;
+  --tr-base: 250ms ease;
+  --tr-slow: 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* ── Layout ── */
+  --container:        1280px;
+  --container-narrow: 800px;
+}
+
+/* ═══════════════════════════════════════════════
+   RTL — Arabe
+   ═══════════════════════════════════════════════ */
+[dir="rtl"] {
+  --font-body:    'Cairo', 'DM Sans', system-ui, sans-serif;
+  --font-heading: 'Cairo', 'Fraunces', Georgia, serif;
+}
+
+[dir="rtl"] body {
+  text-align: start;
+  letter-spacing: 0;
+  word-spacing: 0.05em;
+}
+
+/* Ensure logical properties flow correctly in RTL */
+[dir="rtl"] .hdr-nav__link::after {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
+
+/* Reverse directional icon animations */
+[dir="rtl"] .btn svg,
+[dir="rtl"] .hdr-nav__cta svg {
+  transform: scaleX(-1);
+}

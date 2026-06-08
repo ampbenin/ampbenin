@@ -5,6 +5,11 @@ import VerifyAttestation from "../../components/VerifyAttestation.jsx";
 const { id } = Astro.params; // récupère l'id depuis l'URL
 ---
 
-<BaseLayout title="Vérification Attestation">
+<BaseLayout
+  title="Vérification d'Attestation — AMP BENIN"
+  description="Vérifiez l'authenticité d'une attestation de volontariat ou de participation délivrée par AMP BENIN."
+  url="https://ampbenin.netlify.app/verify"
+  keywords="vérification attestation AMP BENIN, attestation volontaire, vérifier certificat"
+>
   <VerifyAttestation id={id} client:load />
 </BaseLayout>

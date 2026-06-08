@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Violences numériques et Intelligence Artificielle : une nouvelle menace pour les femmes">
+<BaseLayout
+  title="Clôture – Jour 16 : IA, Violences numériques & Appel à l'action | AMP BENIN"
+  description="Jour 16 — Clôture des 16 Jours d'activisme AMP BENIN 2025 : intelligence artificielle, violences numériques et appel à l'action pour un numérique sûr et équitable au Bénin."
+  url="https://ampbenin.netlify.app/16jours/j16"
+  keywords="clôture 16 jours activisme, IA violences femmes Bénin, AMP BENIN 2025, numérique sans VBG"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 16 — Clôture", "item": "https://ampbenin.netlify.app/16jours/j16" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -19,7 +36,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <!-- HERO IMAGE -->
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v16.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903921/ong-site/images/16jours/og-image-v16.jpg"
         alt="Violences numériques et IA — visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -61,7 +78,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 -->
       <figure class="w-full mb-10">
         <img 
-          src="/images/16jours/1J16-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903910/ong-site/images/16jours/1J16-16jours-25.webp"
           alt="Signaler et dénoncer les violences basées sur le genre"
           class="rounded-lg shadow-md w-full object-cover"
         />

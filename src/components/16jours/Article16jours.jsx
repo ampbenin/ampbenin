@@ -46,10 +46,10 @@ export default function Article16jours({
   ];
 
   const defaultGallery = [
-    { id: 1, src: "/images/16jours/atelier1.webp", alt: "Atelier Tori-Bossito" },
-    { id: 2, src: "/images/16jours/atelier2.webp", alt: "Atelier Kpomassè" },
-    { id: 3, src: "/images/bootcamp.webp", alt: "BootCamp Village Noël" },
-    { id: 4, src: "/images/16jours/campagnedigitale.webp", alt: "Campagne digitale" },
+    { id: 1, src: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903907/ong-site/images/16jours/atelier1.webp", alt: "Atelier Tori-Bossito" },
+    { id: 2, src: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903994/ong-site/images/16jours/atelier2.webp", alt: "Atelier Kpomassè" },
+    { id: 3, src: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903982/ong-site/images/bootcamp.webp", alt: "BootCamp Village Noël" },
+    { id: 4, src: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903993/ong-site/images/16jours/campagnedigitale.webp", alt: "Campagne digitale" },
   ];
 
   const defaultVideos = [

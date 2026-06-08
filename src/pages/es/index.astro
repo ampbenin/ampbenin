@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HeroSlider from "../../components/HeroSlider.astro";
+import NewsSlider from "../../components/NewsSlider.astro";
+import ISCarousel from "../../components/ISCarousel.astro";
+import Stat from "../../components/Stat.astro";
+import AMPStats from "../../components/AMPStats.astro";
+import NewsLetter from "../../components/NewsLetter.astro";
+import Accueil from "../../components/Accueil.astro";
+import Campagne16jSection from "../../components/Campagne16jSection.astro";
+import { useTranslations } from "../../i18n/utils";
+import type { Lang } from "../../i18n/utils";
+
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
+const SITE = "https://ampbenin.netlify.app";
+---
+
+<BaseLayout
+  title={t('meta', 'homeTitle')}
+  description={t('meta', 'homeDesc')}
+  url={SITE}
+  imagePath="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903879/ong-site/og-image-v16.jpg"
+  keywords="AMP BENIN, ONG Bénin, Action Monde Productif, ODD, développement durable, jeunes volontaires, droits femmes, santé communautaire, Bénin"
+>
+  <script type="application/ld+json" slot="head">
+  {"@context":"https://schema.org","@type":"NGO","name":"AMP BENIN","alternateName":"Action Monde Productif","url":"https://ampbenin.netlify.app","logo":"https://ampbenin.netlify.app/images/Logo.png","description":"Organisation sociale béninoise engagée dans la promotion des Objectifs de Développement Durable (ODD) au Bénin","foundingDate":"2021","areaServed":{"@type":"Country","name":"Bénin"},"address":{"@type":"PostalAddress","addressLocality":"Tori-Bossito","addressCountry":"BJ"},"contactPoint":{"@type":"ContactPoint","contactType":"customer support","email":"ampbenin.contact@gmail.com"},"sameAs":["https://facebook.com/ampbenin.org","https://whatsapp.com/channel/0029VaIOnPDEVccHs3abBh1A"]}
+  </script>
+  <HeroSlider />
+  <Accueil />
+  <Campagne16jSection />
+  <Stat />
+  <NewsSlider />
+  <ISCarousel />
+  <AMPStats />
+  <NewsLetter />
+</BaseLayout>

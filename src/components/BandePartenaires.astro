@@ -1,0 +1,56 @@
+---
+// src/components/BandePartenaires.astro
+---
+
+<section class="bande-partenaires">
+  <div class="bande-partenaires__inner">
+    <h2 class="bande-partenaires__titre">Nos Partenaires</h2>
+    <div class="bande-partenaires__image-wrapper">
+      <img
+        src="https://res.cloudinary.com/di21pnpda/image/upload/v1780907564/im_3_ubygtp.jpg"
+        alt="Partenaires MyCountry229"
+        class="bande-partenaires__image"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .bande-partenaires {
+    width: 100%;
+    background: #f8f9fa;
+    border-top: 1px solid #e5e7eb;
+    padding: 3rem 1.5rem;
+    margin-top: 4rem;
+  }
+
+  .bande-partenaires__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .bande-partenaires__titre {
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b7280;
+    margin-bottom: 2rem;
+  }
+
+  .bande-partenaires__image-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 0.75rem;
+  }
+
+  .bande-partenaires__image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    display: block;
+  }
+</style>

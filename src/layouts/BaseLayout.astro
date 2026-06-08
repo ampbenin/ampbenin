@@ -1,55 +1,118 @@
 ---
+import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import '../styles/tokens.css';
 import '../styles/global.css';
 
+const SITE = "https://ampbenin.netlify.app";
+
+const lang = (Astro.currentLocale ?? 'fr') as string;
+const dir = lang === 'ar' ? 'rtl' : 'ltr';
+
 const {
-  title = "ARTICLE DU JOUR : Cyberviolences et pressions sur la vie des femmes",
-  description = "Action Monde Productif - Article du jour - 16 Jours d'activisme contre les VBG.",
-  url = "https://ampbenin.netlify.app",
-  imagePath = "/og-image-v16.jpg"   // chemin réel du fichier
+  title       = "AMP BENIN — Action Monde Productif",
+  description = "Découvrez les actions de AMP BENIN pour un Bénin plus durable à travers des programmes communautaires et la mobilisation des jeunes.",
+  url         = SITE,
+  imagePath   = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903879/ong-site/og-image-v16.jpg",
+  image,
+  keywords,
+  type,
 } = Astro.props;
 
-// URL absolue pour Open Graph (sans paramètres, sans fallback)
-const image = `https://ampbenin.netlify.app${imagePath}`;
+const canonicalUrl = url.startsWith("http") ? url : `${SITE}${url}`;
+const ogImage = image
+  ? (image.startsWith("http") ? image : `${SITE}${image}`)
+  : (imagePath.startsWith("http") ? imagePath : `${SITE}${imagePath}`);
+
+// hreflang: compute base path stripped of any lang prefix
+const reqPath = Astro.url.pathname;
+const segs = reqPath.split('/').filter(Boolean);
+const langPrefixes = ['en', 'es', 'ar'];
+const basePath = (segs.length > 0 && langPrefixes.includes(segs[0]))
+  ? ('/' + segs.slice(1).join('/') || '/')
+  : reqPath;
+const bp = basePath === '' ? '/' : basePath;
+
+const hreflangs = [
+  { hreflang: 'fr',        href: `${SITE}${bp}` },
+  { hreflang: 'en',        href: `${SITE}/en${bp === '/' ? '' : bp}` },
+  { hreflang: 'es',        href: `${SITE}/es${bp === '/' ? '' : bp}` },
+  { hreflang: 'ar',        href: `${SITE}/ar${bp === '/' ? '' : bp}` },
+  { hreflang: 'x-default', href: `${SITE}${bp}` },
+];
 ---
 
-<html lang="fr">
+<html lang={lang} dir={dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
 
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <meta name="robots" content="index, follow" />
+    <!-- Préconnexions ressources externes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
 
-    <!-- Open Graph / Facebook / WhatsApp -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={url} />
-    <meta property="og:image" content={image} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={title} />
+    <!-- Google Fonts : Fraunces + DM Sans + Cairo (Arabic) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Cairo:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={image} />
-    <meta name="twitter:image:alt" content={title} />
+    <!-- hreflang SEO -->
+    {hreflangs.map(h => (
+      <link rel="alternate" hreflang={h.hreflang} href={h.href} />
+    ))}
 
-    <link rel="icon" href="/favicon.png" />
+    <!-- Composant SEO centralisé -->
+    <SEO
+      title={title}
+      description={description}
+      image={ogImage}
+      canonicalUrl={canonicalUrl}
+      lang={lang}
+      keywords={keywords}
+      type={type}
+    />
 
+    <!-- Slot pour JSON-LD et autres overrides spécifiques à la page -->
     <slot name="head" />
   </head>
-  <body class="flex flex-col min-h-screen bg-green-100">
+
+  <body>
     <Header />
-    <main class="flex-1">
+    <main id="main-content">
       <slot />
     </main>
     <Footer />
+
+    <!-- Observer global pour animations fade-up au scroll -->
+    <script is:inline>
+      (function () {
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReduced) {
+          document.querySelectorAll('.fade-up').forEach(function (el) {
+            el.classList.add('is-visible');
+          });
+          return;
+        }
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-visible');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.15 }
+        );
+        document.querySelectorAll('.fade-up').forEach(function (el) {
+          io.observe(el);
+        });
+      })();
+    </script>
   </body>
 </html>

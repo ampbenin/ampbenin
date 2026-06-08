@@ -5,10 +5,28 @@ const title = "Campagne 16 Jours d’Activisme (25 novembre – 10 décembre 202
 const description = "Pour l’édition 2025 des 16 Jours d’Activisme, AMP BENIN a mené un projet innovant et collaboratif pour sensibiliser, outiller et mobiliser les communautés béninoises contre les violences basées sur le genre.";
 const pubDate = "2025-12-15";
 const author = "AMP BENIN";
-const ogImage = "/images/social-16jours-ampbenin.png";
+const ogImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_1200/v1780903921/ong-site/images/16jours/og-image-v16.jpg";
 ---
 
-<BaseLayout title={title} description={description} ogImage={ogImage}>
+<BaseLayout
+  title={title}
+  description={description}
+  image={ogImage}
+  url="https://ampbenin.netlify.app/actualites/16jours"
+  keywords="16 jours activisme VBG 2025, AMP BENIN, violences basées sur le genre, campagne Bénin"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Actualités", "item": "https://ampbenin.netlify.app/actualites" },
+      { "@type": "ListItem", "position": 3, "name": "16 Jours d'Activisme 2025", "item": "https://ampbenin.netlify.app/actualites/16jours" }
+    ]
+  }
+  </script>
   <div class="bg-orange-50 min-h-screen py-12">
     <article class="prose lg:prose-xl max-w-5xl mx-auto px-4 md:px-0">
 
@@ -16,7 +34,7 @@ const ogImage = "/images/social-16jours-ampbenin.png";
       <header class="rounded-lg overflow-hidden shadow-lg border border-orange-200">
         <div class="relative">
           <img 
-            src="/images/campagne-16-jours-ampbenin.png" 
+            src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903906/ong-site/images/16jours/Lancement-16jours.webp" 
             alt="Campagne 16 jours AMP BENIN"
             class="w-full h-56 md:h-full object-cover brightness-95"
           />

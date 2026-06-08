@@ -1,0 +1,898 @@
+---
+// src/pages/actualites/mycountry229-redaction-plan-plaidoyer.astro
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BandePartenaires from '../../components/BandePartenaires.astro';
+import PlaidoyerPhotoGallery from "../../components/PlaidoyerPhotoGallery.jsx";
+import PlaidoyerStats from "../../components/PlaidoyerStats.jsx";
+
+const title =
+  "AMP BENIN : Focus group pour l'élaboration d'un plan de plaidoyer contre la désinformation | MyCountry229";
+const description =
+  "AMP BENIN organise un focus group participatif réunissant leaders communautaires, jeunes et acteurs de la société civile pour co-construire un plan de plaidoyer contre la désinformation au Bénin. Retour sur une démarche inclusive et stratégique.";
+const canonicalUrl =
+  "https://www.ampbenin.org/actualites/mycountry229-redaction-plan-plaidoyer";
+const publishedDate = "2026-06-01";
+const modifiedDate = "2026-06-06";
+const authorName = "AMP BENIN – Action Monde Productif";
+const imageOg = "https://www.ampbenin.org/images/mycountry229/plaidoyer-photo-1.jpg";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  headline:
+    "AMP BENIN renforce la mobilisation communautaire à travers un focus group dédié à l'élaboration d'un plan de plaidoyer contre la désinformation",
+  description,
+  image: [imageOg],
+  datePublished: publishedDate,
+  dateModified: modifiedDate,
+  author: {
+    "@type": "Organization",
+    name: "AMP BENIN – Action Monde Productif",
+    url: "https://www.ampbenin.org",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "AMP BENIN",
+    logo: { "@type": "ImageObject", url: "https://www.ampbenin.org/logo.png" },
+  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+  keywords:
+    "plaidoyer communautaire, désinformation, AMP BENIN, MyCountry229, focus group, leaders communautaires, société civile, Bénin, éducation aux médias, résilience informationnelle",
+  articleSection: "Actualités / Projets",
+  inLanguage: "fr-BJ",
+  about: [
+    { "@type": "Thing", name: "Désinformation" },
+    { "@type": "Thing", name: "Plaidoyer communautaire" },
+    { "@type": "Thing", name: "Éducation aux médias" },
+  ],
+};
+
+const faqData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Qu'est-ce qu'un plan de plaidoyer communautaire contre la désinformation ?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Un plan de plaidoyer communautaire est un document stratégique qui recense les préoccupations des communautés face à la désinformation et formule des recommandations à destination des décideurs publics, partenaires institutionnels et acteurs de la gouvernance de l'information, afin de promouvoir des mesures durables d'éducation aux médias et de lutte contre les fausses informations.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Quels acteurs ont participé au focus group d'AMP BENIN ?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Le focus group a réuni des leaders communautaires, des jeunes, des acteurs de la société civile, des relais communautaires et d'autres parties prenantes locales, dans une démarche participative et inclusive de co-construction.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Quelles sont les principales formes de désinformation identifiées par AMP BENIN ?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Les participants ont identifié quatre formes principales : les rumeurs relayées au niveau local, les fausses informations diffusées sur les réseaux sociaux, les contenus manipulés à des fins de désorientation, et les informations sorties de leur contexte ou interprétées de manière erronée.",
+      },
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  url={canonicalUrl}
+  image={imageOg}
+  type="article"
+  keywords="plan de plaidoyer, désinformation Bénin, AMP BENIN, MyCountry229, focus group communautaire, leaders communautaires, société civile, éducation aux médias, résilience informationnelle, lutte fausses informations, Afrique de l'Ouest"
+>
+  <Fragment slot="head">
+    <!-- Playfair Display + Inter (non inclus dans BaseLayout) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Article Open Graph -->
+    <meta property="article:published_time" content={publishedDate} />
+    <meta property="article:modified_time" content={modifiedDate} />
+    <meta property="article:section" content="Projets" />
+    <meta property="article:tag" content="plaidoyer" />
+    <meta property="article:tag" content="désinformation" />
+    <meta property="article:tag" content="focus group" />
+    <meta property="article:tag" content="Bénin" />
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <script type="application/ld+json" set:html={JSON.stringify(faqData)} />
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: "https://www.ampbenin.org" },
+        { "@type": "ListItem", position: 2, name: "Actualités", item: "https://www.ampbenin.org/actualites" },
+        { "@type": "ListItem", position: 3, name: "Plan de plaidoyer MyCountry229", item: canonicalUrl },
+      ],
+    })} />
+  </Fragment>
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-eyebrow anim-1">
+        <span class="hero-badge hero-badge--primary">Mobilisation communautaire</span>
+        <span class="hero-badge hero-badge--rose">Plan de plaidoyer</span>
+        <span class="hero-badge hero-badge--outline">🇧🇯 Bénin</span>
+        <span class="hero-badge hero-badge--outline">MyCountry229</span>
+      </div>
+
+      <h1 class="anim-2">
+        AMP BENIN mobilise les communautés<br />
+        pour construire un <em>plan de plaidoyer</em><br />
+        contre la désinformation
+      </h1>
+
+      <p class="hero-deck anim-3">
+        Un focus group participatif réunissant leaders communautaires, jeunes et acteurs de la société civile
+        pour co-construire des stratégies adaptées et élaborer un document de plaidoyer destiné aux décideurs
+        publics et partenaires institutionnels.
+      </p>
+
+      <div class="hero-meta-row anim-4">
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+          <time datetime={publishedDate}>Publié le 1er juin 2026</time>
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          Lecture 7 min
+        </div>
+        <div class="hero-meta-item">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" clip-rule="evenodd"/></svg>
+          Leaders communautaires · Jeunes · Société civile
+        </div>
+      </div>
+
+      <div class="hero-partners anim-4">
+        <span class="hero-partners-lbl">Initiative :</span>
+        <span class="hero-partner-chip">AMP BENIN</span>
+        <span class="hero-partner-chip">DG Partners ONG</span>
+        <span class="hero-partner-chip">ABCA</span>
+        <span class="hero-partner-chip">Projet MyCountry229</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARTICLE CONTENT ── -->
+  <div class="article-wrap">
+
+    <PlaidoyerPhotoGallery client:load />
+    <PlaidoyerStats client:visible />
+
+    <p class="intro-box">
+      Face à la montée croissante de la désinformation et de ses conséquences sur la cohésion sociale,
+      <strong>AMP BENIN</strong> a organisé un focus group consacré à l'élaboration des stratégies et méthodes
+      de rédaction d'un <strong>plan de plaidoyer communautaire</strong>. Cette activité s'inscrit dans une démarche
+      participative visant à identifier les différentes formes de désinformation et à définir des mécanismes
+      adaptés pour prévenir leur propagation.
+    </p>
+
+    <div class="article-body">
+
+      <h2>Un contexte marqué par la prolifération de la désinformation</h2>
+      <p>
+        À l'ère du numérique, les populations sont exposées quotidiennement à une quantité considérable
+        d'informations diffusées à travers les réseaux sociaux, les plateformes numériques, les groupes
+        de discussion en ligne et les canaux traditionnels de communication. Si ces outils facilitent
+        l'accès à l'information, ils favorisent également la diffusion rapide de contenus inexacts,
+        trompeurs ou manipulés.
+      </p>
+      <p>
+        La désinformation représente aujourd'hui un défi majeur pour les communautés. Elle peut engendrer
+        la méfiance envers les institutions, alimenter les tensions sociales, compromettre les efforts
+        de développement et influencer négativement les comportements individuels et collectifs.
+      </p>
+
+      <div class="pull-quote">
+        <p>
+          « Dans certains contextes, la désinformation constitue un facteur aggravant de vulnérabilité
+          en limitant l'accès des populations à des informations fiables et vérifiées. »
+        </p>
+      </div>
+
+      <hr class="divider" />
+
+      <h2>Une approche participative ancrée dans les réalités du terrain</h2>
+
+      <div class="highlight-block">
+        <div class="highlight-block-header">
+          <div class="highlight-icon" aria-hidden="true">🤝</div>
+          <div>
+            <div class="highlight-title">Qui participait au focus group ?</div>
+            <div class="highlight-subtitle">Composition plurielle et inclusive</div>
+          </div>
+        </div>
+        <p style="font-size:0.9rem;color:var(--text-mid);margin:0;line-height:1.65">
+          Le focus group a réuni des <strong>leaders communautaires</strong>, des <strong>jeunes</strong>,
+          des <strong>acteurs de la société civile</strong>, des <strong>relais communautaires</strong>
+          ainsi que d'autres parties prenantes locales — constituant un cadre privilégié d'échanges,
+          de réflexion et de co-construction autour des enjeux liés à la circulation des fausses informations.
+        </p>
+      </div>
+
+      <p>
+        Le focus group a permis de placer les communautés au cœur du processus de réflexion. Les échanges
+        ont mis en lumière plusieurs formes de désinformation observées, ainsi que les facteurs qui en
+        favorisent la propagation.
+      </p>
+
+      <h2>Les 4 formes de désinformation identifiées dans les communautés</h2>
+
+      <div class="desinfo-grid">
+        <div class="desinfo-card">
+          <span class="desinfo-card-icon" aria-hidden="true">📢</span>
+          <div class="desinfo-card-body">
+            <div class="desinfo-card-title">Rumeurs locales</div>
+            <div class="desinfo-card-desc">Rumeurs relayées au niveau communautaire, souvent amplifiées par les réseaux informels de bouche à oreille</div>
+          </div>
+        </div>
+        <div class="desinfo-card">
+          <span class="desinfo-card-icon" aria-hidden="true">📱</span>
+          <div class="desinfo-card-body">
+            <div class="desinfo-card-title">Fausses informations numériques</div>
+            <div class="desinfo-card-desc">Contenus erronés diffusés via les réseaux sociaux, groupes WhatsApp et plateformes numériques</div>
+          </div>
+        </div>
+        <div class="desinfo-card">
+          <span class="desinfo-card-icon" aria-hidden="true">🎭</span>
+          <div class="desinfo-card-body">
+            <div class="desinfo-card-title">Contenus manipulés</div>
+            <div class="desinfo-card-desc">Informations intentionnellement manipulées ou falsifiées à des fins de désorientation ou d'instrumentalisation</div>
+          </div>
+        </div>
+        <div class="desinfo-card">
+          <span class="desinfo-card-icon" aria-hidden="true">🔀</span>
+          <div class="desinfo-card-body">
+            <div class="desinfo-card-title">Informations hors contexte</div>
+            <div class="desinfo-card-desc">Données réelles sorties de leur contexte d'origine ou interprétées de manière erronée et trompeuse</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2>Élaborer des stratégies communautaires de résistance à la désinformation</h2>
+      <p>
+        Au-delà de l'identification des problématiques, le focus group a permis d'engager une réflexion
+        approfondie sur les réponses à apporter pour renforcer la résistance des communautés face
+        aux fausses informations. Les discussions ont abouti à la formulation de plusieurs pistes d'action :
+      </p>
+
+      <div class="strategy-list">
+        <div class="strategy-item">
+          <span class="strategy-num" aria-hidden="true">1</span>
+          <span class="strategy-text"><strong>Campagnes de sensibilisation communautaire</strong> — Renforcer la fréquence et la portée des actions d'information au niveau local</span>
+        </div>
+        <div class="strategy-item">
+          <span class="strategy-num" aria-hidden="true">2</span>
+          <span class="strategy-text"><strong>Implication des leaders d'opinion</strong> — Mobiliser les personnalités influentes comme relais de prévention dans leurs réseaux</span>
+        </div>
+        <div class="strategy-item">
+          <span class="strategy-num" aria-hidden="true">3</span>
+          <span class="strategy-text"><strong>Éducation aux médias et à l'information (EMI)</strong> — Développer les compétences critiques face aux contenus numériques</span>
+        </div>
+        <div class="strategy-item">
+          <span class="strategy-num" aria-hidden="true">4</span>
+          <span class="strategy-text"><strong>Mécanismes locaux d'alerte et de vérification</strong> — Mettre en place des dispositifs communautaires de fact-checking et de signalement</span>
+        </div>
+        <div class="strategy-item">
+          <span class="strategy-num" aria-hidden="true">5</span>
+          <span class="strategy-text"><strong>Collaboration multi-acteurs</strong> — Renforcer les synergies entre OSC, autorités locales, médias et acteurs communautaires</span>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2>Les fondements du plan de plaidoyer communautaire</h2>
+      <p>
+        L'un des résultats majeurs de cette activité réside dans la définition des orientations stratégiques
+        qui serviront à la rédaction d'un plan de plaidoyer communautaire. Ce document aura pour objectif
+        de porter les préoccupations et recommandations des communautés auprès des décideurs publics,
+        des partenaires institutionnels et des acteurs impliqués dans la gouvernance de l'information.
+      </p>
+
+      <div class="goals-grid">
+        <div class="goal-card">
+          <span class="goal-icon" aria-hidden="true">📚</span>
+          <p class="goal-text">
+            <strong>Éducation aux médias</strong>
+            Promouvoir l'intégration de mesures d'éducation aux médias dans les politiques locales et nationales
+          </p>
+        </div>
+        <div class="goal-card">
+          <span class="goal-icon" aria-hidden="true">💪</span>
+          <p class="goal-text">
+            <strong>Renforcement des capacités</strong>
+            Soutenir la montée en compétence des acteurs communautaires face aux défis informationnels
+          </p>
+        </div>
+        <div class="goal-card">
+          <span class="goal-icon" aria-hidden="true">🔓</span>
+          <p class="goal-text">
+            <strong>Accès à l'information fiable</strong>
+            Améliorer l'accès des populations à des sources d'information vérifiées et de qualité
+          </p>
+        </div>
+        <div class="goal-card">
+          <span class="goal-icon" aria-hidden="true">🌱</span>
+          <p class="goal-text">
+            <strong>Soutien aux initiatives locales</strong>
+            Encourager et financer les initiatives de terrain de lutte contre la désinformation
+          </p>
+        </div>
+      </div>
+
+      <hr class="divider" />
+
+      <h2>AMP BENIN, un engagement constant pour des communautés résilientes</h2>
+      <p>
+        À travers l'organisation de ce focus group, AMP BENIN réaffirme son engagement en faveur
+        de la promotion d'une information responsable, de la participation citoyenne et du développement
+        de communautés capables de faire face aux défis informationnels contemporains.
+      </p>
+      <p>
+        Cette initiative témoigne de la volonté de l'organisation de créer des espaces de dialogue
+        inclusifs où les citoyens peuvent contribuer activement à l'identification des problématiques
+        qui les concernent et à la recherche de solutions durables.
+      </p>
+
+      <div class="closing-cta">
+        <span class="closing-cta-icon" aria-hidden="true">🎯</span>
+        <div>
+          <div class="closing-cta-title">
+            Un environnement informationnel plus sain, inclusif et résilient
+          </div>
+          <p class="closing-cta-text">
+            En renforçant les capacités des acteurs locaux et en favorisant l'émergence de stratégies
+            adaptées aux réalités communautaires, AMP BENIN contribue à bâtir un espace numérique
+            au service du développement et de la cohésion sociale au Bénin et en Afrique francophone de l'Ouest.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ARTICLE LIÉ -->
+    <div class="related-box">
+      <span class="related-icon" aria-hidden="true">🔗</span>
+      <div>
+        <div class="related-label">Article lié – MyCountry229</div>
+        <div class="related-title">Gogounou : les jeunes mobilisés contre la désinformation et pour la promotion des contenus numériques fiables</div>
+        <a href="/actualites/mycountry229-lutte-desinformation-gogounou" class="related-link">
+          Lire l'article complet →
+        </a>
+      </div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="article-tags" aria-label="Mots-clés">
+      <span class="tags-label">🏷️</span>
+      <a href="/actualites?tag=plaidoyer" class="tag-pill">#Plaidoyer</a>
+      <a href="/actualites?tag=desinformation" class="tag-pill">#Désinformation</a>
+      <a href="/actualites?tag=focus-group" class="tag-pill">#FocusGroup</a>
+      <a href="/actualites?tag=mycountry229" class="tag-pill">#MyCountry229</a>
+      <a href="/actualites?tag=benin" class="tag-pill">#Bénin</a>
+      <a href="/actualites?tag=societe-civile" class="tag-pill">#SociétéCivile</a>
+      <a href="/actualites?tag=education-medias" class="tag-pill">#ÉducationAuxMédias</a>
+      <a href="/actualites?tag=resilience" class="tag-pill">#RésilienceInformationnelle</a>
+    </div>
+
+    <!-- SHARE -->
+    <div class="share-bar" aria-label="Partager cet article">
+      <span class="share-lbl">Partager :</span>
+      <a
+        href={`https://twitter.com/intent/tweet?text=AMP+BENIN+élabore+un+plan+de+plaidoyer+communautaire+contre+la+désinformation+%23MyCountry229+%23Benin&url=${canonicalUrl}`}
+        class="share-btn sbt-tw"
+        target="_blank" rel="noopener noreferrer"
+        aria-label="Partager sur Twitter/X"
+      >𝕏 Twitter</a>
+      <a
+        href={`https://www.facebook.com/sharer/sharer.php?u=${canonicalUrl}`}
+        class="share-btn sbt-fb"
+        target="_blank" rel="noopener noreferrer"
+        aria-label="Partager sur Facebook"
+      >f Facebook</a>
+      <a
+        href={`https://wa.me/?text=AMP+BENIN+élabore+un+plan+de+plaidoyer+contre+la+désinformation+au+Bénin+${canonicalUrl}`}
+        class="share-btn sbt-wa"
+        target="_blank" rel="noopener noreferrer"
+        aria-label="Partager sur WhatsApp"
+      >📱 WhatsApp</a>
+      <button
+        class="share-btn sbt-cp"
+        aria-label="Copier le lien"
+        onclick={`navigator.clipboard.writeText('${canonicalUrl}').then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)})`}
+      >🔗 Copier</button>
+    </div>
+
+  </div>
+
+  <BandePartenaires />
+
+</BaseLayout>
+
+<style is:global>
+  :root {
+    --purple-950: #0e0520;
+    --purple-900: #1a0a38;
+    --purple-800: #2d1a5a;
+    --purple-700: #4a2d8a;
+    --purple-600: #6a4ab8;
+    --purple-400: #9a7adf;
+    --purple-200: #d4c0f8;
+    --purple-100: #ede8ff;
+    --purple-50:  #f8f4ff;
+    --rose:       #cf4f7c;
+    --rose-light: #ffe0ec;
+    --amber:      #d4860a;
+    --amber-light:#fff3d0;
+    --text-dark:  #18102e;
+    --text-mid:   #3a2a5a;
+    --text-soft:  #5a4a7a;
+    --border:     #e0d4f8;
+    --white:      #ffffff;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans:  'Inter', system-ui, sans-serif;
+    --max-w: 830px;
+    --side-pad: clamp(1rem, 5vw, 2.25rem);
+  }
+
+  body { background: #fdfbff; font-family: var(--font-sans); }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(150deg, var(--purple-950) 0%, #1e0a42 50%, #2a1060 100%);
+    padding: 4rem var(--side-pad) 3.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 15% 60%, rgba(106,74,184,0.2) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 15%, rgba(207,79,124,0.1) 0%, transparent 45%),
+      radial-gradient(ellipse at 60% 90%, rgba(79,127,207,0.08) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .hero-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.22rem 0.65rem;
+    border-radius: 20px;
+  }
+  .hero-badge--primary { background: var(--purple-600); color: #fff; }
+  .hero-badge--outline {
+    background: rgba(255,255,255,0.07);
+    color: var(--purple-200);
+    border: 1px solid rgba(255,255,255,0.13);
+  }
+  .hero-badge--rose { background: var(--rose); color: #fff; }
+
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.65rem, 4.2vw, 2.55rem);
+    color: #fff;
+    line-height: 1.22;
+    margin-bottom: 0.9rem;
+    font-weight: 700;
+  }
+  .hero h1 em { font-style: italic; color: var(--purple-200); }
+
+  .hero-deck {
+    font-size: 1.02rem;
+    color: rgba(255,255,255,0.78);
+    max-width: 640px;
+    line-height: 1.68;
+    margin-bottom: 1.75rem;
+  }
+  .hero-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.75rem;
+    align-items: center;
+  }
+  .hero-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--purple-200);
+  }
+  .hero-meta-item svg { width: 13px; height: 13px; opacity: 0.65; flex-shrink: 0; }
+  .hero-partners {
+    margin-top: 1.6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .hero-partners-lbl {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--purple-200);
+    opacity: 0.65;
+  }
+  .hero-partner-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.07);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.14);
+    padding: 0.18rem 0.55rem;
+    border-radius: 5px;
+  }
+
+  /* ── CONTENT WRAP ── */
+  .article-wrap {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 2.5rem var(--side-pad) 4.5rem;
+  }
+
+  /* ── INTRO BOX ── */
+  .intro-box {
+    background: var(--purple-50);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--purple-600);
+    border-radius: 0 12px 12px 0;
+    padding: 1.35rem 1.6rem;
+    margin-bottom: 2.5rem;
+    font-family: var(--font-serif);
+    font-size: 1.08rem;
+    color: var(--text-mid);
+    line-height: 1.68;
+    font-style: italic;
+  }
+  .intro-box strong { font-style: normal; color: var(--purple-800); }
+
+  /* ── TYPOGRAPHY ── */
+  .article-body h2 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+    font-weight: 700;
+    color: var(--purple-900);
+    margin: 3rem 0 0.85rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 2px solid var(--border);
+    line-height: 1.3;
+  }
+  .article-body p {
+    margin-bottom: 1.1rem;
+    font-size: 0.99rem;
+    color: var(--text-dark);
+    line-height: 1.82;
+  }
+  .article-body ul {
+    margin: 0.5rem 0 1.3rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .article-body li {
+    font-size: 0.96rem;
+    color: var(--text-mid);
+    line-height: 1.65;
+    padding-left: 0.2rem;
+  }
+  .article-body li::marker { color: var(--purple-600); }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  /* ── HIGHLIGHT BLOCK ── */
+  .highlight-block {
+    background: var(--purple-50);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin: 1.5rem 0 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .highlight-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple-600), var(--rose));
+  }
+  .highlight-block-header {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    margin-bottom: 0.9rem;
+  }
+  .highlight-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    background: linear-gradient(135deg, var(--purple-700), var(--purple-600));
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+  }
+  .highlight-title {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--purple-900);
+  }
+  .highlight-subtitle {
+    font-size: 0.73rem;
+    color: var(--text-soft);
+    font-weight: 500;
+    margin-top: 0.1rem;
+  }
+
+  /* ── DESINFORMATION GRID ── */
+  .desinfo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    margin: 1.25rem 0 2rem;
+  }
+  @media (max-width: 560px) { .desinfo-grid { grid-template-columns: 1fr; } }
+
+  .desinfo-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+  .desinfo-card-icon { font-size: 1.35rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .desinfo-card-title { font-weight: 700; font-size: 0.86rem; color: var(--purple-900); margin-bottom: 0.25rem; }
+  .desinfo-card-desc { font-size: 0.79rem; color: var(--text-soft); line-height: 1.5; }
+
+  /* ── STRATEGY LIST ── */
+  .strategy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 1.1rem 0 1.8rem;
+  }
+  .strategy-item {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.85rem 1.1rem;
+  }
+  .strategy-num {
+    width: 1.7rem;
+    height: 1.7rem;
+    background: var(--purple-600);
+    color: #fff;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+  .strategy-text { font-size: 0.9rem; color: var(--text-mid); line-height: 1.55; }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    margin: 2rem 0;
+    padding: 1.1rem 1.5rem;
+    border-left: 5px solid var(--amber);
+    background: var(--amber-light);
+    border-radius: 0 10px 10px 0;
+  }
+  .pull-quote p {
+    font-family: var(--font-serif);
+    font-size: 1.08rem;
+    font-style: italic;
+    color: var(--text-dark);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ── GOALS GRID ── */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    margin: 1.2rem 0 2rem;
+  }
+  @media (max-width: 520px) { .goals-grid { grid-template-columns: 1fr; } }
+  .goal-card {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    padding: 1rem 1.1rem;
+    background: var(--purple-50);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .goal-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.05rem; }
+  .goal-text { font-size: 0.86rem; color: var(--text-mid); line-height: 1.55; }
+  .goal-text strong { color: var(--purple-800); display: block; margin-bottom: 0.15rem; }
+
+  /* ── CLOSING CTA ── */
+  .closing-cta {
+    background: linear-gradient(135deg, var(--purple-900) 0%, var(--purple-800) 100%);
+    border-radius: 16px;
+    padding: 2.2rem 2rem;
+    margin: 2.5rem 0;
+    display: flex;
+    gap: 1.4rem;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+  }
+  .closing-cta::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(154,122,223,0.25), transparent 70%);
+  }
+  .closing-cta-icon { font-size: 2rem; flex-shrink: 0; margin-top: 0.2rem; }
+  .closing-cta-title {
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.55rem;
+  }
+  .closing-cta-text { font-size: 0.9rem; color: var(--purple-200); line-height: 1.6; margin: 0; }
+
+  /* ── RELATED ── */
+  .related-box {
+    background: var(--purple-50);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .related-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .related-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  .related-title {
+    font-family: var(--font-serif);
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--purple-900);
+    margin-bottom: 0.3rem;
+  }
+  .related-link {
+    font-size: 0.8rem;
+    color: var(--purple-600);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .related-link:hover { text-decoration: underline; }
+
+  /* ── TAGS ── */
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .tags-label {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-right: 0.2rem;
+  }
+  .tag-pill {
+    font-size: 0.77rem;
+    background: var(--purple-100);
+    color: var(--purple-800);
+    padding: 0.22rem 0.68rem;
+    border-radius: 20px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .tag-pill:hover { background: var(--purple-200); }
+
+  /* ── SHARE BAR ── */
+  .share-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .share-lbl {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.38rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+    cursor: pointer;
+    border: none;
+  }
+  .share-btn:hover { opacity: 0.82; }
+  .sbt-tw  { background: #1da1f2; color: #fff; }
+  .sbt-fb  { background: #1877f2; color: #fff; }
+  .sbt-wa  { background: #25d366; color: #fff; }
+  .sbt-cp  { background: var(--purple-100); color: var(--purple-800); border: 1px solid var(--border); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .anim-1 { animation: fadeSlide 0.5s 0.04s ease both; }
+  .anim-2 { animation: fadeSlide 0.5s 0.12s ease both; }
+  .anim-3 { animation: fadeSlide 0.5s 0.20s ease both; }
+  .anim-4 { animation: fadeSlide 0.5s 0.28s ease both; }
+</style>

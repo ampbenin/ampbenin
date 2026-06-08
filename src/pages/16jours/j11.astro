@@ -2,7 +2,24 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="VBG Numériques au Bénin : le web, miroir des violences sociales">
+<BaseLayout
+  title="VBG Numériques – Jour 11 : le web, miroir des violences sociales | AMP BENIN"
+  description="Jour 11 des 16 Jours d'activisme AMP BENIN 2025 : mobilisation des jeunes contre les violences numériques basées sur le genre. Actions et engagements communautaires au Bénin."
+  url="https://ampbenin.netlify.app/16jours/j11"
+  keywords="jeunes contre VBG numérique Bénin, mobilisation violences, 16 jours activisme jour 11, AMP BENIN"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "16 Jours d'Activisme", "item": "https://ampbenin.netlify.app/16jours" },
+      { "@type": "ListItem", "position": 3, "name": "Jour 11", "item": "https://ampbenin.netlify.app/16jours/j11" }
+    ]
+  }
+  </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
 
@@ -20,7 +37,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <figure class="w-full mb-10">
       <img 
-        src="/images/16jours/og-image-v11.jpg"
+        src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903917/ong-site/images/16jours/og-image-v11.jpg"
         alt="VBG numériques au Bénin - visuel principal"
         class="rounded-lg shadow-md w-full object-cover"
       />
@@ -52,7 +69,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 1 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/1J11-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903945/ong-site/images/16jours/1J11-16jours-25.webp"
           alt="Critiques numériques contre les femmes célibataires plus âgées"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -90,7 +107,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 2 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/2J11-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903946/ong-site/images/16jours/2J11-16jours-25.webp"
           alt="Critiques numériques contre les femmes célibataires plus âgées"
           class="rounded-lg shadow-md w-full object-cover"
         />
@@ -138,7 +155,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <!-- IMAGE 3 -->
       <figure class="w-full my-6">
         <img 
-          src="/images/16jours/3J11-16jours-25.webp"
+          src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903947/ong-site/images/16jours/3J11-16jours-25.webp"
           alt="Critiques numériques contre les femmes célibataires plus âgées"
           class="rounded-lg shadow-md w-full object-cover"
         />

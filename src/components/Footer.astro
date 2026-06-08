@@ -1,111 +1,306 @@
-<footer class="bg-gradient-to-r from-green-900 to-green-800 text-white py-12 relative overflow-hidden">
-  <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12">
+---
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/utils';
+const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const t = useTranslations(lang);
+const prefix = lang === 'fr' ? '' : `/${lang}`;
+---
 
-    <!-- Bloc 1 : Logo / Nom -->
-    <div class="flex flex-col items-start md:items-start relative z-10">
-      <h2 class="text-3xl font-bold mb-3 text-green-100 animate-fadeIn">AMP BENIN</h2>
-      <p class="text-sm text-green-200 leading-relaxed animate-fadeIn delay-200">
-        Action Monde Productif - Pour un Monde durable, productif, inclusif et engagé.
-      </p>
-    </div>
+<footer class="ftr" aria-label={t('common', 'footerAriaLabel')}>
 
-    <!-- Bloc 2 : Liens rapides -->
-    <div class="relative z-10">
-      <h3 class="text-lg font-semibold mb-3 text-green-100 animate-fadeIn delay-400">Liens rapides</h3>
-      <ul class="space-y-2 text-sm">
-        <li class="flex items-center gap-2">
-          <span class="text-green-200">🏠</span>
-          <a href="/" class="hover:text-green-300 transition-all duration-300 transform hover:translate-x-2 hover:underline">Accueil</a>
-        </li>
-        <li class="flex items-center gap-2">
-          <span class="text-green-200">ℹ️</span>
-          <a href="/a-propos" class="hover:text-green-300 transition-all duration-300 transform hover:translate-x-2 hover:underline">À propos</a>
-        </li>
-        <li class="flex items-center gap-2">
-          <span class="text-green-200">🏛️</span>
-          <a href="/is" class="hover:text-green-300 transition-all duration-300 transform hover:translate-x-2 hover:underline">Institutions</a>
-        </li>
-        <li class="flex items-center gap-2">
-          <span class="text-green-200">📰</span>
-          <a href="/actualites" class="hover:text-green-300 transition-all duration-300 transform hover:translate-x-2 hover:underline">Actualités</a>
-        </li>
-        <li class="flex items-center gap-2">
-          <span class="text-green-200">📞</span>
-          <a href="/contact" class="hover:text-green-300 transition-all duration-300 transform hover:translate-x-2 hover:underline">Contact</a>
-        </li>
-      </ul>
-    </div>
+  <!-- Grille principale 4 colonnes -->
+  <div class="container ftr__grid">
 
-    <!-- Bloc 3 : Réseaux sociaux + Logo AMP BENIN -->
-    <div class="relative z-10 flex flex-col items-center md:items-center">
-      <h3 class="text-lg font-semibold mb-3 text-green-100 animate-fadeIn delay-600">Nous suivre</h3>
-
-      <!-- Ligne des réseaux sociaux -->
-      <div class="flex justify-center gap-3 mb-4 flex-wrap">
-        <!-- Facebook -->
-        <div class="flex flex-col items-center">
-          <a href="https://facebook.com/ampbenin.org" target="_blank" aria-label="Facebook"
-             class="bg-blue-600 p-3 rounded-full hover:bg-blue-500 hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24">
-              <path d="M22 12a10 10 0 10-11.5 9.9v-7h-2v-3h2v-2.3c0-2 1.2-3.2 3-3.2.9 0 1.8.2 1.8.2v2h-1c-1 0-1.3.6-1.3 1.2V12h2.3l-.4 3h-1.9v7A10 10 0 0022 12z"/>
-            </svg>
-          </a>
-          <span class="mt-1 text-xs text-green-200">Facebook</span>
-        </div>
-
-        <!-- Twitter/X -->
-        <div class="flex flex-col items-center">
-          <a href="https://twitter.com" target="_blank" aria-label="X"
-             class="bg-[#1DA1F2] p-3 rounded-full hover:bg-[#0d95e8] hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26L22.5 21.75h-6.421l-5.03-6.568-5.757 6.568H2.984l7.73-8.828L1.5 2.25h6.58l4.533 6.054L18.244 2.25z"/>
-            </svg>
-          </a>
-          <span class="mt-1 text-xs text-green-200">X (Twitter)</span>
-        </div>
-
-        <!-- WhatsApp -->
-        <div class="flex flex-col items-center">
-          <a href="https://whatsapp.com/channel/0029VaIOnPDEVccHs3abBh1A" target="_blank" aria-label="WhatsApp"
-             class="bg-green-500 p-3 rounded-full hover:bg-green-400 hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24">
-              <path d="M20.52 3.48A11.87 11.87 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.17 1.6 6L0 24l6.17-1.58A12 12 0 0012 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.2-3.48-8.52zM12 21.6c-1.87 0-3.68-.5-5.26-1.46l-.38-.23-3.66.94.98-3.56-.25-.38A9.58 9.58 0 012.4 12c0-5.3 4.3-9.6 9.6-9.6 2.56 0 4.97 1 6.77 2.8 1.8 1.8 2.8 4.21 2.8 6.77 0 5.3-4.3 9.6-9.6 9.6zm5.52-7.28c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.65-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.07c.15.2 2.1 3.2 5.08 4.48.71.31 1.27.49 1.7.63.71.23 1.35.2 1.85.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.13-.27-.2-.57-.35z"/>
-            </svg>
-          </a>
-          <span class="mt-1 text-xs text-green-200">WhatsApp</span>
-        </div>
-
-        <!-- LinkedIn -->
-        <div class="flex flex-col items-center">
-          <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn"
-             class="bg-[#0077B5] p-3 rounded-full hover:bg-[#005582] hover:scale-110 transition-transform duration-300">
-            <svg class="w-6 h-6 fill-white" viewBox="0 0 24 24">
-              <path d="M4.98 3.5C3.33 3.5 2 4.83 2 6.5s1.33 3 2.98 3c1.65 0 2.98-1.33 2.98-3S6.63 3.5 4.98 3.5zM2 8h6v14H2V8zm7 0h5.5v2h.1c.76-1.44 2.63-2.96 5.4-2.96 5.77 0 6.1 3.8 6.1 8.72V22h-6v-6.9c0-1.65-.03-3.77-2.3-3.77-2.3 0-2.65 1.8-2.65 3.65V22h-6V8z"/>
-            </svg>
-          </a>
-          <span class="mt-1 text-xs text-green-200 text-center">LinkedIn</span>
-        </div>
-      </div>
-
-      <!-- Logo + AMP BENIN encadré -->
-      <div class="flex justify-center items-center mt-2">
-        <div class="flex items-center gap-2 p-3 rounded-md bg-gradient-to-r from-blue-500 via-green-400 to-yellow-400 animate-pulse">
-          <img src="/images/Logo.png" alt="Logo AMP BENIN" class="h-12 w-auto">
-          <span class="font-bold text-white text-lg">AMP BENIN</span>
-        </div>
+    <!-- Colonne 1 : Logo + Mission -->
+    <div class="ftr__col ftr__col--brand">
+      <a href={`${prefix}/`} class="ftr__logo-link" aria-label={t('common', 'homeAriaLabel')}>
+        <img src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_300/v1780903877/ong-site/images/Logo.png" alt={t('common', 'logoAlt')} class="ftr__logo-img" />
+        <span class="ftr__logo-name">AMP BENIN</span>
+      </a>
+      <p class="ftr__mission">{t('footer', 'mission')}</p>
+      <div class="ftr__badge" aria-hidden="true">
+        <span>{t('footer', 'foundedIn')}</span>
+        <strong>2021</strong>
       </div>
     </div>
+
+    <!-- Colonne 2 : Navigation -->
+    <div class="ftr__col">
+      <h3 class="ftr__col-title">{t('footer', 'navigation')}</h3>
+      <nav aria-label="Liens rapides du pied de page">
+        <ul class="ftr__nav-list">
+          <li><a href={`${prefix}/`}            class="ftr__nav-link">{t('nav', 'home')}</a></li>
+          <li><a href={`${prefix}/a-propos`}    class="ftr__nav-link">{t('nav', 'about')}</a></li>
+          <li><a href={`${prefix}/nos-actions`} class="ftr__nav-link">{t('nav', 'actions')}</a></li>
+          <li><a href={`${prefix}/is`}          class="ftr__nav-link">{t('nav', 'institutions')}</a></li>
+          <li><a href={`${prefix}/actualites`}  class="ftr__nav-link">{t('nav', 'news')}</a></li>
+          <li><a href={`${prefix}/adhesion`}    class="ftr__nav-link">{t('nav', 'adhesion')}</a></li>
+          <li><a href="/16jours"                class="ftr__nav-link">{t('nav', 'jours16')}</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Colonne 3 : Contact -->
+    <div class="ftr__col">
+      <h3 class="ftr__col-title">{t('footer', 'contact')}</h3>
+      <address class="ftr__contact">
+        <p class="ftr__contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {t('footer', 'location')}
+        </p>
+        <p class="ftr__contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <a href="mailto:contact@ampbenin.org" class="ftr__contact-link">contact@ampbenin.org</a>
+        </p>
+        <p class="ftr__contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91A16 16 0 0 0 16 16.92l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 24 17v.92z"/></svg>
+          <a href="tel:+22900000000" class="ftr__contact-link">+229 00 00 00 00</a>
+        </p>
+        <div class="ftr__contact-item ftr__contact-item--cta">
+          <a href={`${prefix}/contact`} class="btn btn--outline-white" style="font-size:var(--text-sm)">{t('footer', 'contactUs')}</a>
+        </div>
+      </address>
+    </div>
+
+    <!-- Colonne 4 : Réseaux sociaux -->
+    <div class="ftr__col">
+      <h3 class="ftr__col-title">{t('footer', 'follow')}</h3>
+      <div class="ftr__socials">
+        <a href="https://facebook.com/ampbenin.org" target="_blank" rel="noopener noreferrer"
+           aria-label="Facebook" class="ftr__social ftr__social--fb">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 10-11.5 9.9v-7h-2v-3h2v-2.3c0-2 1.2-3.2 3-3.2.9 0 1.8.2 1.8.2v2h-1c-1 0-1.3.6-1.3 1.2V12h2.3l-.4 3h-1.9v7A10 10 0 0022 12z"/></svg>
+          <span>Facebook</span>
+        </a>
+        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"
+           aria-label="X (Twitter)" class="ftr__social ftr__social--tw">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26L22.5 21.75h-6.421l-5.03-6.568-5.757 6.568H2.984l7.73-8.828L1.5 2.25h6.58l4.533 6.054L18.244 2.25z"/></svg>
+          <span>X (Twitter)</span>
+        </a>
+        <a href="https://whatsapp.com/channel/0029VaIOnPDEVccHs3abBh1A" target="_blank" rel="noopener noreferrer"
+           aria-label="WhatsApp" class="ftr__social ftr__social--wa">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.87 11.87 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.17 1.6 6L0 24l6.17-1.58A12 12 0 0012 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.2-3.48-8.52zM12 21.6c-1.87 0-3.68-.5-5.26-1.46l-.38-.23-3.66.94.98-3.56-.25-.38A9.58 9.58 0 012.4 12c0-5.3 4.3-9.6 9.6-9.6 2.56 0 4.97 1 6.77 2.8 1.8 1.8 2.8 4.21 2.8 6.77 0 5.3-4.3 9.6-9.6 9.6zm5.52-7.28c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.65-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.22 3.07c.15.2 2.1 3.2 5.08 4.48.71.31 1.27.49 1.7.63.71.23 1.35.2 1.85.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.13-.27-.2-.57-.35z"/></svg>
+          <span>WhatsApp</span>
+        </a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"
+           aria-label="LinkedIn" class="ftr__social ftr__social--li">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5C3.33 3.5 2 4.83 2 6.5s1.33 3 2.98 3c1.65 0 2.98-1.33 2.98-3S6.63 3.5 4.98 3.5zM2 8h6v14H2V8zm7 0h5.5v2h.1c.76-1.44 2.63-2.96 5.4-2.96 5.77 0 6.1 3.8 6.1 8.72V22h-6v-6.9c0-1.65-.03-3.77-2.3-3.77-2.3 0-2.65 1.8-2.65 3.65V22h-6V8z"/></svg>
+          <span>LinkedIn</span>
+        </a>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Ligne multicolore -->
-  <div class="flex h-1 mt-8 overflow-hidden rounded">
-    <div class="flex-1 bg-green-600"></div>
-    <div class="flex-1 bg-yellow-400"></div>
-    <div class="flex-1 bg-red-600"></div>
+  <!-- Séparateur tricolore -->
+  <div class="ftr__sep" aria-hidden="true">
+    <div class="ftr__sep-bar ftr__sep-bar--green"></div>
+    <div class="ftr__sep-bar ftr__sep-bar--yellow"></div>
+    <div class="ftr__sep-bar ftr__sep-bar--red"></div>
   </div>
 
   <!-- Mentions légales -->
-  <div class="text-center text-sm mt-4 text-green-200 animate-fadeIn delay-1000">
-    © 2021 AMP BENIN. Tous droits réservés.
+  <div class="ftr__legal">
+    <span>&copy; {new Date().getFullYear()} AMP BENIN. {t('footer', 'rights')}</span>
+    <span class="ftr__legal-sep" aria-hidden="true">·</span>
+    <a href={`${prefix}/contact`} class="ftr__legal-link">{t('footer', 'privacy')}</a>
+    <span class="ftr__legal-sep" aria-hidden="true">·</span>
+    <a href={`${prefix}/contact`} class="ftr__legal-link">{t('footer', 'terms')}</a>
   </div>
+
 </footer>
+
+<style>
+  .ftr {
+    background: var(--col-footer-bg);
+    color: rgba(255, 255, 255, 0.65);
+    font-family: var(--font-body);
+  }
+
+  .ftr__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-10);
+    padding-top: var(--sp-16);
+    padding-bottom: var(--sp-12);
+  }
+  @media (min-width: 640px) {
+    .ftr__grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (min-width: 1024px) {
+    .ftr__grid { grid-template-columns: 2fr 1fr 1.5fr 1.5fr; gap: var(--sp-12); }
+  }
+
+  .ftr__col { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+  .ftr__logo-link {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    text-decoration: none;
+    margin-bottom: var(--sp-1);
+  }
+  .ftr__logo-img { height: 2.75rem; width: auto; }
+  .ftr__logo-name {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-xl);
+    color: var(--col-white);
+  }
+  .ftr__mission {
+    font-size: var(--text-sm);
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.55);
+    max-width: 22rem;
+  }
+  .ftr__badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(201, 144, 58, 0.12);
+    border: 1px solid rgba(201, 144, 58, 0.25);
+    border-radius: var(--r-lg);
+    padding: var(--sp-2) var(--sp-4);
+    width: fit-content;
+    font-size: var(--text-xs);
+    color: rgba(255, 255, 255, 0.50);
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ftr__badge strong {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    color: var(--col-accent);
+    font-weight: 700;
+  }
+
+  .ftr__col-title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-base);
+    color: var(--col-white);
+    letter-spacing: 0.02em;
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .ftr__nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+  .ftr__nav-link {
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.58);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    transition: color var(--tr-base), transform var(--tr-base);
+    padding: 2px 0;
+  }
+  .ftr__nav-link::before {
+    content: '→';
+    font-size: 0.7rem;
+    color: var(--col-accent);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity var(--tr-base), transform var(--tr-base);
+  }
+  [dir="rtl"] .ftr__nav-link::before { content: '←'; transform: translateX(6px); }
+  .ftr__nav-link:hover { color: var(--col-white); transform: translateX(4px); }
+  [dir="rtl"] .ftr__nav-link:hover { transform: translateX(-4px); }
+  .ftr__nav-link:hover::before { opacity: 1; transform: translateX(0); }
+  .ftr__nav-link:focus-visible { outline: 1px solid var(--col-accent); border-radius: 2px; }
+
+  .ftr__contact {
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+  }
+  .ftr__contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.55);
+  }
+  .ftr__contact-item svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--col-accent);
+  }
+  .ftr__contact-link {
+    color: rgba(255, 255, 255, 0.58);
+    text-decoration: none;
+    transition: color var(--tr-base);
+  }
+  .ftr__contact-link:hover { color: var(--col-white); }
+  .ftr__contact-item--cta { margin-top: var(--sp-2); }
+
+  .ftr__socials {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+  .ftr__social {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-lg);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    color: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    transition: background var(--tr-base), color var(--tr-base), transform var(--tr-base), border-color var(--tr-base);
+  }
+  .ftr__social svg { width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+  .ftr__social:hover { color: var(--col-white); transform: translateX(4px); }
+  [dir="rtl"] .ftr__social:hover { transform: translateX(-4px); }
+  .ftr__social:focus-visible { outline: 1px solid var(--col-accent); }
+
+  .ftr__social--fb:hover { background: rgba(24, 119, 242, 0.18); border-color: rgba(24, 119, 242, 0.30); }
+  .ftr__social--fb:hover svg { color: #1877F2; }
+  .ftr__social--tw:hover { background: rgba(29, 161, 242, 0.18); border-color: rgba(29, 161, 242, 0.30); }
+  .ftr__social--tw:hover svg { color: #1DA1F2; }
+  .ftr__social--wa:hover { background: rgba(37, 211, 102, 0.18); border-color: rgba(37, 211, 102, 0.30); }
+  .ftr__social--wa:hover svg { color: #25D366; }
+  .ftr__social--li:hover { background: rgba(0, 119, 181, 0.18); border-color: rgba(0, 119, 181, 0.30); }
+  .ftr__social--li:hover svg { color: #0077B5; }
+
+  .ftr__sep { display: flex; height: 3px; overflow: hidden; }
+  .ftr__sep-bar { flex: 1; }
+  .ftr__sep-bar--green  { background: #009E60; }
+  .ftr__sep-bar--yellow { background: #FCD116; }
+  .ftr__sep-bar--red    { background: #E8112D; }
+
+  .ftr__legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2) var(--sp-4);
+    padding: var(--sp-5) var(--sp-6);
+    font-size: var(--text-xs);
+    color: rgba(255, 255, 255, 0.35);
+  }
+  .ftr__legal-sep { display: none; }
+  @media (min-width: 480px) { .ftr__legal-sep { display: inline; } }
+  .ftr__legal-link {
+    color: rgba(255, 255, 255, 0.40);
+    text-decoration: none;
+    transition: color var(--tr-base);
+  }
+  .ftr__legal-link:hover { color: rgba(255, 255, 255, 0.70); }
+
+  @media (max-width: 639px) {
+    .ftr__col--brand { order: 1; }
+  }
+</style>
