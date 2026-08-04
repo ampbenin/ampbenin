@@ -1,10 +1,8 @@
 ---
 import Layout from '../layouts/BaseLayout.astro';
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const prefix = lang === 'fr' ? '' : `/${lang}`;
 ---
 
 <Layout
@@ -42,7 +40,7 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
         </div>
         <h3 class="text-lg font-semibold mb-2">{t('contact', 'partnerTitle')}</h3>
         <p class="text-sm text-gray-600 mb-4">{t('contact', 'partnerDesc')}</p>
-        <a href={`${prefix}/partenaire`} class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
+        <a href="/partenaire" class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
           {t('contact', 'partnerBtn')}
         </a>
       </div>
@@ -56,7 +54,7 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
         </div>
         <h3 class="text-lg font-semibold mb-2">{t('contact', 'memberTitle')}</h3>
         <p class="text-sm text-gray-600 mb-4">{t('contact', 'memberDesc')}</p>
-        <a href={`${prefix}/adhesion`} class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
+        <a href="/adhesion" class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
           {t('contact', 'memberBtn')}
         </a>
       </div>
@@ -70,7 +68,7 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
         </div>
         <h3 class="text-lg font-semibold mb-2">{t('contact', 'volunteerTitle')}</h3>
         <p class="text-sm text-gray-600 mb-4">{t('contact', 'volunteerDesc')}</p>
-        <a href={`${prefix}/volontaires`} class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
+        <a href="/volontaires" class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition">
           {t('contact', 'volunteerBtn')}
         </a>
       </div>

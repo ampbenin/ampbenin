@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { adminFetch } from "@/services/admin/api";
 
 const STATUTS = ["Non disponible", "Refusé", "Mission validée"];
 
@@ -8,24 +9,23 @@ export default function SaveVolunteers() {
     nom: "",
     prenom: "",
     telephone: "",
-    missions: [], // { missionId, statut }
+    programs: [], // { programId, statut }
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const [allMissions, setAllMissions] = useState([]);
-  const [assignedMissions, setAssignedMissions] = useState([]);
+  const [allPrograms, setAllPrograms] = useState([]);
+  const [assignedPrograms, setAssignedPrograms] = useState([]);
   const [volunteerId, setVolunteerId] = useState(null);
 
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  /* ===================== FETCH MISSIONS ===================== */
+  /* ===================== FETCH PROGRAMMES ===================== */
   useEffect(() => {
-    fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/missions")
-      .then((res) => res.json())
-      .then(setAllMissions)
+    adminFetch("/api/volunteer-programs/all")
+      .then((data) => setAllPrograms(data?.items || []))
       .catch(console.error);
   }, []);
 
@@ -34,11 +34,8 @@ export default function SaveVolunteers() {
     if (email.length < 2) return;
 
     const delay = setTimeout(async () => {
-      const res = await fetch(
-        `https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers?search=${email}`
-      );
-      const data = await res.json();
-      if (data.success) {
+      const data = await adminFetch(`/api/volunteers?search=${encodeURIComponent(email)}`);
+      if (data?.success) {
         setSuggestions(data.items);
         setShowSuggestions(true);
       }
@@ -56,35 +53,35 @@ export default function SaveVolunteers() {
       nom: volunteer.nom || "",
       prenom: volunteer.prenom || "",
       telephone: volunteer.telephone || "",
-      missions: [],
+      programs: [],
     });
 
-    setAssignedMissions(volunteer.missions || []);
+    setAssignedPrograms(volunteer.programs || []);
     setShowSuggestions(false);
   };
 
-  /* ===================== MISSIONS ===================== */
-  const toggleMission = (missionId) => {
+  /* ===================== PROGRAMMES ===================== */
+  const toggleProgram = (programId) => {
     setForm((prev) => {
-      const exists = prev.missions.find((m) => m.missionId === missionId);
+      const exists = prev.programs.find((p) => p.programId === programId);
       if (exists) {
         return {
           ...prev,
-          missions: prev.missions.filter((m) => m.missionId !== missionId),
+          programs: prev.programs.filter((p) => p.programId !== programId),
         };
       }
       return {
         ...prev,
-        missions: [...prev.missions, { missionId, statut: "Non disponible" }],
+        programs: [...prev.programs, { programId, statut: "Non disponible" }],
       };
     });
   };
 
-  const updateMissionStatut = (missionId, statut) => {
+  const updateProgramStatut = (programId, statut) => {
     setForm((prev) => ({
       ...prev,
-      missions: prev.missions.map((m) =>
-        m.missionId === missionId ? { ...m, statut } : m
+      programs: prev.programs.map((p) =>
+        p.programId === programId ? { ...p, statut } : p
       ),
     }));
   };
@@ -100,16 +97,13 @@ export default function SaveVolunteers() {
         nom: form.nom,
         prenom: form.prenom,
         telephone: form.telephone,
-        missions: form.missions,
+        programs: form.programs,
       };
 
-      const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers", {
+      await adminFetch("/api/volunteers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) throw new Error("Erreur lors de l’enregistrement");
 
       setMessage({
         type: "success",
@@ -119,8 +113,8 @@ export default function SaveVolunteers() {
       });
 
       setEmail("");
-      setForm({ nom: "", prenom: "", telephone: "", missions: [] });
-      setAssignedMissions([]);
+      setForm({ nom: "", prenom: "", telephone: "", programs: [] });
+      setAssignedPrograms([]);
       setVolunteerId(null);
     } catch (err) {
       setMessage({ type: "error", text: err.message });
@@ -153,7 +147,7 @@ export default function SaveVolunteers() {
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
-              setAssignedMissions([]);
+              setAssignedPrograms([]);
               setVolunteerId(null);
             }}
             type="email"
@@ -196,33 +190,33 @@ export default function SaveVolunteers() {
           onChange={(e) => setForm({ ...form, telephone: e.target.value })}
         />
 
-        {/* TABLE MISSIONS */}
+        {/* TABLE PROGRAMMES */}
         <table className="w-full border text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-2">Mission</th>
+              <th className="border p-2">Programme</th>
               <th className="border p-2">Statut de la mission</th>
             </tr>
           </thead>
           <tbody>
-            {allMissions.map((mission) => {
-              const assigned = assignedMissions.find(
-                (m) => m.missionId?._id === mission._id
+            {allPrograms.map((program) => {
+              const assigned = assignedPrograms.find(
+                (p) => p.programId === program._id
               );
-              const selected = form.missions.find(
-                (m) => m.missionId === mission._id
+              const selected = form.programs.find(
+                (p) => p.programId === program._id
               );
 
               return (
-                <tr key={mission._id}>
+                <tr key={program._id}>
                   <td className="border p-2">
                     <input
                       type="checkbox"
                       disabled={!!assigned}
                       checked={!!selected}
-                      onChange={() => toggleMission(mission._id)}
+                      onChange={() => toggleProgram(program._id)}
                     />{" "}
-                    {mission.titre}
+                    {program.title}
                   </td>
                   <td className="border p-2">
                     {assigned ? (
@@ -233,8 +227,8 @@ export default function SaveVolunteers() {
                       <select
                         value={selected.statut}
                         onChange={(e) =>
-                          updateMissionStatut(
-                            mission._id,
+                          updateProgramStatut(
+                            program._id,
                             e.target.value
                           )
                         }

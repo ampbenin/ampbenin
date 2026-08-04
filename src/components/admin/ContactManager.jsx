@@ -1,29 +1,28 @@
 // src/components/admin/ContactManager.jsx
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { adminFetch } from '@/services/admin/api';
+import { usePaginatedAdminList } from './usePaginatedAdminList';
+import Pagination from './Pagination';
 
-export default function ContactManager({ serverUrl = '' }) {
-  const [list, setList] = useState([]);
-
-  useEffect(() => {
-    fetch(`${serverUrl}/admin/contacts`).then(r => r.json()).then(setList).catch(console.error);
-  }, []);
+export default function ContactManager() {
+  const { items, setItems, page, setPage, totalPages } = usePaginatedAdminList('/admin/contacts');
 
   const del = async (id) => {
     if (!confirm('Supprimer ce contact ?')) return;
-    await fetch(`${serverUrl}/admin/contacts/${id}`, { method: 'DELETE' });
-    setList(list.filter(l => l._id !== id));
+    await adminFetch(`/admin/contacts/${id}`, { method: 'DELETE' });
+    setItems(items.filter(l => l._id !== id));
   };
 
   const mark = async (id) => {
-    await fetch(`${serverUrl}/admin/contacts/${id}/handled`, { method: 'PATCH' });
-    setList(list.map(i => i._id === id ? { ...i, handled: true } : i));
+    await adminFetch(`/admin/contacts/${id}/handled`, { method: 'PATCH' });
+    setItems(items.map(i => i._id === id ? { ...i, handled: true } : i));
   };
 
   return (
     <div className="p-4 bg-white rounded shadow">
       <h2 className="text-xl mb-3">Contacts</h2>
       <div style={{maxHeight:400, overflow:'auto'}}>
-        {list.map(c => (
+        {items.map(c => (
           <div key={c._id} className="border-b py-2">
             <div className="flex justify-between items-center">
               <div>
@@ -44,6 +43,7 @@ export default function ContactManager({ serverUrl = '' }) {
           </div>
         ))}
       </div>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }

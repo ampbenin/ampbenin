@@ -1,5 +1,19 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Campagne 16 jours),
+// avec repli sur le contenu codé en dur ci-dessous si l'API est indisponible
+// ou si cet article n'a pas encore été édité.
+let cmsBody: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/campaigns/16jours-2025`);
+  if (res.ok) {
+    const data = await res.json();
+    const day = data?.dailyArticles?.find((d: any) => d.day === 14);
+    if (day?.body) cmsBody = day.body;
+  }
+} catch {}
 ---
 
 <BaseLayout
@@ -22,9 +36,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   </script>
 
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
 
     <!-- HEADER -->
-    <header class="mb-10 text-center">
     <header class="mb-10 text-center">
       <h1 class="text-3xl md:text-4xl font-bold text-orange-700 mb-4 leading-tight">
          Comprendre, prévenir et agir face aux cyberviolences envers les élèves, étudiantes...     
@@ -71,7 +88,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <li>Utilisation abusive du statut pour obtenir des faveurs</li>
       </ul>
       <p>Ces actes constituent des Violences Basées sur le Genre (VBG), car ils exploitent un rapport de pouvoir et ciblent majoritairement les jeunes femmes.</p>
-
+    </section>
 
     <!-- SECTION 2 -->
     <section class="mt-12 prose prose-lg max-w-none prose-orange text-justify">
@@ -151,5 +168,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       </p>
     </section>
 
+      </>
+    )}
   </main>
 </BaseLayout>

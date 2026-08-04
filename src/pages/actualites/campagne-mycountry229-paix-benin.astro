@@ -5,6 +5,19 @@ const title = "MyCountry229 : mobilisation digitale (11–24 août 2025) pour la
 const description = "Du 11 au 24 août 2025, AMP BENIN organise MyCountry229 : une campagne digitale mobilisant la jeunesse pour la paix, la cohésion sociale et la lutte contre la désinformation, alignée sur les ODD.";
 const pubDate = "2025-08-08";
 const author = "AMP BENIN";
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "campagne-mycountry229-paix-benin"), avec repli sur le contenu codé en dur
+// ci-dessous si l'API est indisponible ou si l'article n'a pas encore été édité.
+let cmsBody: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/campagne-mycountry229-paix-benin`);
+  if (res.ok) {
+    const data = await res.json();
+    if (data?.body) cmsBody = data.body;
+  }
+} catch {}
 ---
 
 <BaseLayout
@@ -26,6 +39,10 @@ const author = "AMP BENIN";
   }
   </script>
   <article class="prose lg:prose-xl max-w-5xl mx-auto px-4 md:px-0 py-12">
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
     <!-- Hero -->
     <header class="rounded-lg overflow-hidden shadow-lg">
       <div class="relative">
@@ -151,5 +168,7 @@ const author = "AMP BENIN";
       <div>Auteur : {author}</div>
       <div class="mt-2">Tags : <span class="text-green-700">#MyCountry229 #AMPBenin</span>, <span class="text-green-700">Paix</span>, <span class="text-green-700">Cohésion</span>, <span class="text-green-700">ODD</span></div>
     </footer>
+      </>
+    )}
   </article>
 </BaseLayout>

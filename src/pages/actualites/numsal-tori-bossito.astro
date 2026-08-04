@@ -3,6 +3,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const title = "Lancement du projet NumSAL à Tori-Bossito";
 const description = "AMP BENIN lance le projet NumSAL pour former plus de 100 jeunes et femmes en compétences numériques et entrepreneuriat sur 6 mois.";
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "numsal-tori-bossito"), avec repli sur le contenu codé en dur ci-dessous
+// si l'API est indisponible ou si l'article n'a pas encore été édité.
+let cmsBody: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/numsal-tori-bossito`);
+  if (res.ok) {
+    const data = await res.json();
+    if (data?.body) cmsBody = data.body;
+  }
+} catch {}
 ---
 
 <BaseLayout
@@ -41,6 +54,10 @@ const description = "AMP BENIN lance le projet NumSAL pour former plus de 100 je
 
       <div class="p-6 md:p-10">
 
+      {cmsBody ? (
+        <Fragment set:html={cmsBody} />
+      ) : (
+        <>
         <h1 class="text-3xl md:text-4xl font-bold text-blue-700 leading-tight mb-6 animate-fade-in">
           Lancement du projet NumSAL à Tori-Bossito : une initiative pour l'inclusion numérique et l'entrepreneuriat des jeunes
         </h1>
@@ -203,6 +220,8 @@ const description = "AMP BENIN lance le projet NumSAL pour former plus de 100 je
             </div>
           </div>
         </section>
+        </>
+      )}
 
       </div>
     </article>

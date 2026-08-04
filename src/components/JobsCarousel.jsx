@@ -1,8 +1,8 @@
 // components/JobsCarousel.jsx
 // Logique de recherche/filtre/modal (useState, filter, iframe Google Drive) conservée à l'identique
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const jobsData = [
+const FALLBACK_JOBS = [
   { id: 1, title: "1 Structure pour la réalisation d'études de terrain et la planification du projet NumSAL", category: "Consultance", location: "Tori-Bossito", file: "https://drive.google.com/file/d/1Ve5iz0Zwodwhwy3av0CfaU4iX6BP-xyU/view?usp=drive_link" },
   { id: 2, title: "1 Structure spécialisée pour l'installation, la fourniture de connexion internet et la maintenance", category: "Consultance", location: "Bénin", file: "https://drive.google.com/file/d/1qkM_By6IGZvbW2gnV7HmfYtEbsKz7VGn/view?usp=sharing" },
   { id: 3, title: "4 Consultants individuels pour la conception de modules pédagogiques en compétences numériques – Projet NumSAL", category: "Consultance", location: "Bénin", file: "https://drive.google.com/file/d/1_lui4qod9aiNgVJgnH7z651T-ERhfaWq/view?usp=drive_link" },
@@ -18,6 +18,22 @@ const CATEGORY_COLORS = {
 };
 
 export default function JobsCarousel() {
+  // Contenu géré depuis le CMS admin (/admin/dashboard → Recrutement),
+  // avec repli sur les offres codées en dur si l'API est indisponible.
+  const [jobsData, setJobsData] = useState(FALLBACK_JOBS);
+
+  useEffect(() => {
+    const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+    fetch(`${apiBase}/api/cms/jobs`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.items) && data.items.length > 0) {
+          setJobsData(data.items);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Logique identique
   const [search,      setSearch]      = useState("");
   const [filter,      setFilter]      = useState("All");
@@ -72,8 +88,9 @@ export default function JobsCarousel() {
       <div className="jobs-grid">
         {filteredJobs.length > 0 ? filteredJobs.map((job) => {
           const catStyle = CATEGORY_COLORS[job.category] || { bg: "#1B4332", text: "#fff" };
+          const fileUrl = job.file || job.applyUrl;
           return (
-            <article key={job.id} className="job-card">
+            <article key={job.id || job._id} className="job-card">
 
               {/* Badges */}
               <div className="job-card__badges">
@@ -100,7 +117,7 @@ export default function JobsCarousel() {
               {/* Actions */}
               <div className="job-card__actions">
                 <button
-                  onClick={() => setSelectedPdf(job.file.replace("/view", "/preview"))}
+                  onClick={() => setSelectedPdf(fileUrl.replace("/view", "/preview"))}
                   className="job-card__btn job-card__btn--primary"
                   aria-label={`Aperçu : ${job.title}`}
                 >
@@ -110,7 +127,7 @@ export default function JobsCarousel() {
                   Aperçu
                 </button>
                 <a
-                  href={job.file}
+                  href={fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="job-card__btn job-card__btn--outline"

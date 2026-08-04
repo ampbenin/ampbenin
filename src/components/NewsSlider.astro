@@ -1,34 +1,67 @@
 ---
-// Données identiques — logique slider JS conservée à l'identique
-const slides = [
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles) : les 3
+// actualités les plus récentes publiées. Repli sur 3 cartes codées en dur
+// si l'API est indisponible ou pas encore alimentée, pour ne jamais casser
+// l'affichage public.
+const FALLBACK_SLIDES = [
   {
     image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903910/ong-site/images/16jours/1J16-16jours-25.webp",
     title: "JOUR FINAL : SENSIBILISATION — 16 JOURS D'ACTIVISME CONTRE LES VBG",
-    description: `Nous sommes au dernier jour de la campagne et nous vous proposons un résumé riche des 16 jours d'activisme contre les VBG 2025.<br><strong>ENSEMBLE, FAISONS DU NUMÉRIQUE UN ESPACE SANS VIOLENCES.</strong>`,
+    description: "Nous sommes au dernier jour de la campagne et nous vous proposons un résumé riche des 16 jours d'activisme contre les VBG 2025. Ensemble, faisons du numérique un espace sans violences.",
     link: "/16jours/j16",
-    linkText: "Lire l'article du J16",
+    linkText: "Lire l'article",
     badge: "10/12/2025",
     tag: "Campagne active",
   },
   {
     image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903911/ong-site/images/16jours/1J15-16jours-25.webp",
     title: "JOUR 15 : CAMPAGNE DE SENSIBILISATION DANS LES LYCÉES",
-    description: `Une journée d'échange avec les jeunes sur les dangers du cyberharcèlement et la promotion du respect en ligne.<br><strong>Les jeunes, moteurs du changement !</strong>`,
+    description: "Une journée d'échange avec les jeunes sur les dangers du cyberharcèlement et la promotion du respect en ligne. Les jeunes, moteurs du changement !",
     link: "/16jours/j15",
-    linkText: "Lire l'article du J15",
+    linkText: "Lire l'article",
     badge: "09/12/2025",
     tag: "Éducation",
   },
   {
     image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903912/ong-site/images/16jours/1J14-16jours-25.webp",
     title: "JOUR 14 : ATELIER SUR L'ÉGALITÉ NUMÉRIQUE",
-    description: `Focus sur la participation des femmes dans le numérique et la lutte contre les discriminations en ligne.<br><strong>Égalité et respect pour toutes et tous.</strong>`,
+    description: "Focus sur la participation des femmes dans le numérique et la lutte contre les discriminations en ligne. Égalité et respect pour toutes et tous.",
     link: "/16jours/j14",
-    linkText: "Lire l'article du J14",
+    linkText: "Lire l'article",
     badge: "08/12/2025",
     tag: "Égalité",
   },
 ];
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
+let slides = FALLBACK_SLIDES;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles?limit=3`);
+  if (res.ok) {
+    const data = await res.json();
+    if (Array.isArray(data?.items) && data.items.length > 0) {
+      slides = data.items.map((a: any) => ({
+        image: a.coverImage,
+        title: a.title,
+        description: a.excerpt,
+        link: a.externalLink || `/actualites/${a.slug}`,
+        linkText: "Lire l'article",
+        badge: a.date || (a.publishedAt ? formatDate(a.publishedAt) : ""),
+        tag: (a.tags && a.tags[0]) || "Actualité",
+      }));
+    }
+  }
+} catch {
+  // API indisponible → on garde le repli.
+}
 ---
 
 <section class="news section-py" aria-labelledby="news-title">
@@ -81,7 +114,7 @@ const slides = [
       <div id="slide-text" class="news__body">
         <span id="slide-tag" class="news__tag">{slides[0].tag}</span>
         <h3 id="slide-title" class="news__title">{slides[0].title}</h3>
-        <div id="slide-description" class="news__desc" set:html={slides[0].description}></div>
+        <p id="slide-description" class="news__desc">{slides[0].description}</p>
         <a id="slide-link" href={slides[0].link} class="btn btn--primary">
           {slides[0].linkText}
         </a>
@@ -98,37 +131,11 @@ const slides = [
   </div>
 </section>
 
+<script type="application/json" id="news-slides-data" set:html={JSON.stringify(slides)} />
+
 <script is:inline>
   (function () {
-    var slides = [
-      {
-        image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903910/ong-site/images/16jours/1J16-16jours-25.webp",
-        title: "JOUR FINAL : SENSIBILISATION — 16 JOURS D'ACTIVISME CONTRE LES VBG",
-        description: "Nous sommes au dernier jour de la campagne et nous vous proposons un résumé riche des 16 jours d'activisme contre les VBG 2025.<br><strong>ENSEMBLE, FAISONS DU NUMÉRIQUE UN ESPACE SANS VIOLENCES.</strong>",
-        link: "/16jours/j16",
-        linkText: "Lire l'article du J16",
-        badge: "10/12/2025",
-        tag: "Campagne active",
-      },
-      {
-        image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903911/ong-site/images/16jours/1J15-16jours-25.webp",
-        title: "JOUR 15 : CAMPAGNE DE SENSIBILISATION DANS LES LYCÉES",
-        description: "Une journée d'échange avec les jeunes sur les dangers du cyberharcèlement et la promotion du respect en ligne.<br><strong>Les jeunes, moteurs du changement !</strong>",
-        link: "/16jours/j15",
-        linkText: "Lire l'article du J15",
-        badge: "09/12/2025",
-        tag: "Éducation",
-      },
-      {
-        image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903912/ong-site/images/16jours/1J14-16jours-25.webp",
-        title: "JOUR 14 : ATELIER SUR L'ÉGALITÉ NUMÉRIQUE",
-        description: "Focus sur la participation des femmes dans le numérique et la lutte contre les discriminations en ligne.<br><strong>Égalité et respect pour toutes et tous.</strong>",
-        link: "/16jours/j14",
-        linkText: "Lire l'article du J14",
-        badge: "08/12/2025",
-        tag: "Égalité",
-      },
-    ];
+    var slides = JSON.parse(document.getElementById("news-slides-data").textContent);
 
     var sliderEl   = document.getElementById("slider");
     var nextBtn    = document.getElementById("next");
@@ -143,13 +150,15 @@ const slides = [
     var index      = 0;
     var total      = slides.length;
 
+    if (total <= 1) return;
+
     function updateSlide() {
       sliderEl.style.transform = "translateX(-" + (index * 100) + "%)";
       // Fade texte
       textPanel.style.opacity = "0";
       setTimeout(function () {
         titleEl.textContent     = slides[index].title;
-        descEl.innerHTML        = slides[index].description;
+        descEl.textContent      = slides[index].description;
         linkEl.href             = slides[index].link;
         linkEl.textContent      = slides[index].linkText;
         if (badgeEl) badgeEl.textContent = slides[index].badge;
@@ -309,7 +318,6 @@ const slides = [
     color: var(--col-text-sec);
     line-height: 1.75;
   }
-  .news__desc strong { color: var(--col-primary); }
 
   /* Indicateurs dots */
   .news__progress {

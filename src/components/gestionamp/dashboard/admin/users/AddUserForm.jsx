@@ -55,7 +55,7 @@ export default function AddUserForm({ onUserCreated }) {
     setLoading(true);
 
     try {
-      await apiFetch("/admin/users", {
+      await apiFetch("/users", {
         method: "POST",
         body: JSON.stringify({
           name,
@@ -92,6 +92,7 @@ export default function AddUserForm({ onUserCreated }) {
           <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="EC">Émissaire Communautaire (EC)</option>
             <option value="IS">Institution Spécialisée (IS)</option>
+            <option value="EDITOR">Éditeur de contenu (EDITOR)</option>
           </select>
         </label>
 

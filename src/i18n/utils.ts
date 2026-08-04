@@ -8,9 +8,16 @@ export type Lang = keyof typeof translations;
 export const defaultLang: Lang = 'fr';
 export const supportedLangs: Lang[] = ['fr', 'en', 'es', 'ar'];
 
-export function getLangFromUrl(url: URL): Lang {
-  const [, first] = url.pathname.split('/');
-  if (first && first in translations) return first as Lang;
+export const LANG_COOKIE = 'lang';
+
+// La langue n'est plus portée par l'URL (plus de préfixe /en, /es, /ar) :
+// elle vient d'un cookie posé par le sélecteur de langue. Sans cookie (ou
+// valeur invalide), on retombe sur le français — jamais de 404.
+export function resolveLang(Astro: { cookies: { get(name: string): { value?: string } | undefined } }): Lang {
+  const cookieValue = Astro.cookies.get(LANG_COOKIE)?.value;
+  if (cookieValue && (supportedLangs as string[]).includes(cookieValue)) {
+    return cookieValue as Lang;
+  }
   return defaultLang;
 }
 
@@ -23,18 +30,4 @@ export function useTranslations(lang: Lang) {
       ?? (fr[section] as Record<string, string>)[key as string]
       ?? String(key);
   };
-}
-
-export function getRouteInLang(currentPath: string, targetLang: Lang): string {
-  const segments = currentPath.split('/').filter(Boolean);
-
-  if (segments.length > 0 && supportedLangs.includes(segments[0] as Lang) && segments[0] !== defaultLang) {
-    segments.shift();
-  }
-
-  if (targetLang === defaultLang) {
-    return '/' + segments.join('/');
-  }
-
-  return '/' + [targetLang, ...segments].join('/');
 }

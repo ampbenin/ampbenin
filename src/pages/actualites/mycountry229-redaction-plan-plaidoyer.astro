@@ -2,8 +2,44 @@
 // src/pages/actualites/mycountry229-redaction-plan-plaidoyer.astro
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BandePartenaires from '../../components/BandePartenaires.astro';
-import PlaidoyerPhotoGallery from "../../components/PlaidoyerPhotoGallery.jsx";
-import PlaidoyerStats from "../../components/PlaidoyerStats.jsx";
+import PhotoGallery from "../../components/PhotoGallery.jsx";
+import StatsStrip from "../../components/StatsStrip.jsx";
+
+const DEFAULT_GALLERY = [
+  { id: 1, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780848303/Capture1111_ap0rca.png", alt: "Focus group AMP BENIN – leaders communautaires et jeunes réunis pour élaborer le plan de plaidoyer", caption: "Vue d'ensemble du focus group réunissant leaders communautaires, jeunes et acteurs de la société civile", label: "Focus Group" },
+  { id: 2, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780848293/111111_oldags.png", alt: "Participants en atelier – identification des formes de désinformation dans les communautés", caption: "Atelier participatif d'identification des formes de désinformation observées dans les communautés locales", label: "Atelier" },
+  { id: 3, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780904134/22_snb5gg.jpg", alt: "Co-construction des stratégies communautaires de lutte contre la désinformation", caption: "Séance de co-construction des stratégies et orientations du plan de plaidoyer communautaire", label: "Co-construction" },
+  { id: 4, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780780745/staff_sori_tvvtcx.jpg", alt: "Restitution et validation des orientations du plan de plaidoyer AMP BENIN", caption: "Restitution collective et validation des orientations stratégiques du plan de plaidoyer communautaire", label: "Restitution" },
+];
+
+const DEFAULT_STATS = [
+  { value: 4, suffix: "", label: "Formes de désinformation cartographiées" },
+  { value: 5, suffix: "+", label: "Stratégies communautaires proposées" },
+  { value: 1, suffix: "", label: "Plan de plaidoyer en cours de rédaction" },
+  { value: 4, suffix: "", label: "Catégories d'acteurs mobilisés" },
+];
+
+const DEFAULT_PILLARS = [
+  { icon: "🏘️", title: "Leaders communautaires", desc: "Relais locaux, jeunes et acteurs de la société civile réunis en focus group", color: "#7c4fcf" },
+  { icon: "🔍", title: "Formes de désinformation identifiées", desc: "Rumeurs, contenus manipulés, fausses informations, données hors contexte", color: "#cf4f7c" },
+  { icon: "📋", title: "Plan de plaidoyer en construction", desc: "Document stratégique co-construit pour influencer les décideurs publics", color: "#4f7ccf" },
+  { icon: "🤝", title: "Approche participative", desc: "Co-construction incluant OSC, autorités locales, médias et communautés", color: "#4fcfaf" },
+];
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "mycountry229-redaction-plan-plaidoyer"), avec repli sur le contenu codé
+// en dur si l'API est indisponible ou si l'article n'a pas encore été édité.
+let cmsArticle: any = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/mycountry229-redaction-plan-plaidoyer`);
+  if (res.ok) cmsArticle = await res.json();
+} catch {}
+
+const galleryData = cmsArticle?.gallery?.length > 0 ? cmsArticle.gallery : DEFAULT_GALLERY;
+const statsData = cmsArticle?.stats?.length > 0 ? cmsArticle.stats : DEFAULT_STATS;
+const pillarsData = cmsArticle?.pillars?.length > 0 ? cmsArticle.pillars : DEFAULT_PILLARS;
+const cmsBody = cmsArticle?.body || null;
 
 const title =
   "AMP BENIN : Focus group pour l'élaboration d'un plan de plaidoyer contre la désinformation | MyCountry229";
@@ -169,9 +205,13 @@ const faqData = {
   <!-- ── ARTICLE CONTENT ── -->
   <div class="article-wrap">
 
-    <PlaidoyerPhotoGallery client:load />
-    <PlaidoyerStats client:visible />
+    <PhotoGallery photos={galleryData} theme="purple" client:load />
+    <StatsStrip stats={statsData} pillars={pillarsData} theme="purple" client:visible />
 
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
     <p class="intro-box">
       Face à la montée croissante de la désinformation et de ses conséquences sur la cohésion sociale,
       <strong>AMP BENIN</strong> a organisé un focus group consacré à l'élaboration des stratégies et méthodes
@@ -417,6 +457,8 @@ const faqData = {
         onclick={`navigator.clipboard.writeText('${canonicalUrl}').then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)})`}
       >🔗 Copier</button>
     </div>
+      </>
+    )}
 
   </div>
 

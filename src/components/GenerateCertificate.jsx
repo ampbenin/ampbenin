@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from "react";
+import { adminFetch } from "@/services/admin/api";
 
 export default function GenerateCertificate() {
   const [titreMission, setTitreMission] = useState("");
   const [mode, setMode] = useState("Tous les volontaires"); // "Tous les volontaires" ou "Un volontaire"
   const [email, setEmail] = useState("");
   const [volunteers, setVolunteers] = useState([]);
-  const [missions, setMissions] = useState([]); // 🔹 Nouveau state
+  const [programs, setPrograms] = useState([]); // 🔹 Programmes de volontariat (remplace missions)
   const [notification, setNotification] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Récupérer les missions au chargement
+  // 🔹 Récupérer les programmes au chargement
+  // (l'endpoint /api/certificates/* conserve la clé de requête "titre" côté
+  // serveur — voir controllers/certificateController.js — seule la source
+  // de la liste change ici, missions → programmes de volontariat)
   useEffect(() => {
-    const fetchMissions = async () => {
+    const fetchPrograms = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/missions"); // adapter selon ton API
-        const data = await res.json();
-        setMissions(data.missions || data || []);
+        const data = await adminFetch("/api/volunteer-programs/all");
+        setPrograms(data?.items || []);
       } catch (err) {
-        console.error("Erreur chargement missions :", err);
+        console.error("Erreur chargement programmes :", err);
       }
     };
-    fetchMissions();
+    fetchPrograms();
   }, []);
 
   const handleFetchVolunteers = async () => {
@@ -36,15 +39,10 @@ export default function GenerateCertificate() {
       const body = { titre: titreMission };
       if (mode === "Un volontaire" && email) body.email = email;
 
-      const res = await fetch("http://localhost:3000/api/certificates/fetch-volunteers", {
+      const data = await adminFetch("/api/certificates/fetch-volunteers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
       if (data.volunteers && data.volunteers.length > 0) {
         setVolunteers(data.volunteers);
@@ -80,15 +78,10 @@ export default function GenerateCertificate() {
         volunteers,
       };
 
-      const res = await fetch("http://localhost:3000/api/certificates/generate", {
+      const data = await adminFetch("/api/certificates/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Erreur serveur");
 
       setNotification(`Attestations générées avec succès pour ${data.generated} volontaire(s).`);
       setVolunteers([]);

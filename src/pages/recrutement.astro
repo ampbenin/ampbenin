@@ -1,9 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import JobsCarousel from '../components/JobsCarousel.jsx';
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
 ---
 
@@ -50,6 +49,14 @@ const t = useTranslations(lang);
     </div>
     <!-- client:visible : hydraté seulement quand le composant est dans le viewport -->
     <JobsCarousel client:visible />
+
+    <!-- Bloc de renvoi vers le recrutement de stagiaires, jusque-là isolé -->
+    <div class="mt-10 text-center bg-orange-50 border border-orange-200 rounded-2xl p-6">
+      <p class="text-gray-700 mb-3">Vous êtes étudiant(e) et à la recherche d'un stage ?</p>
+      <a href="/recru-stagiaire" class="inline-block bg-orange-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-orange-700 transition">
+        Découvrir nos offres de stage →
+      </a>
+    </div>
   </section>
 
 </BaseLayout>

@@ -7,26 +7,22 @@ const LANGS = [
   { code: 'ar', label: 'AR', flag: '🇸🇦' },
 ];
 
-const SUPPORTED = ['fr', 'en', 'es', 'ar'];
-const DEFAULT = 'fr';
+const COOKIE_NAME = 'lang';
 
-function getRoute(currentPath: string, targetLang: string): string {
-  const segs = currentPath.split('/').filter(Boolean);
-  if (segs.length > 0 && SUPPORTED.includes(segs[0]) && segs[0] !== DEFAULT) {
-    segs.shift();
-  }
-  const clean = segs.join('/');
-  if (targetLang === DEFAULT) return clean ? `/${clean}` : '/';
-  return `/${targetLang}${clean ? `/${clean}` : ''}`;
+// Pose le cookie de langue et recharge la MÊME page (aucune navigation,
+// aucun changement d'URL) pour que le contenu se rende dans la langue
+// choisie côté serveur.
+function setLangCookie(code: string) {
+  document.cookie = `${COOKIE_NAME}=${code}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+  window.location.reload();
 }
 
 interface Props {
   currentLang: string;
-  currentPath: string;
   variant?: 'desktop' | 'mobile';
 }
 
-export default function LanguageSwitcher({ currentLang, currentPath, variant = 'desktop' }: Props) {
+export default function LanguageSwitcher({ currentLang, variant = 'desktop' }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -44,15 +40,16 @@ export default function LanguageSwitcher({ currentLang, currentPath, variant = '
     return (
       <div className="ls-mobile" role="group" aria-label="Changer de langue">
         {LANGS.map(({ code, label, flag }) => (
-          <a
+          <button
             key={code}
-            href={getRoute(currentPath, code)}
+            type="button"
+            onClick={() => setLangCookie(code)}
             className={code === currentLang ? 'ls-pill ls-pill--active' : 'ls-pill'}
-            aria-current={code === currentLang ? 'page' : undefined}
+            aria-current={code === currentLang ? 'true' : undefined}
           >
             <span aria-hidden="true">{flag}</span>
             <span>{label}</span>
-          </a>
+          </button>
         ))}
       </div>
     );
@@ -84,13 +81,13 @@ export default function LanguageSwitcher({ currentLang, currentPath, variant = '
       {open && (
         <div className="ls-dropdown" role="listbox" aria-label="Choisir une langue">
           {LANGS.map(({ code, label, flag }) => (
-            <a
+            <button
               key={code}
-              href={getRoute(currentPath, code)}
+              type="button"
+              onClick={() => { setOpen(false); setLangCookie(code); }}
               className={code === currentLang ? 'ls-option ls-option--active' : 'ls-option'}
               role="option"
               aria-selected={code === currentLang}
-              onClick={() => setOpen(false)}
             >
               <span aria-hidden="true">{flag}</span>
               <span>{label}</span>
@@ -99,7 +96,7 @@ export default function LanguageSwitcher({ currentLang, currentPath, variant = '
                   <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-            </a>
+            </button>
           ))}
         </div>
       )}

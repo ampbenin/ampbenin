@@ -1,47 +1,72 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
 
-const articles = [
+const FALLBACK_ARTICLES = [
   {
+    slug: "numsal-tori-bossito",
     title: "Lancement du projet NumSAL - 2026",
     date: "En cours…",
     excerpt: "AMP BENIN, à travers sa section SNIE, lance officiellement le projet NumSAL pour former les jeunes et promouvoir l'entrepreneuriat numérique. Projet soutenu par le programme FP2E / NexT Impact (Sèmè City) et financé par la Banque mondiale.",
-    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903903/ong-site/images/numsal/Lancement-numsal.jpg",
-    link: "/actualites/numsal-tori-bossito"
+    coverImage: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903903/ong-site/images/numsal/Lancement-numsal.jpg",
+    externalLink: "/actualites/numsal-tori-bossito",
+    tags: ["Numérique"],
   },
   {
+    slug: "16jours-2025",
     title: "Campagne des 16 Jours d'activisme contre les VBG — 2025",
     date: "Du 25 novembre au 10 décembre 2025",
     excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme, s'est engagée pour l'élimination des VBG dans nos communautés.",
-    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903906/ong-site/images/16jours/Lancement-16jours.webp",
-    link: "/16jours"
+    coverImage: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903906/ong-site/images/16jours/Lancement-16jours.webp",
+    externalLink: "/16jours",
+    tags: ["Campagne active"],
   },
   {
+    slug: "campagne-mycountry229-paix-benin",
     title: "Lancement de la campagne MYCOUNTRY229 pour la paix",
     date: "Du 11 au 24 août 2025",
     excerpt: "AMP BENIN mobilise les jeunes à travers tout le pays pour promouvoir la paix et la cohésion sociale.",
-    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903905/ong-site/images/campagne-mycountry229-paix-benin.png",
-    link: "/actualites/campagne-mycountry229-paix-benin"
+    coverImage: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903905/ong-site/images/campagne-mycountry229-paix-benin.png",
+    externalLink: "/actualites/campagne-mycountry229-paix-benin",
+    tags: ["Citoyenneté"],
   },
   {
+    slug: "16jours-2024",
     title: "Rapport de fin des 16 Jours d'activisme 2024",
     date: "Du 25 novembre au 25 décembre 2024",
     excerpt: "AMP BENIN, à travers la Section du Féminisme et de Promotion de la Femme, s'est engagée pour l'élimination des VBG dans nos communautés.",
-    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903907/ong-site/images/16jours/atelier1.webp",
-    link: "/16jours/article"
+    coverImage: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903907/ong-site/images/16jours/atelier1.webp",
+    externalLink: "/16jours/article",
+    tags: ["VBG"],
   },
   {
+    slug: "forum-jeunesse-odd",
     title: "Forum des jeunes pour le développement durable",
     date: "15 juin 2024",
     excerpt: "Une centaine de jeunes se sont réunis à Cotonou pour échanger sur les enjeux des ODD au Bénin.",
-    image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903909/ong-site/images/news2.webp",
-    link: "/actualites/forum-jeunesse-odd"
+    coverImage: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903909/ong-site/images/news2.webp",
+    externalLink: "/actualites/forum-jeunesse-odd",
+    tags: ["ODD"],
   }
 ];
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles),
+// avec repli sur les 5 cartes codées en dur si l'API est indisponible.
+let articles = FALLBACK_ARTICLES;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles?limit=20`);
+  if (res.ok) {
+    const data = await res.json();
+    if (Array.isArray(data?.items) && data.items.length > 0) {
+      articles = data.items;
+    }
+  }
+} catch {
+  // API indisponible → on garde le repli.
+}
 ---
 
 <BaseLayout
@@ -62,36 +87,188 @@ const articles = [
   }
   </script>
 
-  <section class="bg-white py-16 px-4">
-    <div class="max-w-6xl mx-auto text-center mb-10">
-      <h1 class="text-4xl font-bold text-primary mb-4">{t('meta', 'actusHeading')}</h1>
-      <p class="text-lg text-gray-600 max-w-3xl mx-auto">
-        {t('meta', 'actusSubtitle')}
-      </p>
+  <section class="actus-head section-py">
+    <div class="container">
+      <div class="actus-head__inner fade-up">
+        <span class="section-label section-label--accent">Actualités</span>
+        <h1 class="actus-head__title">{t('meta', 'actusHeading')}</h1>
+        <p class="actus-head__subtitle">{t('meta', 'actusSubtitle')}</p>
+      </div>
     </div>
   </section>
 
-  <section class="bg-gray-100 py-16 px-4" aria-label="Liste des actualités">
-    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
-      {articles.map(article => (
-        <a href={article.link} class="block bg-white rounded-2xl shadow hover:shadow-lg transition overflow-hidden">
-          <img
-            src={article.image}
-            alt={article.title}
-            class="w-full h-56 object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          <div class="p-6">
-            <h2 class="text-xl font-semibold text-primary mb-2">{article.title}</h2>
-            <p class="text-sm text-gray-500 mb-2">
-              <time>{article.date}</time>
-            </p>
-            <p class="text-gray-600">{article.excerpt}</p>
-          </div>
-        </a>
-      ))}
+  <section class="actus-list section-py" aria-label="Liste des actualités">
+    <div class="container">
+      <div class="actus-grid">
+        {articles.map((article, i) => (
+          <a
+            href={article.externalLink || `/actualites/${article.slug}`}
+            class="actus-card fade-up"
+            style={`transition-delay:${(i % 3) * 0.1}s`}
+          >
+            <div class="actus-card__img-wrap">
+              <img
+                src={article.coverImage}
+                alt={article.title}
+                class="actus-card__img"
+                loading="lazy"
+                decoding="async"
+              />
+              {article.date && (
+                <span class="actus-card__badge"><time>{article.date}</time></span>
+              )}
+            </div>
+            <div class="actus-card__body">
+              {article.tags?.[0] && <span class="actus-card__tag">{article.tags[0]}</span>}
+              <h2 class="actus-card__title">{article.title}</h2>
+              <p class="actus-card__excerpt">{article.excerpt}</p>
+              <span class="actus-card__cta">Lire l'article →</span>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
   </section>
 
 </BaseLayout>
+
+<style>
+  .actus-head {
+    background: var(--col-surface);
+  }
+  .actus-head__inner {
+    text-align: center;
+    max-width: 42rem;
+    margin-inline: auto;
+  }
+  .actus-head__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 4.5vw, var(--text-5xl));
+    color: var(--col-primary);
+    line-height: 1.15;
+    margin-bottom: var(--sp-4);
+  }
+  .actus-head__subtitle {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: var(--col-text-sec);
+    line-height: 1.7;
+  }
+
+  .actus-list {
+    background: var(--col-bg);
+  }
+  .actus-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-8);
+  }
+  @media (min-width: 640px) {
+    .actus-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .actus-grid { grid-template-columns: repeat(3, 1fr); gap: var(--sp-10); }
+  }
+
+  .actus-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-2xl);
+    overflow: hidden;
+    box-shadow: var(--sh-sm);
+    text-decoration: none;
+    transition: transform var(--tr-base), box-shadow var(--tr-base);
+  }
+  .actus-card:hover,
+  .actus-card:focus-visible {
+    transform: translateY(-6px);
+    box-shadow: var(--sh-lg);
+    outline: none;
+  }
+  .actus-card:focus-visible {
+    outline: 2px solid var(--col-primary);
+    outline-offset: 3px;
+  }
+
+  .actus-card__img-wrap {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--col-primary-dark);
+  }
+  .actus-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--tr-slow);
+  }
+  .actus-card:hover .actus-card__img { transform: scale(1.06); }
+
+  .actus-card__badge {
+    position: absolute;
+    bottom: var(--sp-3);
+    right: var(--sp-3);
+    background: rgba(10, 28, 18, 0.80);
+    color: var(--col-accent-light);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-full);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .actus-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--sp-6);
+  }
+  .actus-card__tag {
+    display: inline-block;
+    align-self: flex-start;
+    background: var(--col-accent-bg);
+    color: var(--col-accent-xdark);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-full);
+    margin-bottom: var(--sp-3);
+  }
+  .actus-card__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    color: var(--col-primary);
+    line-height: 1.3;
+    margin-bottom: var(--sp-3);
+  }
+  .actus-card__excerpt {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    line-height: 1.65;
+    flex: 1;
+    margin-bottom: var(--sp-4);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .actus-card__cta {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-accent);
+    transition: color var(--tr-base);
+  }
+  .actus-card:hover .actus-card__cta { color: var(--col-primary); }
+</style>

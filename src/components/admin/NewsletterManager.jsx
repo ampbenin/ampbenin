@@ -1,8 +1,11 @@
 // src/components/admin/NewsletterManager.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { adminFetch } from '@/services/admin/api';
+import { usePaginatedAdminList } from './usePaginatedAdminList';
+import Pagination from './Pagination';
 
-export default function NewsletterManager({ serverUrl = '' }) {
-  const [list, setList] = useState([]);
+export default function NewsletterManager() {
+  const { items, setItems, page, setPage, total, totalPages } = usePaginatedAdminList('/admin/newsletters');
   const [loading, setLoading] = useState(false);
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
@@ -13,25 +16,6 @@ export default function NewsletterManager({ serverUrl = '' }) {
   const [rangeTo, setRangeTo] = useState(9);
   const [listEmails, setListEmails] = useState('');
 
-useEffect(() => {
-  const fetchNewsletters = async () => {
-    try {
-      const res = await fetch(`${serverUrl}/admin/newsletters`);
-      const data = await res.json();
-      if (Array.isArray(data)) setList(data);
-      else {
-        console.error('Données inattendues reçues:', data);
-        setList([]);
-      }
-    } catch (err) {
-      console.error('Erreur fetch newsletters:', err);
-      setList([]);
-    }
-  };
-  fetchNewsletters();
-}, [serverUrl]);
-
-
   const send = async () => {
     setLoading(true);
     const body = { type: selection, subject, text, html };
@@ -39,24 +23,21 @@ useEffect(() => {
     if (selection === 'range') { body.from = parseInt(rangeFrom || 0); body.to = parseInt(rangeTo || 0); }
     if (selection === 'list') body.emails = listEmails.split(',').map(s => s.trim()).filter(Boolean);
     try {
-      const res = await fetch(`${serverUrl}/admin/newsletters/send`, {
+      const data = await adminFetch('/admin/newsletters/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const data = await res.json();
-      if (res.ok) alert(`Envoi lancé — destinataires: ${data.sentTo || 'inconnu'}`);
-      else alert(data.error || 'Erreur');
+      alert(`Envoi lancé — destinataires: ${data?.sentTo || 'inconnu'}`);
     } catch (err) {
       console.error(err);
-      alert('Erreur en envoyant');
+      alert(err.message || 'Erreur en envoyant');
     } finally { setLoading(false); }
   };
 
   const del = async (id) => {
     if (!confirm('Supprimer cet abonné ?')) return;
-    await fetch(`${serverUrl}/admin/newsletters/${id}`, { method: 'DELETE' });
-    setList(list.filter(l => l._id !== id));
+    await adminFetch(`/admin/newsletters/${id}`, { method: 'DELETE' });
+    setItems(items.filter(l => l._id !== id));
   };
 
   return (
@@ -102,15 +83,15 @@ useEffect(() => {
       <hr />
 
       <div className="mt-4">
-        <h3 className="font-medium mb-2">Abonnés ({list.length})</h3>
+        <h3 className="font-medium mb-2">Abonnés ({total})</h3>
         <div style={{maxHeight:300, overflow:'auto'}}>
           <table className="w-full">
             <thead><tr><th>Email</th><th>Nom</th><th>Actions</th></tr></thead>
             <tbody>
-              {list.map(item => (
+              {items.map(item => (
                 <tr key={item._id}>
                   <td>{item.email}</td>
-                  <td>{item.name || '-'}</td>
+                  <td>{item.fullname || '-'}</td>
                   <td>
                     <button onClick={() => { navigator.clipboard.writeText(item.email); alert('Copié'); }} className="mr-2">Copier</button>
                     <button onClick={() => del(item._id)} className="text-red-600">Supprimer</button>
@@ -120,6 +101,7 @@ useEffect(() => {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
     </div>
   );

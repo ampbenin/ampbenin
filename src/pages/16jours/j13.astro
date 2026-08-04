@@ -1,6 +1,20 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
+// Contenu géré depuis le CMS admin (/admin/dashboard → Campagne 16 jours),
+// avec repli sur le contenu codé en dur ci-dessous si l'API est indisponible
+// ou si cet article n'a pas encore été édité.
+let cmsBody: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/campaigns/16jours-2025`);
+  if (res.ok) {
+    const data = await res.json();
+    const day = data?.dailyArticles?.find((d: any) => d.day === 13);
+    if (day?.body) cmsBody = day.body;
+  }
+} catch {}
+
 // Génération du tableau de 8 photos
 const photos = Array.from({ length: 8 });
 ---
@@ -24,6 +38,10 @@ const photos = Array.from({ length: 8 });
   }
   </script>
   <main class="px-5 py-12 text-gray-900 bg-orange-50 rounded-xl shadow-sm">
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
 
     <!-- HEADER -->
     <header class="mb-10 text-center">
@@ -192,5 +210,7 @@ const photos = Array.from({ length: 8 });
       <p class="mt-2 text-sm text-gray-600">Cliquez sur une photo pour naviguer dans la galerie.</p>
     </section>
 
+      </>
+    )}
   </main>
 </BaseLayout>

@@ -1,9 +1,26 @@
 ---
-import Layout from "../layouts/BaseLayout.astro";
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import Layout from '../layouts/BaseLayout.astro';
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
+
+// Catalogue géré depuis l'admin (/admin/dashboard → Programmes de
+// volontariat). Remplace l'ancien formulaire générique unique : chaque
+// programme publié a désormais sa propre fiche et son propre formulaire de
+// candidature (voir server-amp-sites/controllers/volunteerProgramController.js).
+let programs = [];
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/volunteer-programs`);
+  if (res.ok) {
+    const data = await res.json();
+    programs = Array.isArray(data?.items) ? data.items : [];
+  }
+} catch {
+  // API indisponible → catalogue vide, la page reste utilisable (candidature spontanée toujours possible).
+}
+
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
 ---
 
 <Layout
@@ -23,219 +40,186 @@ const t = useTranslations(lang);
     ]
   }
   </script>
-  <section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 p-6">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-8 animate-fade-in">
-      
-      <h1 class="text-4xl font-extrabold text-green-700 mb-4 text-center">
-        Rejoignez-nous en tant que Volontaire
-      </h1>
-      <p class="text-center text-gray-600 mb-8">
-        Remplissez ce formulaire pour contribuer activement aux projets AMP BENIN. Chaque geste compte !
-      </p>
 
-      <form id="volunteerForm" class="space-y-5">
-
-        <!-- Nom et Prénom -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Nom et Prénom</label>
-          <input type="text" name="fullName" placeholder="Ex: Jean Dupont" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Date de naissance -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Date de naissance</label>
-          <input type="date" name="birthDate" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Genre -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Genre</label>
-          <select id="genderSelect" name="gender" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition">
-            <option value="">Choisissez...</option>
-            <option value="H">Homme</option>
-            <option value="F">Femme</option>
-            <option value="Autre">Autre</option>
-          </select>
-          <input type="text" id="otherGender" name="otherGender" placeholder="Veuillez préciser"
-            class="mt-2 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition hidden" />
-        </div>
-
-        <!-- Pays -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Pays</label>
-          <select id="countrySelect" name="country" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition">
-            <option value="">Choisissez un pays</option>
-            <option value="Bénin">Bénin</option>
-            <option value="Togo">Togo</option>
-            <option value="Nigeria">Nigeria</option>
-            <option value="France">France</option>
-            <option value="Autre">Autre</option>
-          </select>
-          <input type="text" id="otherCountry" name="otherCountry" placeholder="Veuillez préciser votre pays"
-            class="mt-2 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition hidden" />
-        </div>
-
-        <!-- Ville / Commune -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Ville / Commune</label>
-          <input type="text" name="city" placeholder="Ex: Cotonou" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Téléphone -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Numéro de téléphone (WhatsApp)</label>
-          <input type="text" name="phone" placeholder="Ex: +229 90 00 00 00" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Email -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" name="email" placeholder="Ex: email@example.com" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Compétence principale -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Compétence principale</label>
-          <input type="text" name="mainSkill" placeholder="Ex: Communication digitale" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition" />
-        </div>
-
-        <!-- Thématique sensible -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Thématique sensible</label>
-          <select id="topicSelect" name="sensitiveTopic" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition">
-            <option value="">Choisissez...</option>
-            <option value="VBG">VBG</option>
-            <option value="Environnement">Environnement</option>
-            <option value="Santé">Santé</option>
-            <option value="Jeunesse">Jeunesse</option>
-            <option value="Numérique">Numérique</option>
-            <option value="Autre">Autre</option>
-          </select>
-          <input type="text" id="otherTopic" name="otherTopic" placeholder="Veuillez préciser"
-            class="mt-2 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition hidden" />
-        </div>
-
-        <!-- Domaine souhaité -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Domaine souhaité</label>
-          <select id="domainSelect" name="desiredDomain" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition">
-            <option value="">Choisissez...</option>
-            <option value="Sensibilisation">Sensibilisation</option>
-            <option value="Communication">Communication</option>
-            <option value="Logistique">Logistique</option>
-            <option value="Événementiel">Événementiel</option>
-            <option value="Autres">Autres</option>
-          </select>
-          <input type="text" id="otherDomain" name="otherDomain" placeholder="Veuillez préciser"
-            class="mt-2 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition hidden" />
-        </div>
-
-        <!-- Motivation -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Pourquoi souhaitez-vous devenir volontaire ?</label>
-          <textarea name="motivation" rows="4" placeholder="Votre motivation..." required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition"></textarea>
-        </div>
-
-        <!-- Disponibilité -->
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700">Disponibilité</label>
-          <select name="availability" required
-            class="mt-1 block w-full p-3 border border-gray-300 rounded-xl focus:ring-green-500 focus:border-green-500 transition">
-            <option value="">Choisissez...</option>
-            <option value="Semaine">Semaine</option>
-            <option value="Week-end">Week-end</option>
-            <option value="Occasionnel">Occasionnel</option>
-          </select>
-        </div>
-
-        <!-- Validation -->
-        <div class="flex items-center space-x-2">
-          <input type="checkbox" name="agreement" required class="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-          <label class="text-sm text-gray-700">J’accepte de devenir volontaire et je certifie que les informations sont exactes.</label>
-        </div>
-
-        <!-- Bouton -->
-        <button type="submit"
-          class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-transform transform hover:scale-105">
-          Envoyer ma candidature
-        </button>
-
-        <p id="formMessage" class="text-center mt-4 text-sm text-gray-600" role="status" aria-live="polite"></p>
-
-      </form>
+  <section class="vol-head section-py">
+    <div class="container">
+      <div class="vol-head__inner fade-up">
+        <span class="section-label section-label--green">Volontariat</span>
+        <h1 class="vol-head__title">Rejoignez les volontaires AMP BENIN</h1>
+        <p class="vol-head__subtitle">
+          Parcourez nos programmes ouverts aux candidatures, ou manifestez votre intérêt général —
+          notre équipe vous recontactera dès qu'une opportunité correspond à votre profil.
+        </p>
+        <a href="/volontaires/candidature-spontanee" class="btn btn--accent btn--lg">
+          Candidature spontanée →
+        </a>
+      </div>
     </div>
   </section>
 
-  <script>
-    // Gestion des champs "Autre"
-    const fields = [
-      { select: 'genderSelect', input: 'otherGender' },
-      { select: 'countrySelect', input: 'otherCountry' },
-      { select: 'topicSelect', input: 'otherTopic' },
-      { select: 'domainSelect', input: 'otherDomain' },
-    ];
+  <section class="vol-list section-py">
+    <div class="container">
+      <h2 class="vol-list__title fade-up">Programmes ouverts aux candidatures</h2>
 
-    fields.forEach(f => {
-      const selectEl = document.getElementById(f.select);
-      const inputEl = document.getElementById(f.input);
+      {programs.length === 0 && (
+        <p class="vol-list__empty fade-up">
+          Aucun programme n'est ouvert aux candidatures pour le moment — mais vous pouvez déjà
+          <a href="/volontaires/candidature-spontanee">déposer une candidature spontanée</a>.
+        </p>
+      )}
 
-      selectEl.addEventListener('change', () => {
-        if (selectEl.value === 'Autre') {
-          inputEl.classList.remove('hidden');
-          inputEl.focus();
-          inputEl.required = true;
-        } else {
-          inputEl.classList.add('hidden');
-          inputEl.value = '';
-          inputEl.required = false;
-        }
-      });
-    });
+      <div class="vol-grid">
+        {programs.map((p, i) => (
+          <article class="vol-card fade-up" style={`transition-delay:${(i % 3) * 0.1}s`}>
+            {p.coverImageUrl ? (
+              <div class="vol-card__img-wrap">
+                <img src={p.coverImageUrl} alt={p.title} class="vol-card__img" loading="lazy" decoding="async" />
+              </div>
+            ) : (
+              <div class="vol-card__img-wrap vol-card__img-wrap--placeholder" aria-hidden="true">🌍</div>
+            )}
+            <div class="vol-card__body">
+              {p.location && <span class="vol-card__badge">{p.location}</span>}
+              <h3 class="vol-card__title">{p.title}</h3>
+              {p.description && <p class="vol-card__desc">{p.description}</p>}
+              <div class="vol-card__meta">
+                {formatDate(p.startDate) && <span>Début : {formatDate(p.startDate)}</span>}
+                {formatDate(p.applicationDeadline) && <span>Candidatures jusqu'au {formatDate(p.applicationDeadline)}</span>}
+              </div>
+              <a href={`/volontaires/candidature/${p._id}`} class="btn btn--primary btn--sm">Postuler →</a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
 
-    // Gestion de l'envoi du formulaire
-    const form = document.getElementById('volunteerForm');
-    const messageEl = document.getElementById('formMessage');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      messageEl.textContent = "Envoi en cours...";
-      messageEl.className = "text-blue-600 text-center";
-
-      const formData = Object.fromEntries(new FormData(form));
-
-      try {
-        const res = await fetch("https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteer-form", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        });
-
-        const result = await res.json();
-        if (result.result === "success") {
-          messageEl.textContent = "Merci pour votre inscription en tant que volontaire 🙌";
-          messageEl.className = "text-green-600 text-center";
-          form.reset();
-          // Cacher tous les champs "Autre" après reset
-          fields.forEach(f => document.getElementById(f.input).classList.add('hidden'));
-        } else {
-          messageEl.textContent = "Erreur : " + (result.error || "Veuillez réessayer");
-          messageEl.className = "text-red-600 text-center";
-        }
-      } catch (err) {
-        messageEl.textContent = "Erreur de connexion au serveur";
-        messageEl.className = "text-red-600 text-center";
-      }
-    });
-  </script>
 </Layout>
+
+<style>
+  .vol-head { background: var(--col-surface); }
+  .vol-head__inner {
+    text-align: center;
+    max-width: 42rem;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .vol-head__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 4.5vw, var(--text-5xl));
+    color: var(--col-primary);
+    line-height: 1.15;
+    margin-bottom: var(--sp-4);
+  }
+  .vol-head__subtitle {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: var(--col-text-sec);
+    line-height: 1.7;
+    margin-bottom: var(--sp-7);
+  }
+
+  .vol-list { background: var(--col-bg); }
+  .vol-list__title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-2xl);
+    color: var(--col-primary);
+    margin-bottom: var(--sp-8);
+  }
+  .vol-list__empty { color: var(--col-text-muted); }
+  .vol-list__empty a { color: var(--col-accent); font-weight: 600; }
+
+  .vol-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-8);
+  }
+  @media (min-width: 640px) { .vol-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .vol-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .vol-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-2xl);
+    overflow: hidden;
+    box-shadow: var(--sh-sm);
+    transition: transform var(--tr-base), box-shadow var(--tr-base);
+  }
+  .vol-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--sh-lg);
+  }
+
+  .vol-card__img-wrap {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--col-primary-dark);
+  }
+  .vol-card__img-wrap--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+  }
+  .vol-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--tr-slow);
+  }
+  .vol-card:hover .vol-card__img { transform: scale(1.06); }
+
+  .vol-card__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    padding: var(--sp-6);
+  }
+  .vol-card__badge {
+    display: inline-block;
+    background: var(--col-accent-bg);
+    color: var(--col-accent-xdark);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-full);
+    margin-bottom: var(--sp-3);
+  }
+  .vol-card__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    color: var(--col-primary);
+    line-height: 1.3;
+    margin-bottom: var(--sp-3);
+  }
+  .vol-card__desc {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    line-height: 1.6;
+    margin-bottom: var(--sp-3);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .vol-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    font-size: var(--text-xs);
+    color: var(--col-text-muted);
+    margin-bottom: var(--sp-5);
+  }
+  .vol-card__body .btn { margin-top: auto; }
+</style>

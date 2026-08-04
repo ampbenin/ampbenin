@@ -1,5 +1,6 @@
 ---
-const photos = [
+// Pilotable depuis le CMS admin (/admin/dashboard → Campagne 16 jours).
+const DEFAULT_PHOTOS = [
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903923/ong-site/images/16jours/2J3-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903989/ong-site/images/16jours/01-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903990/ong-site/images/16jours/02-16jours-25.webp",
@@ -7,6 +8,12 @@ const photos = [
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903992/ong-site/images/16jours/04-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903992/ong-site/images/16jours/05-16jours-25.webp",
 ];
+
+interface Props {
+  photos?: string[];
+}
+const { photos: propPhotos } = Astro.props;
+const photos = propPhotos && propPhotos.length > 0 ? propPhotos : DEFAULT_PHOTOS;
 ---
 
 <section class="py-20 bg-white">

@@ -3,17 +3,18 @@ import { FiMoreVertical, FiChevronDown } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { adminFetch } from "@/services/admin/api";
 
-const API_BASE =
-  (import.meta?.env?.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api/volunteers`
-    : "https://potential-rafa-amp1-00541efa.koyeb.app/api/volunteers");
-
+// Le champ "programs" (autrefois "missions") ne porte plus d'objet peuplé
+// (VolunteerProgram vit sur une connexion Mongo séparée de Volunteer — voir
+// controllers/volunteerController.js#attachProgramTitles) : chaque entrée
+// a `programId` (chaîne) + `programTitle` (résolu côté serveur), au lieu de
+// l'ancien `missionId` peuplé en objet `{_id, titre}`.
 export default function VolunteersManager() {
   const [volunteers, setVolunteers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterMission, setFilterMission] = useState("");
+  const [filterProgram, setFilterProgram] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [editingVolunteer, setEditingVolunteer] = useState(null);
   const [detailsVolunteer, setDetailsVolunteer] = useState(null);
@@ -28,22 +29,8 @@ export default function VolunteersManager() {
   useEffect(() => {
     const fetchVolunteers = async () => {
       try {
-        const res = await fetch(API_BASE);
-        const data = await res.json();
-setVolunteers(
-  (
-    Array.isArray(data)
-      ? data
-      : Array.isArray(data.items)
-      ? data.items
-      : []
-  ).map((v) => ({
-    ...v,
-    missions: (v.missions || []).filter(
-      (m) => m?.missionId && typeof m.missionId === "object"
-    ),
-  }))
-);
+        const data = await adminFetch("/api/volunteers");
+        setVolunteers(Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : []);
       } catch (err) {
         console.error("Erreur chargement volontaires :", err);
       } finally {
@@ -73,17 +60,15 @@ setVolunteers(
       v.prenom?.toLowerCase().includes(search.toLowerCase()) ||
       v.email?.toLowerCase().includes(search.toLowerCase());
 
-    if (!filterMission) return matchSearch;
+    if (!filterProgram) return matchSearch;
 
-    const mission = v.missions?.find(
-      (m) =>
-        (m.missionId?.titre || m.missionId)
-          .toLowerCase() === filterMission.toLowerCase()
+    const program = v.programs?.find(
+      (p) => (p.programTitle || p.programId || "").toLowerCase() === filterProgram.toLowerCase()
     );
 
-    if (!mission) return false;
+    if (!program) return false;
 
-    if (filterStatut && mission.statut !== filterStatut) return false;
+    if (filterStatut && program.statut !== filterStatut) return false;
 
     return matchSearch;
   });
@@ -98,8 +83,7 @@ setVolunteers(
   const handleDelete = async (id) => {
     if (!confirm("Voulez-vous vraiment supprimer ce volontaire ?")) return;
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erreur suppression");
+      await adminFetch(`/api/volunteers/${id}`, { method: "DELETE" });
       setVolunteers((prev) => prev.filter((v) => v._id !== id));
     } catch (err) {
       console.error(err);
@@ -115,21 +99,16 @@ setVolunteers(
         nom: vol.nom,
         prenom: vol.prenom,
         telephone: vol.telephone,
-        missions: vol.missions?.map((m) => ({
-          missionId: m.missionId?._id || m.missionId,
-          statut: m.statut || "Non disponible",
+        programs: vol.programs?.map((p) => ({
+          programId: p.programId,
+          statut: p.statut || "Non disponible",
         })) || [],
       };
 
-      const res = await fetch(API_BASE, {
+      const data = await adminFetch("/api/volunteers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) throw new Error("Erreur mise à jour");
-
-      const data = await res.json();
 
       setVolunteers((prev) =>
         prev.map((v) => (v.email === data.volunteer.email ? data.volunteer : v))
@@ -147,14 +126,14 @@ setVolunteers(
     const doc = new jsPDF();
     doc.text("Liste des volontaires", 14, 16);
     autoTable(doc, {
-      head: [["Nom", "Prénom", "Email", "Téléphone", "Missions"]],
+      head: [["Nom", "Prénom", "Email", "Téléphone", "Programmes"]],
       body: filteredVolunteers.map((v) => [
         v.nom,
         v.prenom,
         v.email,
         v.telephone || "-",
-        v.missions
-          ?.map((m) => `${m.missionId?.titre || m.missionId} (${m.statut})`)
+        v.programs
+          ?.map((p) => `${p.programTitle || p.programId} (${p.statut})`)
           .join(", ") || "-",
       ]),
       startY: 20,
@@ -170,9 +149,9 @@ setVolunteers(
         Prénom: v.prenom,
         Email: v.email,
         Téléphone: v.telephone || "-",
-        Missions:
-          v.missions
-            ?.map((m) => `${m.missionId?.titre || m.missionId} (${m.statut})`)
+        Programmes:
+          v.programs
+            ?.map((p) => `${p.programTitle || p.programId} (${p.statut})`)
             .join(", ") || "-",
       }))
     );
@@ -200,24 +179,24 @@ setVolunteers(
         />
 
         <select
-          value={filterMission}
-          onChange={(e) => setFilterMission(e.target.value)}
+          value={filterProgram}
+          onChange={(e) => setFilterProgram(e.target.value)}
           className="border px-3 py-2 rounded focus:ring-2 focus:ring-green-400"
         >
-          <option value="">🎯 Toutes les missions</option>
+          <option value="">🎯 Tous les programmes</option>
           {[...new Set(
             volunteers.flatMap((v) =>
-              v.missions?.map((m) => m.missionId?.titre || m.missionId).filter(Boolean)
+              v.programs?.map((p) => p.programTitle || p.programId).filter(Boolean)
             )
-          )].map((mission) => (
-            <option key={mission} value={mission}>
-              {mission}
+          )].map((program) => (
+            <option key={program} value={program}>
+              {program}
             </option>
           ))}
         </select>
 
         <select
-          disabled={!filterMission}
+          disabled={!filterProgram}
           value={filterStatut}
           onChange={(e) => setFilterStatut(e.target.value)}
           className="border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400"
@@ -281,7 +260,7 @@ setVolunteers(
               <th className="py-3 px-4">Nom complet</th>
               <th className="py-3 px-4">Email</th>
               <th className="py-3 px-4">Téléphone</th>
-              <th className="py-3 px-4">Missions</th>
+              <th className="py-3 px-4">Programmes</th>
               <th className="py-3 px-4">Actions</th>
             </tr>
           </thead>
@@ -302,50 +281,50 @@ setVolunteers(
                 <td className="px-4 py-2">{v.email}</td>
                 <td className="px-4 py-2">{v.telephone || "-"}</td>
                 <td className="px-4 py-2">
-                  {v.missions && v.missions.length > 0 ? (
+                  {v.programs && v.programs.length > 0 ? (
                     <>
                       <span className="text-xs text-gray-500 mb-1 block">
-                        {v.missions.length} mission(s)
+                        {v.programs.length} programme(s)
                       </span>
                       <ol className="space-y-1 text-sm">
-                        {(v.showAllMissions ? v.missions : v.missions.slice(0, 2)).map(
-                          (m, index) => (
-                            <li key={m.missionId?._id || index} className="flex items-center gap-2">
+                        {(v.showAllPrograms ? v.programs : v.programs.slice(0, 2)).map(
+                          (p, index) => (
+                            <li key={p.programId || index} className="flex items-center gap-2">
                               <span className="font-bold text-violet-600 w-5">
                                 {index + 1}.
                               </span>
                               <span className="font-medium truncate max-w-[140px]">
-                                {m.missionId?.titre || m.missionId}
+                                {p.programTitle || p.programId}
                               </span>
                               <span
                                 className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                  m.statut === "Mission validée"
+                                  p.statut === "Mission validée"
                                     ? "bg-green-100 text-green-700"
-                                    : m.statut === "Refusé"
+                                    : p.statut === "Refusé"
                                     ? "bg-red-100 text-red-700"
                                     : "bg-gray-100 text-gray-700"
                                 }`}
                               >
-                                {m.statut || "Non disponible"}
+                                {p.statut || "Non disponible"}
                               </span>
                             </li>
                           )
                         )}
                       </ol>
-                      {v.missions.length > 2 && (
+                      {v.programs.length > 2 && (
                         <button
                           onClick={() =>
                             setVolunteers((prev) =>
                               prev.map((vol) =>
                                 vol._id === v._id
-                                  ? { ...vol, showAllMissions: !vol.showAllMissions }
+                                  ? { ...vol, showAllPrograms: !vol.showAllPrograms }
                                   : vol
                               )
                             )
                           }
                           className="mt-1 text-xs text-blue-600 hover:underline"
                         >
-                          {v.showAllMissions ? "Masquer" : "Afficher plus"}
+                          {v.showAllPrograms ? "Masquer" : "Afficher plus"}
                         </button>
                       )}
                     </>
@@ -455,11 +434,11 @@ setVolunteers(
               <b>Téléphone :</b> {detailsVolunteer.telephone}
             </p>
             <div>
-              <b>Missions :</b>
+              <b>Programmes :</b>
               <ul>
-                {detailsVolunteer.missions?.map((m) => (
-                  <li key={m.missionId?._id || m.missionId}>
-                    {m.missionId?.titre || m.missionId} ({m.statut || "Non disponible"})
+                {detailsVolunteer.programs?.map((p) => (
+                  <li key={p.programId}>
+                    {p.programTitle || p.programId} ({p.statut || "Non disponible"})
                   </li>
                 )) || "-"}
               </ul>
@@ -528,18 +507,18 @@ setVolunteers(
               className="border px-3 py-2 mb-2 w-full rounded"
             />
 
-            {/* Missions */}
+            {/* Programmes */}
             <div className="mt-2">
-              <p className="font-bold mb-1">Missions :</p>
-              {editingVolunteer.missions?.map((m, index) => (
-                <div key={m.missionId?._id || index} className="mb-2 flex gap-2 items-center">
-                  <span className="flex-1">{m.missionId?.titre || m.missionId}</span>
+              <p className="font-bold mb-1">Programmes :</p>
+              {editingVolunteer.programs?.map((p, index) => (
+                <div key={p.programId || index} className="mb-2 flex gap-2 items-center">
+                  <span className="flex-1">{p.programTitle || p.programId}</span>
                   <select
-                    value={m.statut || "Non disponible"}
+                    value={p.statut || "Non disponible"}
                     onChange={(e) => {
-                      const missions = [...editingVolunteer.missions];
-                      missions[index] = { ...missions[index], statut: e.target.value };
-                      setEditingVolunteer({ ...editingVolunteer, missions });
+                      const programs = [...editingVolunteer.programs];
+                      programs[index] = { ...programs[index], statut: e.target.value };
+                      setEditingVolunteer({ ...editingVolunteer, programs });
                     }}
                     className="border px-2 py-1 rounded"
                   >

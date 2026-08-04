@@ -1,6 +1,23 @@
 ---
-// Import identique — aucune donnée modifiée
-import { IS_LIST } from '../data/is.js';
+// Contenu géré depuis le CMS admin (/admin/dashboard → Institutions Spécialisées).
+// Repli sur les données codées en dur si l'API est indisponible ou pas encore alimentée,
+// pour ne jamais casser l'affichage public pendant la migration.
+import { IS_LIST as IS_LIST_FALLBACK } from '../data/is.js';
+
+let IS_LIST = IS_LIST_FALLBACK;
+
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/institutions`);
+  if (res.ok) {
+    const data = await res.json();
+    if (Array.isArray(data?.items) && data.items.length > 0) {
+      IS_LIST = data.items;
+    }
+  }
+} catch {
+  // API indisponible (hors ligne, DB pas encore migrée...) → on garde le repli.
+}
 ---
 
 <section class="is-carousel section-py" aria-labelledby="is-carousel-title">

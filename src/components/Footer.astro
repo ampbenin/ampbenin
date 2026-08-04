@@ -1,9 +1,7 @@
 ---
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const prefix = lang === 'fr' ? '' : `/${lang}`;
 ---
 
 <footer class="ftr" aria-label={t('common', 'footerAriaLabel')}>
@@ -13,7 +11,7 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
 
     <!-- Colonne 1 : Logo + Mission -->
     <div class="ftr__col ftr__col--brand">
-      <a href={`${prefix}/`} class="ftr__logo-link" aria-label={t('common', 'homeAriaLabel')}>
+      <a href="/" class="ftr__logo-link" aria-label={t('common', 'homeAriaLabel')}>
         <img src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_300/v1780903877/ong-site/images/Logo.png" alt={t('common', 'logoAlt')} class="ftr__logo-img" />
         <span class="ftr__logo-name">AMP BENIN</span>
       </a>
@@ -29,13 +27,16 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
       <h3 class="ftr__col-title">{t('footer', 'navigation')}</h3>
       <nav aria-label="Liens rapides du pied de page">
         <ul class="ftr__nav-list">
-          <li><a href={`${prefix}/`}            class="ftr__nav-link">{t('nav', 'home')}</a></li>
-          <li><a href={`${prefix}/a-propos`}    class="ftr__nav-link">{t('nav', 'about')}</a></li>
-          <li><a href={`${prefix}/nos-actions`} class="ftr__nav-link">{t('nav', 'actions')}</a></li>
-          <li><a href={`${prefix}/is`}          class="ftr__nav-link">{t('nav', 'institutions')}</a></li>
-          <li><a href={`${prefix}/actualites`}  class="ftr__nav-link">{t('nav', 'news')}</a></li>
-          <li><a href={`${prefix}/adhesion`}    class="ftr__nav-link">{t('nav', 'adhesion')}</a></li>
+          <li><a href="/"            class="ftr__nav-link">{t('nav', 'home')}</a></li>
+          <li><a href="/a-propos"    class="ftr__nav-link">{t('nav', 'about')}</a></li>
+          <li><a href="/programmes"  class="ftr__nav-link">{t('nav', 'programmes')}</a></li>
+          <li><a href="/nos-actions" class="ftr__nav-link">{t('nav', 'actions')}</a></li>
+          <li><a href="/is"          class="ftr__nav-link">{t('nav', 'institutions')}</a></li>
+          <li><a href="/actualites"  class="ftr__nav-link">{t('nav', 'news')}</a></li>
+          <li><a href="/adhesion"    class="ftr__nav-link">{t('nav', 'adhesion')}</a></li>
           <li><a href="/16jours"                class="ftr__nav-link">{t('nav', 'jours16')}</a></li>
+          <li><a href="/recrutement"    class="ftr__nav-link">{t('nav', 'jobs')}</a></li>
+          <li><a href="/monattestation" class="ftr__nav-link">{t('nav', 'attestation')}</a></li>
         </ul>
       </nav>
     </div>
@@ -57,7 +58,7 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
           <a href="tel:+22900000000" class="ftr__contact-link">+229 00 00 00 00</a>
         </p>
         <div class="ftr__contact-item ftr__contact-item--cta">
-          <a href={`${prefix}/contact`} class="btn btn--outline-white" style="font-size:var(--text-sm)">{t('footer', 'contactUs')}</a>
+          <a href="/contact" class="btn btn--outline-white" style="font-size:var(--text-sm)">{t('footer', 'contactUs')}</a>
         </div>
       </address>
     </div>
@@ -102,9 +103,9 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   <div class="ftr__legal">
     <span>&copy; {new Date().getFullYear()} AMP BENIN. {t('footer', 'rights')}</span>
     <span class="ftr__legal-sep" aria-hidden="true">·</span>
-    <a href={`${prefix}/contact`} class="ftr__legal-link">{t('footer', 'privacy')}</a>
+    <a href="/contact" class="ftr__legal-link">{t('footer', 'privacy')}</a>
     <span class="ftr__legal-sep" aria-hidden="true">·</span>
-    <a href={`${prefix}/contact`} class="ftr__legal-link">{t('footer', 'terms')}</a>
+    <a href="/contact" class="ftr__legal-link">{t('footer', 'terms')}</a>
   </div>
 
 </footer>

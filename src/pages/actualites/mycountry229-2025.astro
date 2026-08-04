@@ -6,8 +6,8 @@ const description = "Synthèse de la campagne MyCountry229 (11–24 août 2025) 
 const pubDate = "2025-08-25";
 const author = "AMP BENIN";
 
-// Volontaires
-const volontaires = [
+// Volontaires (repli si l'API/CMS est indisponible ou pas encore alimenté)
+const DEFAULT_VOLONTAIRES = [
   { nom: "Alice HOUNTONDJI", message: "Heureuse d’avoir contribué à la paix numérique.", photo: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_400,h_400,c_fill,g_face/v1780903949/ong-site/images/16jours/1-Paneliste-16jours-25.webp" },
   { nom: "Jean KOUASSI", message: "Une belle expérience de cohésion et d’apprentissage.", photo: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_400,h_400,c_fill,g_face/v1780903950/ong-site/images/16jours/2-Paneliste-16jours-25.webp" },
   { nom: "Mariam ISSA", message: "J’ai appris à mieux lutter contre la désinformation.", photo: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_400,h_400,c_fill,g_face/v1780903952/ong-site/images/16jours/3-Paneliste-16jours-25.webp" },
@@ -15,13 +15,32 @@ const volontaires = [
   { nom: "Clémentine ADJOVI", message: "Cette mission a renforcé ma confiance en moi et mes compétences.", photo: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_400,h_400,c_fill/v1780903907/ong-site/images/16jours/atelier1.webp" },
 ];
 
-// Statistiques
-const stats = [
+// Statistiques (repli)
+const DEFAULT_STATS = [
   { chiffre: "226", label: "Volontaires mobilisés" },
   { chiffre: "2", label: "Équipes constituées" },
   { chiffre: "14", label: "Jours de mobilisation digitale" },
   { chiffre: "500K+", label: "Personnes touchées en ligne" },
 ];
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "mycountry229-2025") : les témoignages de volontaires vivent dans le champ
+// `testimonials` de l'Article (name/quote/photo), les stats dans `stats`
+// (value/label) — repli sur le contenu codé en dur si absent/indisponible.
+let cmsArticle: any = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/mycountry229-2025`);
+  if (res.ok) cmsArticle = await res.json();
+} catch {}
+
+const volontaires = cmsArticle?.testimonials?.length > 0
+  ? cmsArticle.testimonials.map((t: any) => ({ nom: t.name, message: t.quote, photo: t.photo }))
+  : DEFAULT_VOLONTAIRES;
+
+const stats = cmsArticle?.stats?.length > 0
+  ? cmsArticle.stats.map((s: any) => ({ chiffre: s.value, label: s.label }))
+  : DEFAULT_STATS;
 ---
 
 <BaseLayout

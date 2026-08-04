@@ -9,6 +9,7 @@ import ValidationQueue from "./ValidationQueue";
 import FilterByYearAndSpace from "./FilterByYearAndSpace";
 import UsersTable from "./users/UsersTable";
 import AddUserForm from "./users/AddUserForm";
+import SpacesManager from "./spaces/SpacesManager";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuthAMP(["ADMIN"]);
@@ -26,6 +27,22 @@ export default function AdminDashboard() {
 
       <section className="dashboard-section">
         <AdminStats />
+      </section>
+
+      <section className="dashboard-section">
+        <h2>Gestion des espaces</h2>
+        <SpacesManager
+          endpoint="coordinations"
+          title="Coordinations Communales"
+          extraField="commune"
+          extraLabel="Commune"
+        />
+        <SpacesManager
+          endpoint="institutions"
+          title="Institutions Spécialisées"
+          extraField="domaine"
+          extraLabel="Domaine"
+        />
       </section>
 
       <section className="dashboard-section">

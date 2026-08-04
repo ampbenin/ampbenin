@@ -1,13 +1,19 @@
 ---
-const timeline = [
+// Pilotable depuis le CMS admin (/admin/dashboard → Campagne 16 jours).
+const DEFAULT_TIMELINE = [
   { date: "11 Novembre", event: "Lancement d'appel à canditacture de recrutement des 300 Volontaires" },
   { date: "26 Novembre", event: "Lancement officiel des 16 Jours d'activisme contre les VBG" },
   { date: "27 Novembre", event: "Démarrage de la campagne digitale sur le plan national avec 300 jeunes classés dans 3équipes" },
   { date: "06 Décembre", event: "WEBINAIRE : Jeunes et le numérique sans les violences" },
   { date: "06 Décembre", event: "Démarrage des activités sur le terrain" },
   { date: "10 Décembre", event: "Marche ORANGEZ LE MONDE" },
-
 ];
+
+interface Props {
+  timeline?: { date: string; event: string }[];
+}
+const { timeline: propTimeline } = Astro.props;
+const timeline = propTimeline && propTimeline.length > 0 ? propTimeline : DEFAULT_TIMELINE;
 ---
 
 <section class="bg-gray-100 py-20">

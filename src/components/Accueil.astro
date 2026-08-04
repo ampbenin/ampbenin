@@ -1,9 +1,7 @@
 ---
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const prefix = lang === 'fr' ? '' : `/${lang}`;
 ---
 
 <section
@@ -20,8 +18,8 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
         <h2 id="welcome-title" class="welcome__title"></h2>
         <p  id="welcome-text"  class="welcome__desc"></p>
         <div class="welcome__ctas">
-          <a href={`${prefix}/a-propos`}    class="btn btn--primary btn--lg">{t('welcome', 'btnLearn')}</a>
-          <a href={`${prefix}/nos-actions`} class="btn btn--ghost">{t('welcome', 'btnActions')} &rarr;</a>
+          <a href="/a-propos"    class="btn btn--primary btn--lg">{t('welcome', 'btnLearn')}</a>
+          <a href="/nos-actions" class="btn btn--ghost">{t('welcome', 'btnActions')} &rarr;</a>
         </div>
       </div>
 

@@ -1,0 +1,288 @@
+---
+// Page détail générique pour tout article créé/édité depuis le CMS admin
+// (/admin/dashboard → Articles) qui n'a pas (ou plus) besoin d'une page
+// codée en dur dédiée. Les 6 articles historiques ont leur propre fichier
+// `actualites/<slug>.astro` — Astro priorise toujours une route statique
+// sur une route dynamique pour un même chemin, donc ce fichier ne les
+// intercepte jamais.
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhotoGallery from '../../components/PhotoGallery.jsx';
+import StatsStrip from '../../components/StatsStrip.jsx';
+
+const { slug } = Astro.params;
+
+let article: any = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/${slug}`);
+  if (res.ok) {
+    article = await res.json();
+  }
+} catch {
+  // API indisponible → traité comme "article introuvable" ci-dessous.
+}
+
+// Article introuvable/dépublié : on ne casse jamais la navigation, on
+// renvoie vers la liste plutôt qu'une page d'erreur sèche.
+if (!article) {
+  return Astro.redirect('/actualites');
+}
+
+// Contenu encore rattaché à une page historique dédiée : on y renvoie
+// plutôt que d'afficher un doublon générique à cette adresse.
+if (article.externalLink) {
+  return Astro.redirect(article.externalLink);
+}
+
+const tag = article.tags?.[0] || '';
+const pageUrl = `https://ampbenin.netlify.app/actualites/${article.slug}`;
+---
+
+<BaseLayout
+  title={article.title}
+  description={article.excerpt || article.title}
+  url={pageUrl}
+  imagePath={article.coverImage || undefined}
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Actualités", "item": "https://ampbenin.netlify.app/actualites" },
+      { "@type": "ListItem", "position": 3, "name": article.title, "item": pageUrl }
+    ]
+  }
+  </script>
+
+  <section class="art-hero section-py">
+    <div class="container container--narrow">
+      <div class="fade-up">
+        <a href="/actualites" class="art-back">← Toutes les actualités</a>
+        {tag && <span class="section-label section-label--accent">{tag}</span>}
+        <h1 class="art-title">{article.title}</h1>
+        {article.date && <p class="art-date"><time>{article.date}</time></p>}
+      </div>
+    </div>
+  </section>
+
+  {article.coverImage && (
+    <div class="art-cover container container--narrow">
+      <img src={article.coverImage} alt={article.title} class="art-cover__img" loading="eager" decoding="async" />
+    </div>
+  )}
+
+  <section class="art-body section-py">
+    <div class="container container--narrow">
+
+      <div class="art-prose" set:html={article.body || `<p>${article.excerpt || ''}</p>`} />
+
+      {article.gallery?.length > 0 && <PhotoGallery photos={article.gallery} theme="green" client:load />}
+
+      {article.stats?.length > 0 && (
+        <StatsStrip stats={article.stats} pillars={article.pillars || []} theme="green" client:visible />
+      )}
+
+      {article.testimonials?.length > 0 && (
+        <section class="art-testimonials" aria-label="Témoignages">
+          <h2 class="art-section-title">Témoignages</h2>
+          <div class="art-testimonials__grid">
+            {article.testimonials.map((t: any) => (
+              <blockquote class="art-testimonial">
+                {t.photo && <img src={t.photo} alt={t.name} class="art-testimonial__photo" loading="lazy" />}
+                <p class="art-testimonial__quote">« {t.quote} »</p>
+                <footer class="art-testimonial__footer">
+                  {t.name}{t.role && <span class="art-testimonial__role"> — {t.role}</span>}
+                </footer>
+              </blockquote>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {article.faq?.length > 0 && (
+        <section class="art-faq" aria-label="Questions fréquentes">
+          <h2 class="art-section-title">Questions fréquentes</h2>
+          {article.faq.map((f: any) => (
+            <details class="art-faq__item">
+              <summary class="art-faq__question">{f.question}</summary>
+              <p class="art-faq__answer">{f.answer}</p>
+            </details>
+          ))}
+        </section>
+      )}
+
+      <div class="art-back-cta">
+        <a href="/actualites" class="btn btn--ghost">← Retour aux actualités</a>
+      </div>
+
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+  .container--narrow {
+    max-width: var(--container-narrow);
+    margin-inline: auto;
+  }
+
+  .art-hero { background: var(--col-surface); }
+  .art-back {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-text-sec);
+    margin-bottom: var(--sp-5);
+  }
+  .art-back:hover { color: var(--col-primary); }
+  .art-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: clamp(var(--text-3xl), 4.5vw, var(--text-5xl));
+    color: var(--col-primary);
+    line-height: 1.18;
+    margin-top: var(--sp-4);
+    margin-bottom: var(--sp-3);
+  }
+  .art-date {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-muted);
+  }
+
+  .art-cover {
+    margin-top: calc(-1 * var(--sp-8));
+    margin-bottom: var(--sp-4);
+  }
+  .art-cover__img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-lg);
+  }
+
+  .art-body { background: var(--col-bg); }
+
+  /* Typographie par défaut pour le contenu HTML libre édité depuis l'admin
+     (set:html) — garantit un rendu propre même sans classes personnalisées. */
+  .art-prose {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: var(--col-text);
+    line-height: 1.75;
+  }
+  .art-prose :global(h2) {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-2xl);
+    color: var(--col-primary);
+    margin-top: var(--sp-10);
+    margin-bottom: var(--sp-4);
+    line-height: 1.3;
+  }
+  .art-prose :global(h3) {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    color: var(--col-primary);
+    margin-top: var(--sp-8);
+    margin-bottom: var(--sp-3);
+  }
+  .art-prose :global(p) { margin-bottom: var(--sp-5); }
+  .art-prose :global(ul),
+  .art-prose :global(ol) {
+    margin: var(--sp-5) 0;
+    padding-inline-start: var(--sp-6);
+  }
+  .art-prose :global(li) { margin-bottom: var(--sp-2); }
+  .art-prose :global(a) { color: var(--col-accent-dark); text-decoration: underline; }
+  .art-prose :global(strong) { color: var(--col-primary); }
+  .art-prose :global(img) {
+    width: 100%;
+    border-radius: var(--r-lg);
+    margin: var(--sp-6) 0;
+  }
+  .art-prose :global(blockquote) {
+    border-inline-start: 4px solid var(--col-accent);
+    background: var(--col-accent-bg);
+    padding: var(--sp-4) var(--sp-5);
+    border-radius: var(--r-md);
+    font-style: italic;
+    color: var(--col-text-sec);
+    margin: var(--sp-6) 0;
+  }
+
+  .art-section-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-2xl);
+    color: var(--col-primary);
+    margin-top: var(--sp-12);
+    margin-bottom: var(--sp-6);
+  }
+
+  .art-testimonials__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-5);
+  }
+  @media (min-width: 640px) {
+    .art-testimonials__grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .art-testimonial {
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-lg);
+    padding: var(--sp-6);
+    box-shadow: var(--sh-xs);
+  }
+  .art-testimonial__photo {
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--r-full);
+    object-fit: cover;
+    margin-bottom: var(--sp-3);
+  }
+  .art-testimonial__quote {
+    font-style: italic;
+    color: var(--col-text-sec);
+    line-height: 1.65;
+    margin-bottom: var(--sp-3);
+  }
+  .art-testimonial__footer {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-primary);
+  }
+  .art-testimonial__role { font-weight: 400; color: var(--col-text-muted); }
+
+  .art-faq__item {
+    border-bottom: 1px solid var(--col-border);
+    padding: var(--sp-4) 0;
+  }
+  .art-faq__question {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--col-primary);
+    cursor: pointer;
+  }
+  .art-faq__answer {
+    margin-top: var(--sp-3);
+    color: var(--col-text-sec);
+    line-height: 1.7;
+  }
+
+  .art-back-cta {
+    margin-top: var(--sp-12);
+    text-align: center;
+  }
+</style>

@@ -1,15 +1,26 @@
 ---
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+import { useTranslations, resolveLang } from '../i18n/utils';
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const prefix = lang === 'fr' ? '' : `/${lang}`;
 
+// Libellés/icônes gardés en dur (déjà traduits via i18n) ; seules les valeurs
+// chiffrées sont éditables depuis le CMS admin (/admin/dashboard → Accueil).
+const DEFAULT_VALUES = [1, 12, 20, 7000];
+
+interface Props {
+  parallaxStats?: { value: number }[];
+}
+const { parallaxStats } = Astro.props;
+const values = DEFAULT_VALUES.map((v, i) => parallaxStats?.[i]?.value ?? v);
+
+// Libellés repris du namespace 'impact' (plus courts, pensés pour tenir dans
+// une carte compacte) — fusion des deux sections de stats jadis dupliquées
+// sur la page d'accueil (voir Stat.astro, retiré de la page).
 const stats = [
-  { label: t('ampstats', 'country'),       value: 1,    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>` },
-  { label: t('ampstats', 'departments'),   value: 12,   icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>` },
-  { label: t('ampstats', 'municipalities'),value: 20,   icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
-  { label: t('ampstats', 'volunteers'),    value: 7000, icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
+  { label: t('impact', 'country'),       value: values[0], icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>` },
+  { label: t('impact', 'departments'),   value: values[1], icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>` },
+  { label: t('impact', 'municipalities'),value: values[2], icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>` },
+  { label: t('impact', 'volunteers'),    value: values[3], icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>` },
 ];
 const bgImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_1600/v1780903896/ong-site/images/ouidah.webp";
 ---
@@ -26,6 +37,7 @@ const bgImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto
   <div class="container amps__inner">
 
     <div class="amps__intro" data-anim="reveal">
+      <span class="section-label section-label--white" data-anim="fade">{t('impact', 'label')}</span>
       <h2 id="amps-title" class="amps__title">
         <span class="amps__title-line">
           <span class="reveal-piece">AMP BENIN</span>
@@ -34,7 +46,7 @@ const bgImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto
       </h2>
       <p class="amps__desc" data-anim="fade">{t('ampstats', 'desc')}</p>
       <div class="amps__ctas" data-anim="fade">
-        <a href={`${prefix}/a-propos`} class="btn btn--outline-white btn--lg">
+        <a href="/a-propos" class="btn btn--outline-white btn--lg">
           {t('ampstats', 'btnLearn')}
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>

@@ -6,6 +6,19 @@ const description = "Pour l’édition 2025 des 16 Jours d’Activisme, AMP BENI
 const pubDate = "2025-12-15";
 const author = "AMP BENIN";
 const ogImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_1200/v1780903921/ong-site/images/16jours/og-image-v16.jpg";
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "16jours-recap-2025"), avec repli sur le contenu codé en dur ci-dessous si
+// l'API est indisponible ou si l'article n'a pas encore été édité.
+let cmsBody: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/16jours-recap-2025`);
+  if (res.ok) {
+    const data = await res.json();
+    if (data?.body) cmsBody = data.body;
+  }
+} catch {}
 ---
 
 <BaseLayout
@@ -30,6 +43,10 @@ const ogImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto
   <div class="bg-orange-50 min-h-screen py-12">
     <article class="prose lg:prose-xl max-w-5xl mx-auto px-4 md:px-0">
 
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
       <!-- HERO -->
       <header class="rounded-lg overflow-hidden shadow-lg border border-orange-200">
         <div class="relative">
@@ -182,6 +199,8 @@ const ogImage = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto
           <span class="text-orange-700">#AMPBenin</span>
         </div>
       </footer>
+      </>
+    )}
 
     </article>
   </div>

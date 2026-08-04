@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/BaseLayout.astro';
+import VolunteerApplicationForm from '../../../components/VolunteerApplicationForm.jsx';
+
+const { id } = Astro.params;
+---
+
+<Layout
+  title="Postuler — AMP BENIN"
+  description="Postulez à un programme de volontariat AMP BENIN."
+  url={`https://ampbenin.netlify.app/volontaires/candidature/${id}`}
+  hideChrome
+>
+  <VolunteerApplicationForm programId={id} client:load />
+</Layout>

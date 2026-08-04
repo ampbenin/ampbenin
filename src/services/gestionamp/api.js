@@ -56,6 +56,13 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   const data = await response.json();
 
+  // 🔐 mot de passe temporaire non encore changé : on redirige, sauf si
+  // c'est justement l'appel de changement de mot de passe (autorisé malgré tout).
+  if (response.status === 403 && data?.mustChangePassword) {
+    window.location.href = "/change-password";
+    return;
+  }
+
   if (!response.ok) {
     throw new Error(data.message || "Erreur API");
   }

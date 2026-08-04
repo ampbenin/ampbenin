@@ -37,6 +37,10 @@ const fr = {
     adhesion: "Adhésion",
     jours16: "16 Jours",
     openMenu: "Ouvrir le menu",
+    programmesMenu: "Nos programmes",
+    programmes: "Programmes",
+    jobs: "Recrutement",
+    attestation: "Mon attestation",
   },
 
   footer: {

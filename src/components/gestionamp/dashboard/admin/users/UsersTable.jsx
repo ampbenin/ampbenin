@@ -14,7 +14,7 @@ export default function UsersTable() {
    */
   const fetchUsers = async () => {
     try {
-      const data = await apiFetch("/api/admin/users");
+      const data = await apiFetch("/users");
       setUsers(data);
     } catch (error) {
       console.error("Erreur chargement utilisateurs", error);
@@ -34,7 +34,7 @@ export default function UsersTable() {
     if (!confirm("Confirmer le changement de statut ?")) return;
 
     try {
-      await apiFetch(`/api/admin/users/${userId}/status`, {
+      await apiFetch(`/users/${userId}/status`, {
         method: "PATCH",
         body: JSON.stringify({ isActive: !currentStatus }),
       });
@@ -90,8 +90,8 @@ export default function UsersTable() {
               <td>{user.role}</td>
 
               <td>
-                {user.role === "EC" && user.coordinationCommunale?.name}
-                {user.role === "IS" && user.institutionSpecialisee?.name}
+                {user.role === "EC" && user.coordinationCommunaleId?.name}
+                {user.role === "IS" && user.institutionSpecialiseeId?.name}
               </td>
 
               <td>

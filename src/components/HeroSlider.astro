@@ -1,5 +1,8 @@
 ---
-const slides = [
+// Contenu géré depuis le CMS admin (/admin/dashboard → Pages du site → Accueil).
+// Props avec valeurs par défaut identiques au contenu historique, pour ne
+// jamais casser l'affichage si la page CmsPage("home") n'est pas encore alimentée.
+const DEFAULT_SLIDES = [
   {
     image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto:good,w_1920/v1780903891/ong-site/images/impact-positif-ODD.webp",
     title: "Environnement, Climat et Promotion des ODD",
@@ -22,11 +25,25 @@ const slides = [
   }
 ];
 
-const heroStats = [
+// Libellés volontairement gardés en dur (non traduits dynamiquement pour l'instant) ;
+// seule la valeur chiffrée est éditable depuis le CMS.
+const DEFAULT_HERO_STATS = [
   { value: "7 000+", label: "Volontaires" },
   { value: "20",     label: "Communes" },
   { value: "12",     label: "Départements" },
 ];
+
+interface Props {
+  slides?: typeof DEFAULT_SLIDES;
+  heroStats?: { value: string }[];
+}
+
+const { slides = DEFAULT_SLIDES, heroStats: heroStatValues } = Astro.props;
+
+const heroStats = DEFAULT_HERO_STATS.map((s, i) => ({
+  ...s,
+  value: heroStatValues?.[i]?.value ?? s.value,
+}));
 ---
 
 <section class="hero" aria-label="Présentation AMP BENIN">

@@ -23,13 +23,21 @@ export default function LoginForm() {
         return;
       }
 
-      // ✅ Stockage du token
+      // ✅ Stockage du token et du rôle (utilisé pour l'affichage de la navigation admin)
       localStorage.setItem("amp_token", data.token);
+      localStorage.setItem("amp_role", data.user.role);
+
+      // 🔐 Mot de passe temporaire : on force le changement avant tout accès
+      if (data.user.mustChangePassword) {
+        window.location.href = "/change-password";
+        return;
+      }
 
       // ✅ Redirection selon rôle
       switch (data.user.role) {
         case "ADMIN":
-          window.location.href = "/gestionamp/dashboard/admin";
+        case "EDITOR":
+          window.location.href = "/admin/dashboard";
           break;
         case "EC":
           window.location.href = "/gestionamp/dashboard/ec";
@@ -72,6 +80,10 @@ export default function LoginForm() {
       <button type="submit" disabled={loading}>
         {loading ? "Connexion..." : "Se connecter"}
       </button>
+
+      <p style={{ marginTop: 12, textAlign: "center" }}>
+        <a href="/forgot-password">Mot de passe oublié ?</a>
+      </p>
     </form>
   );
 }

@@ -17,13 +17,8 @@ export default defineConfig({
   output: "server",
   adapter: netlify(),
 
-  i18n: {
-    defaultLocale: "fr",
-    locales: ["fr", "en", "es", "ar"],
-    routing: {
-      prefixDefaultLocale: false,
-    },
-  },
+  // Pas de routage i18n par URL : une seule adresse par page, la langue
+  // est choisie via un cookie (voir src/i18n/utils.ts `resolveLang`).
 
   vite: {
     resolve: {

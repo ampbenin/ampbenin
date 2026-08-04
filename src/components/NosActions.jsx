@@ -2,7 +2,7 @@
 // Logique de filtrage (useState, filter, match regex) conservée à l'identique
 import { useState, useEffect, useRef } from "react";
 
-const actions = [
+const FALLBACK_ACTIONS = [
   {
     title: "Projet À l'écoute des jeunes (2023)",
     description:
@@ -93,7 +93,7 @@ function ActionCard({ act, delay }) {
   const ref = useRef(null);
   useFadeUp(ref);
   const yearMatch = act.title.match(/\((\d{4})\)/);
-  const year = yearMatch ? yearMatch[1] : null;
+  const year = act.year || (yearMatch ? yearMatch[1] : null);
   const themeStyle = THEME_COLORS[act.theme] || { bg: "#1B4332", text: "#ffffff" };
 
   return (
@@ -131,9 +131,9 @@ function ActionCard({ act, delay }) {
       <div className="act-card__body">
         <h3 className="act-card__title">{act.title}</h3>
         <p className="act-card__desc">{act.description}</p>
-        {act.report && (
+        {(act.report || act.reportUrl) && (
           <a
-            href={act.report}
+            href={act.report || act.reportUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="act-card__report-link"
@@ -150,15 +150,35 @@ function ActionCard({ act, delay }) {
 }
 
 export default function NosActions() {
+  // Contenu géré depuis le CMS admin (/admin/dashboard → Actions / Projets),
+  // avec repli sur les cartes codées en dur si l'API est indisponible.
+  const [actions, setActions] = useState(FALLBACK_ACTIONS);
+
+  useEffect(() => {
+    const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+    fetch(`${apiBase}/api/cms/actions`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data?.items) && data.items.length > 0) {
+          setActions(data.items);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Logique de filtrage identique
   const [selectedYear,  setSelectedYear]  = useState("all");
   const [selectedTheme, setSelectedTheme] = useState("all");
 
+  const getYear = (act) => {
+    const m = act.title.match(/\((\d{4})\)/);
+    return String(act.year || (m ? m[1] : ""));
+  };
+
+  const availableYears = [...new Set(actions.map(getYear).filter(Boolean))].sort((a, b) => b - a);
+
   const filtered = actions.filter((act) => {
-    const yearMatch =
-      selectedYear === "all" ||
-      (act.title.match(/\((\d{4})\)/) &&
-        act.title.match(/\((\d{4})\)/)[1] === selectedYear);
+    const yearMatch = selectedYear === "all" || getYear(act) === selectedYear;
     const themeMatch = selectedTheme === "all" || act.theme === selectedTheme;
     return yearMatch && themeMatch;
   });
@@ -188,9 +208,9 @@ export default function NosActions() {
             onChange={(e) => setSelectedYear(e.target.value)}
           >
             <option value="all">Toutes les années</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
+            {availableYears.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
           </select>
         </div>
 

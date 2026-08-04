@@ -3,17 +3,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import HeroSlider from "../components/HeroSlider.astro";
 import NewsSlider from "../components/NewsSlider.astro";
 import ISCarousel from "../components/ISCarousel.astro";
-import Stat from "../components/Stat.astro";
 import AMPStats from "../components/AMPStats.astro";
 import NewsLetter from "../components/NewsLetter.astro";
 import Accueil from "../components/Accueil.astro";
 import Campagne16jSection from "../components/Campagne16jSection.astro";
-import { useTranslations } from "../i18n/utils";
-import type { Lang } from "../i18n/utils";
+import { useTranslations, resolveLang } from "../i18n/utils";
 
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
 const SITE = "https://ampbenin.netlify.app";
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Pages du site → Accueil),
+// avec repli sur les composants existants (leurs valeurs par défaut) si l'API
+// est indisponible ou pas encore alimentée.
+let homeZones: Record<string, any> = {};
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/pages/home`);
+  if (res.ok) {
+    const data = await res.json();
+    homeZones = data?.zones || {};
+  }
+} catch {
+  // API indisponible → les composants gardent leur contenu par défaut.
+}
 ---
 
 <BaseLayout
@@ -44,13 +57,12 @@ const SITE = "https://ampbenin.netlify.app";
   }
   </script>
 
-  <HeroSlider />
+  <HeroSlider slides={homeZones.heroSlides} heroStats={homeZones.heroStats} />
   <Accueil />
+  <AMPStats parallaxStats={homeZones.parallaxStats} />
   <Campagne16jSection />
-  <Stat />
   <NewsSlider />
   <ISCarousel />
-  <AMPStats />
   <NewsLetter />
 
 </BaseLayout>

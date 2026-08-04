@@ -2,8 +2,36 @@
 // src/pages/actualites/mycountry229-lutte-desinformation-gogounou.astro
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BandePartenaires from '../../components/BandePartenaires.astro';
-import ArticlePhotoGallery from "../../components/ArticlePhotoGallery.jsx";
-import ArticleStats from "../../components/ArticleStats.jsx";
+import PhotoGallery from "../../components/PhotoGallery.jsx";
+import StatsStrip from "../../components/StatsStrip.jsx";
+
+const DEFAULT_GALLERY = [
+  { id: 1, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780848303/Capture1111_ap0rca.png", alt: "Focus groupe en ligne – 34 jeunes de Gogounou, 18-20 mai 2026", caption: "Focus groupe en ligne réunissant 34 jeunes participants de la commune de Gogounou (18-20 mai 2026)", label: "Focus Groupe" },
+  { id: 2, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780780745/famille_sori_hzaj8f.jpg", alt: "Activité de terrain à Sori – formation des jeunes leaders, 23 mai 2026", caption: "Activité communautaire de terrain dans l'arrondissement de Sori, commune de Gogounou (23 mai 2026)", label: "Terrain Sori" },
+  { id: 3, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780780745/ec_form_sori_cauntg.jpg", alt: "Session de formation – désinformation et citoyenneté numérique", caption: "Session interactive animée par M. Fiacre TCHISSOU sur l'identification des contenus trompeurs", label: "Formation" },
+  { id: 4, image: "https://res.cloudinary.com/di21pnpda/image/upload/v1780780745/echange_foor_jlfltl.jpg", alt: "Jeunes relais communautaires MyCountry229 à Gogounou", caption: "Les 20 jeunes relais communautaires engagés à diffuser les bonnes pratiques numériques dans leurs localités", label: "Relais Communautaires" },
+];
+
+const DEFAULT_STATS = [
+  { value: 34, label: "Jeunes au focus groupe", suffix: "", icon: "👥" },
+  { value: 20, label: "Relais communautaires formés", suffix: "", icon: "🎓" },
+  { value: 300, label: "Jeunes touchés indirectement", suffix: "+", icon: "🌍" },
+  { value: 3, label: "Jours de concertation participative", suffix: "", icon: "📅" },
+];
+
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles, slug
+// "mycountry229-lutte-desinformation-gogounou"), avec repli sur le contenu
+// codé en dur si l'API est indisponible ou si l'article n'a pas encore été édité.
+let cmsArticle: any = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/articles/mycountry229-lutte-desinformation-gogounou`);
+  if (res.ok) cmsArticle = await res.json();
+} catch {}
+
+const galleryData = cmsArticle?.gallery?.length > 0 ? cmsArticle.gallery : DEFAULT_GALLERY;
+const statsData = cmsArticle?.stats?.length > 0 ? cmsArticle.stats : DEFAULT_STATS;
+const cmsBody = cmsArticle?.body || null;
 
 const title =
   "MyCountry229 à Gogounou : Les jeunes mobilisés contre la désinformation numérique | AMP Bénin";
@@ -128,9 +156,13 @@ const structuredData = {
   <!-- ── ARTICLE CONTENT ── -->
   <div class="article-wrap">
 
-    <ArticlePhotoGallery client:load />
-    <ArticleStats client:visible />
+    <PhotoGallery photos={galleryData} theme="green" client:load />
+    <StatsStrip stats={statsData} theme="green" client:visible />
 
+    {cmsBody ? (
+      <Fragment set:html={cmsBody} />
+    ) : (
+      <>
     <p class="intro-callout">
       Dans un contexte où la désinformation fragilise la cohésion sociale au Bénin et en Afrique de l'Ouest,
       le projet <strong>MyCountry229</strong> fait le pari des jeunes : former des relais communautaires capables
@@ -370,6 +402,8 @@ const structuredData = {
         onclick={`navigator.clipboard.writeText('${canonicalUrl}').then(()=>{this.textContent='✓ Copié !';setTimeout(()=>this.textContent='🔗 Copier',2000)})`}
       >🔗 Copier</button>
     </div>
+      </>
+    )}
 
   </div>
 

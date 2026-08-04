@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { adminFetch } from "@/services/admin/api";
 
 export default function CreateMission() {
   const [form, setForm] = useState({
@@ -14,17 +15,11 @@ export default function CreateMission() {
   const [loadingMissions, setLoadingMissions] = useState(false);
   const [editingMission, setEditingMission] = useState(null);
 
-  const API_BASE =
-    import.meta.env.MODE === "development"
-      ? "http://localhost:3000/api/missions"
-      : "http://localhost:3000/api/missions";
-
   // Charger toutes les missions
   const fetchMissions = async () => {
     try {
       setLoadingMissions(true);
-      const res = await fetch(API_BASE);
-      const data = await res.json();
+      const data = await adminFetch("/api/missions");
       // 🔹 filtrer les missions nulles et undefined
       setMissions(Array.isArray(data) ? data.filter((m) => m) : []);
     } catch (err) {
@@ -49,23 +44,17 @@ export default function CreateMission() {
     setMessage(null);
 
     try {
-      let res;
       if (editingMission) {
-        res = await fetch(`${API_BASE}/${editingMission._id}`, {
+        await adminFetch(`/api/missions/${editingMission._id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
       } else {
-        res = await fetch(API_BASE, {
+        await adminFetch("/api/missions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
       }
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur lors de l'opération");
 
       setMessage({
         type: "success",
@@ -86,9 +75,7 @@ export default function CreateMission() {
     if (!confirm("Voulez-vous vraiment supprimer cette mission ?")) return;
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur suppression");
+      const data = await adminFetch(`/api/missions/${id}`, { method: "DELETE" });
       setMessage({ type: "success", text: data.message });
       setMissions((prev) => prev.filter((m) => m?._id !== id));
     } catch (err) {

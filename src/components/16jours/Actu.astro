@@ -1,5 +1,7 @@
 ---
-const images = [
+// Images pilotables depuis le CMS admin (/admin/dashboard → Campagne 16 jours),
+// avec repli sur la liste codée en dur si la campagne n'est pas alimentée.
+const DEFAULT_IMAGES = [
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903910/ong-site/images/16jours/1J16-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903911/ong-site/images/16jours/1J15-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903912/ong-site/images/16jours/1J14-16jours-25.webp",
@@ -14,6 +16,12 @@ const images = [
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903943/ong-site/images/16jours/3J9-16jours-25.webp",
   "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903925/ong-site/images/16jours/1J4-16jours-25.webp",
 ];
+
+interface Props {
+  images?: string[];
+}
+const { images: propImages } = Astro.props;
+const images = propImages && propImages.length > 0 ? propImages : DEFAULT_IMAGES;
 ---
 
 <!-- Section Image + Description -->

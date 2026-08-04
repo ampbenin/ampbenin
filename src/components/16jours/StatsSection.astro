@@ -1,10 +1,17 @@
 ---
-const stats = [
+// Pilotable depuis le CMS admin (/admin/dashboard → Campagne 16 jours).
+const DEFAULT_STATS = [
   { number: "1 sur 3", label: "Femmes victimes de violences au cours de leur vie" },
   { number: "40%", label: "Des victimes ne reçoivent aucune aide" },
   { number: "15-49 ans", label: "Tranche d’âge la plus touchée par les VBG" },
   { number: "70%", label: "Des agressions commises par un proche" },
 ];
+
+interface Props {
+  stats?: { number: string; label: string }[];
+}
+const { stats: propStats } = Astro.props;
+const stats = propStats && propStats.length > 0 ? propStats : DEFAULT_STATS;
 ---
 
 <section class="bg-white py-20">

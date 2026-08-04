@@ -1,17 +1,15 @@
 ---
-import { useTranslations } from '../i18n/utils';
-import type { Lang } from '../i18n/utils';
+import { useTranslations, resolveLang } from '../i18n/utils';
 import LanguageSwitcher from './LanguageSwitcher';
-const lang = (Astro.currentLocale ?? 'fr') as Lang;
+const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const prefix = lang === 'fr' ? '' : `/${lang}`;
 ---
 
 <header id="site-header">
   <div class="hdr-inner">
 
     <!-- Logo -->
-    <a href={`${prefix}/`} class="hdr-logo" aria-label={t('common', 'homeAriaLabel')}>
+    <a href="/" class="hdr-logo" aria-label={t('common', 'homeAriaLabel')}>
       <img src="https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_300/v1780903877/ong-site/images/Logo.png" alt={t('common', 'logoAlt')} class="hdr-logo__img" />
       <div class="hdr-logo__text">
         <span class="hdr-logo__name">AMP BENIN</span>
@@ -21,14 +19,28 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
 
     <!-- Navigation desktop -->
     <nav class="hdr-nav" aria-label="Navigation principale">
-      <a href={`${prefix}/`}           class="hdr-nav__link">{t('nav', 'home')}</a>
-      <a href={`${prefix}/a-propos`}   class="hdr-nav__link">{t('nav', 'about')}</a>
-      <a href={`${prefix}/is`}         class="hdr-nav__link">{t('nav', 'institutions')}</a>
-      <a href={`${prefix}/actualites`} class="hdr-nav__link">{t('nav', 'news')}</a>
-      <a href={`${prefix}/contact`}    class="hdr-nav__link">{t('nav', 'contact')}</a>
+      <a href="/"           class="hdr-nav__link">{t('nav', 'home')}</a>
+      <a href="/a-propos"   class="hdr-nav__link">{t('nav', 'about')}</a>
+
+      <details class="hdr-dropdown">
+        <summary class="hdr-nav__link hdr-dropdown__trigger">
+          {t('nav', 'programmesMenu')}
+          <svg class="hdr-dropdown__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="hdr-dropdown__menu">
+          <a href="/programmes"  class="hdr-dropdown__item">{t('nav', 'programmes')}</a>
+          <a href="/nos-actions" class="hdr-dropdown__item">{t('nav', 'actions')}</a>
+          <a href="/is"          class="hdr-dropdown__item">{t('nav', 'institutions')}</a>
+          <a href="/16jours"     class="hdr-dropdown__item">{t('nav', 'jours16')}</a>
+          <a href="/recrutement" class="hdr-dropdown__item">{t('nav', 'jobs')}</a>
+        </div>
+      </details>
+
+      <a href="/actualites" class="hdr-nav__link">{t('nav', 'news')}</a>
+      <a href="/contact"    class="hdr-nav__link">{t('nav', 'contact')}</a>
       <span class="hdr-lang-sep" aria-hidden="true"></span>
-      <LanguageSwitcher client:load currentLang={lang} currentPath={Astro.url.pathname} variant="desktop" />
-      <a href={`${prefix}/adhesion`}   class="btn btn--primary hdr-nav__cta">{t('nav', 'join')}</a>
+      <LanguageSwitcher client:load currentLang={lang} variant="desktop" />
+      <a href="/adhesion"   class="btn btn--primary hdr-nav__cta">{t('nav', 'join')}</a>
     </nav>
 
     <!-- Bouton burger mobile -->
@@ -48,13 +60,20 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   <!-- Navigation mobile -->
   <div id="mobile-menu" class="hdr-mobile" aria-hidden="true">
     <nav aria-label="Navigation mobile">
-      <a href={`${prefix}/`}           class="hdr-mobile__link">{t('nav', 'home')}</a>
-      <a href={`${prefix}/a-propos`}   class="hdr-mobile__link">{t('nav', 'about')}</a>
-      <a href={`${prefix}/is`}         class="hdr-mobile__link">{t('nav', 'institutions')}</a>
-      <a href={`${prefix}/actualites`} class="hdr-mobile__link">{t('nav', 'news')}</a>
-      <a href={`${prefix}/contact`}    class="hdr-mobile__link">{t('nav', 'contact')}</a>
-      <LanguageSwitcher client:load currentLang={lang} currentPath={Astro.url.pathname} variant="mobile" />
-      <a href={`${prefix}/adhesion`}   class="hdr-mobile__cta">{t('nav', 'join')} →</a>
+      <a href="/"           class="hdr-mobile__link">{t('nav', 'home')}</a>
+      <a href="/a-propos"   class="hdr-mobile__link">{t('nav', 'about')}</a>
+
+      <span class="hdr-mobile__section">{t('nav', 'programmesMenu')}</span>
+      <a href="/programmes"  class="hdr-mobile__link hdr-mobile__link--sub">{t('nav', 'programmes')}</a>
+      <a href="/nos-actions" class="hdr-mobile__link hdr-mobile__link--sub">{t('nav', 'actions')}</a>
+      <a href="/is"          class="hdr-mobile__link hdr-mobile__link--sub">{t('nav', 'institutions')}</a>
+      <a href="/16jours"     class="hdr-mobile__link hdr-mobile__link--sub">{t('nav', 'jours16')}</a>
+      <a href="/recrutement" class="hdr-mobile__link hdr-mobile__link--sub">{t('nav', 'jobs')}</a>
+
+      <a href="/actualites" class="hdr-mobile__link">{t('nav', 'news')}</a>
+      <a href="/contact"    class="hdr-mobile__link">{t('nav', 'contact')}</a>
+      <LanguageSwitcher client:load currentLang={lang} variant="mobile" />
+      <a href="/adhesion"   class="hdr-mobile__cta">{t('nav', 'join')} →</a>
     </nav>
   </div>
 </header>
@@ -74,6 +93,17 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   window.addEventListener('scroll', () => {
     header?.classList.toggle('hdr--scrolled', window.scrollY > 24);
   }, { passive: true });
+
+  // Fermer le menu déroulant "Nos programmes" au clic en dehors ou sur un lien
+  const dropdown = document.querySelector('.hdr-dropdown');
+  document.addEventListener('click', (e) => {
+    if (dropdown && dropdown.hasAttribute('open') && !dropdown.contains(e.target)) {
+      dropdown.removeAttribute('open');
+    }
+  });
+  dropdown?.querySelectorAll('.hdr-dropdown__item').forEach((link) => {
+    link.addEventListener('click', () => dropdown.removeAttribute('open'));
+  });
 </script>
 
 <style>
@@ -161,6 +191,52 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   .hdr-nav__link:hover::after { width: 100%; }
   .hdr-nav__cta { margin-inline-start: var(--sp-2); font-size: var(--text-sm); }
 
+  /* Menu déroulant "Nos programmes" */
+  .hdr-dropdown { position: relative; }
+  .hdr-dropdown__trigger {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .hdr-dropdown__trigger::-webkit-details-marker { display: none; }
+  .hdr-dropdown__chevron { width: 0.85rem; height: 0.85rem; transition: transform var(--tr-fast); }
+  .hdr-dropdown[open] .hdr-dropdown__chevron { transform: rotate(180deg); }
+  .hdr-dropdown[open] .hdr-dropdown__trigger::after { width: 100%; }
+
+  .hdr-dropdown__menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    inset-inline-start: 0;
+    min-width: 190px;
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-lg);
+    box-shadow: var(--sh-md);
+    overflow: hidden;
+    z-index: 200;
+    animation: hdr-dropdown-fade 120ms ease;
+  }
+  @keyframes hdr-dropdown-fade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .hdr-dropdown__item {
+    display: block;
+    padding: var(--sp-3) var(--sp-4);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--col-text);
+    text-decoration: none;
+    transition: background var(--tr-fast), color var(--tr-fast);
+  }
+  .hdr-dropdown__item:hover {
+    background: var(--col-primary-bg);
+    color: var(--col-primary);
+  }
+
   /* Séparateur langue */
   .hdr-lang-sep {
     display: block;
@@ -230,6 +306,19 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   .hdr-mobile__link:hover {
     background: var(--col-primary-bg);
     color: var(--col-primary);
+  }
+  .hdr-mobile__section {
+    padding: var(--sp-3) var(--sp-4) 2px;
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--col-text-muted);
+  }
+  .hdr-mobile__link--sub {
+    padding-inline-start: var(--sp-6);
+    font-size: var(--text-sm);
   }
   .hdr-mobile__cta {
     display: block;
@@ -310,8 +399,13 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
   :global(.ls-option) {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 8px;
     padding: 9px 14px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: start;
     font-family: var(--font-body);
     font-size: var(--text-sm);
     font-weight: 500;
@@ -343,6 +437,8 @@ const prefix = lang === 'fr' ? '' : `/${lang}`;
     padding: 5px 14px;
     border: 1.5px solid var(--col-border);
     border-radius: var(--r-full);
+    background: transparent;
+    cursor: pointer;
     font-family: var(--font-body);
     font-weight: 600;
     font-size: var(--text-sm);

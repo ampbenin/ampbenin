@@ -18,6 +18,20 @@ import MapSection from "../components/16jours/MapSection.astro";
 const title = "16 Jours d'Activisme Contre les VBG — AMP BENIN 2025";
 const description = "AMP BENIN s'engage pour les 16 Jours d'activisme contre les violences basées sur le genre (VBG) 2025 : sensibilisation, plaidoyer et mobilisation au Bénin. #OrangezLeMonde";
 const keywords = "16 jours activisme, VBG Bénin, violences basées sur le genre, campagne sensibilisation, AMP BENIN, OrangezLeMonde";
+
+// Blocs à données gérés depuis le CMS admin (/admin/dashboard → Campagne 16 jours),
+// avec repli sur le contenu par défaut des composants si l'API est indisponible.
+let campaignSections: Record<string, any> = {};
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/cms/campaigns/16jours-2025`);
+  if (res.ok) {
+    const data = await res.json();
+    campaignSections = data?.sections || {};
+  }
+} catch {
+  // API indisponible → les composants gardent leur contenu par défaut.
+}
 ---
 
 <BaseLayout
@@ -41,12 +55,12 @@ const keywords = "16 jours activisme, VBG Bénin, violences basées sur le genre
   </script>
 
   <HeroHeader />
-  <Actu />
+  <Actu images={campaignSections.actuImages} />
   <AboutSection />
   <EngagementsSection />
-  <StatsSection />
-  <TimelineSection />
-  <GallerySection />
+  <StatsSection stats={campaignSections.stats} />
+  <TimelineSection timeline={campaignSections.timeline} />
+  <GallerySection photos={campaignSections.gallery} />
   <TestimonialsSection />
   <ActionsSection />
   <NewsletterSection />

@@ -20,12 +20,11 @@ const { title = "AMP BENIN" } = Astro.props;
     <header class="amp-header">
       <div class="logo">
         <strong>AMP BENIN</strong>
+        <span class="amp-header__tag">Gestion des espaces</span>
       </div>
 
-      <nav class="amp-nav">
-        <a href="/gestionamp/dashboard/admin">Dashboard</a>
-        <a href="/gestionamp/dashboard/ec">EC</a>
-        <a href="/gestionamp/dashboard/is">IS</a>
+      <nav class="amp-nav" id="amp-nav">
+        <!-- Rempli côté client selon le rôle connecté (voir script ci-dessous) -->
       </nav>
 
       <div class="actions">
@@ -43,6 +42,33 @@ const { title = "AMP BENIN" } = Astro.props;
     <footer class="amp-footer">
       <small>© AMP BENIN — Plateforme de suivi</small>
     </footer>
+
+    <script is:inline>
+      // Navigation adaptée au rôle connecté : chacun ne voit que ce qui le
+      // concerne, et un ADMIN retrouve un lien direct vers l'espace CMS
+      // (contenu du site), qui reste une interface séparée par choix.
+      (function () {
+        const role = localStorage.getItem('amp_role');
+        const nav = document.getElementById('amp-nav');
+        if (!nav) return;
+
+        const links = [];
+        if (role === 'ADMIN') {
+          links.push({ href: '/gestionamp/dashboard/admin', label: 'Gestion AMP' });
+          links.push({ href: '/admin/dashboard', label: '← Contenu du site (CMS)', accent: true });
+        } else if (role === 'EC') {
+          links.push({ href: '/gestionamp/dashboard/ec', label: 'Mon espace EC' });
+        } else if (role === 'IS') {
+          links.push({ href: '/gestionamp/dashboard/is', label: 'Mon espace IS' });
+        } else {
+          links.push({ href: '/gestionamp/login', label: 'Connexion' });
+        }
+
+        nav.innerHTML = links
+          .map((l) => `<a href="${l.href}"${l.accent ? ' class="amp-nav__accent"' : ''}>${l.label}</a>`)
+          .join('');
+      })();
+    </script>
   </body>
 </html>
 
@@ -62,6 +88,13 @@ const { title = "AMP BENIN" } = Astro.props;
     color: white;
   }
 
+  .amp-header__tag {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.6;
+    font-weight: 400;
+  }
+
   .amp-nav a {
     color: white;
     margin-right: 1rem;
@@ -71,6 +104,12 @@ const { title = "AMP BENIN" } = Astro.props;
 
   .amp-nav a:hover {
     text-decoration: underline;
+  }
+
+  .amp-nav__accent {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
   }
 
   .amp-content {
