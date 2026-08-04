@@ -17,8 +17,12 @@ const buildQueryParams = (params = {}) => {
 };
 
 /**
- * Client API centralisé - AMP BENIN
- * ⚠️ Tous les endpoints sont SANS /api
+ * Client API centralisé - AMP BENIN (sous-système "Gestion AMP")
+ * ⚠️ Tous les endpoints sont SANS /api — le préfixe /gestionamp/api est
+ * ajouté ici, pour matcher exactement le montage réel côté serveur
+ * (ampserver.js : app.use("/gestionamp/api/auth", ...), etc.). Ce préfixe
+ * manquait auparavant, ce qui faisait échouer TOUT appel de ce client en
+ * production (404), y compris la connexion.
  */
 export const apiFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("amp_token");
@@ -27,8 +31,8 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   const queryString = buildQueryParams(params);
 
-  // ✅ /api CENTRALISÉ ICI
-  const url = `${API_BASE_URL}/api${endpoint}${queryString}`;
+  // ✅ /gestionamp/api CENTRALISÉ ICI
+  const url = `${API_BASE_URL}/gestionamp/api${endpoint}${queryString}`;
 
   console.log("📡 API CALL →", url);
 
