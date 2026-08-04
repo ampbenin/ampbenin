@@ -48,15 +48,19 @@ export default function ChangePasswordForm({ forced = false }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ width: 340 }}>
-      <h2>{forced ? "Changement de mot de passe requis" : "Changer mon mot de passe"}</h2>
+    <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8">
+      <h2 className="text-xl font-bold text-gray-900 mb-2">
+        {forced ? "Changement de mot de passe requis" : "Changer mon mot de passe"}
+      </h2>
       {forced && (
-        <p style={{ fontSize: "0.85rem", color: "#555" }}>
+        <p className="text-sm text-gray-500 mb-5">
           Pour des raisons de sécurité, vous devez choisir un nouveau mot de passe avant de continuer.
         </p>
       )}
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
+      )}
 
       <input
         type="password"
@@ -65,7 +69,7 @@ export default function ChangePasswordForm({ forced = false }) {
         onChange={(e) => setNewPassword(e.target.value)}
         required
         minLength={8}
-        style={{ width: "100%", marginBottom: 8 }}
+        className={`w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition ${forced ? "mt-5" : ""} mb-4`}
       />
       <input
         type="password"
@@ -74,10 +78,14 @@ export default function ChangePasswordForm({ forced = false }) {
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
         minLength={8}
-        style={{ width: "100%", marginBottom: 8 }}
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
       />
 
-      <button type="submit" disabled={loading} style={{ width: "100%" }}>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50"
+      >
         {loading ? "Enregistrement..." : "Valider le nouveau mot de passe"}
       </button>
     </form>

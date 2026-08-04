@@ -56,10 +56,15 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ width: "320px" }}>
-      <h2>Connexion AMP</h2>
+    <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8">
+      <span className="block text-xs font-semibold uppercase tracking-wide text-violet-600 mb-1">
+        AMP BÉNIN
+      </span>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Connexion admin</h2>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
+      )}
 
       <input
         type="email"
@@ -67,6 +72,7 @@ export default function LoginForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
       />
 
       <input
@@ -75,14 +81,21 @@ export default function LoginForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-5 outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition"
       />
 
-      <button type="submit" disabled={loading}>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl transition disabled:opacity-50"
+      >
         {loading ? "Connexion..." : "Se connecter"}
       </button>
 
-      <p style={{ marginTop: 12, textAlign: "center" }}>
-        <a href="/forgot-password">Mot de passe oublié ?</a>
+      <p className="mt-4 text-center text-sm">
+        <a href="/forgot-password" className="text-violet-700 hover:underline">
+          Mot de passe oublié ?
+        </a>
       </p>
     </form>
   );
