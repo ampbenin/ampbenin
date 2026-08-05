@@ -562,6 +562,21 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  const replyToComment = async (commentId) => {
+    const reply = window.prompt("Votre réponse à ce commentaire :");
+    if (reply === null) return;
+    if (!reply.trim()) { alert("La réponse ne peut pas être vide."); return; }
+    try {
+      await adminFetch(`/api/volunteer-partner/comments/${commentId}/reply`, {
+        method: "PATCH",
+        body: JSON.stringify({ reply: reply.trim() }),
+      });
+      loadPartnerTab();
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'envoi de la réponse");
+    }
+  };
+
   const reviewSubmissionTask = async (submissionId, action) => {
     try {
       await adminFetch(`/api/volunteer-tasks/submissions/${submissionId}/${action}`, {
@@ -1299,7 +1314,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <div className="space-y-2 mb-4">
                     {currentPartners.map((u) => (
                       <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
-                        <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
+                        <div className="flex items-center gap-2">
+                          {u.partnerLogoUrl && (
+                            <img src={u.partnerLogoUrl} alt="" className="w-8 h-8 rounded object-cover border border-gray-200" />
+                          )}
+                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
+                        </div>
                         <button onClick={() => togglePartnerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
                       </div>
                     ))}
@@ -1332,7 +1352,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       <div className="text-gray-500 text-xs mb-1">
                         {c.partnerName} ({c.partnerEmail}) — {new Date(c.createdAt).toLocaleDateString("fr-FR")}
                       </div>
-                      <p className="whitespace-pre-line">{c.text}</p>
+                      <p className="whitespace-pre-line mb-2">{c.text}</p>
+                      {c.reply ? (
+                        <div className="bg-gray-50 rounded-lg p-2 text-xs">
+                          <strong>Réponse envoyée</strong>
+                          {c.repliedAt && <span className="text-gray-400 ml-1">({new Date(c.repliedAt).toLocaleDateString("fr-FR")})</span>}
+                          <p className="whitespace-pre-line mt-1">{c.reply}</p>
+                        </div>
+                      ) : (
+                        <button onClick={() => replyToComment(c._id)} className="text-xs text-gray-700 font-semibold hover:underline">
+                          Répondre
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
