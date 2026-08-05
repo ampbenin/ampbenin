@@ -23,6 +23,8 @@ const FIELD_TYPES = [
 const CONDITIONAL_TRIGGER_TYPES = ["SELECT", "CHECKBOX"];
 const APPLICANT_FIELD_IDS = ["applicantFirstName", "applicantLastName", "applicantEmail", "applicantPhone"];
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
+const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
+const emptyTaskForm = { title: "", description: "", recurrence: "ONCE" };
 
 const canMoveFieldUp = (fields, index) =>
   index > 0 && fields[index].conditional?.fieldId !== fields[index - 1].id;
@@ -53,7 +55,9 @@ const emptyFieldForm = {
 const TABS = [
   { value: "info", label: "Informations", icon: "ℹ️" },
   { value: "form", label: "Formulaire de candidature", icon: "📝" },
+  { value: "tasks", label: "Tâches", icon: "✅" },
   { value: "applications", label: "Candidatures", icon: "📥" },
+  { value: "tracking", label: "Suivi des tâches", icon: "📊" },
 ];
 
 export default function VolunteerProgramEditor({ programId, onBack }) {
@@ -67,7 +71,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     title: "", description: "", coverImageUrl: "", location: "", startDate: "", endDate: "",
     capacity: "", accessMode: "APPLICATION", applicationDeadline: "",
     status: "DRAFT", brandColor: "", contactWhatsapp: "", contactEmail: "",
-    admissionInstructions: "",
+    admissionInstructions: "", missionValidationThreshold: 100,
   });
   const [copied, setCopied] = useState(false);
 
@@ -78,6 +82,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [formTemplates, setFormTemplates] = useState([]);
   const [importTemplateId, setImportTemplateId] = useState("");
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+
+  const [tasks, setTasks] = useState([]);
+  const [taskForm, setTaskForm] = useState(emptyTaskForm);
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [programProgress, setProgramProgress] = useState([]);
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
 
   const load = async () => {
     try {
@@ -99,9 +109,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
         contactWhatsapp: data.contactWhatsapp || "",
         contactEmail: data.contactEmail || "",
         admissionInstructions: data.admissionInstructions || "",
+        missionValidationThreshold: data.missionValidationThreshold ?? 100,
       });
       setFormFields(data.applicationForm?.fields || []);
       setEstimatedDuration(data.applicationForm?.estimatedDuration || "");
+      setTasks(data.tasks || []);
 
       const apps = await adminFetch(`/api/volunteer-applications?programId=${programId}`);
       setApplications(apps?.items || []);
@@ -347,6 +359,78 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  const saveTasks = async (nextTasks) => {
+    try {
+      const updated = await adminFetch(`/api/volunteer-programs/${programId}`, {
+        method: "PUT",
+        body: JSON.stringify({ programTasks: nextTasks }),
+      });
+      setProgram(updated);
+      setTasks(updated.tasks || []);
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'enregistrement des tâches");
+    }
+  };
+
+  const submitTaskForm = async (e) => {
+    e.preventDefault();
+    if (!taskForm.title.trim()) return;
+
+    const task = {
+      id: editingTaskId || `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      title: taskForm.title,
+      description: taskForm.description,
+      recurrence: taskForm.recurrence,
+    };
+    const nextTasks = editingTaskId
+      ? tasks.map((t) => (t.id === editingTaskId ? task : t))
+      : [...tasks, task];
+
+    await saveTasks(nextTasks);
+    setTaskForm(emptyTaskForm);
+    setEditingTaskId(null);
+  };
+
+  const editTask = (task) => {
+    setEditingTaskId(task.id);
+    setTaskForm({ title: task.title, description: task.description || "", recurrence: task.recurrence });
+  };
+
+  const deleteTask = async (taskId) => {
+    if (!confirm("Supprimer cette tâche ? Les soumissions déjà faites par les volontaires restent enregistrées mais ne compteront plus dans la progression.")) return;
+    await saveTasks(tasks.filter((t) => t.id !== taskId));
+  };
+
+  const loadTracking = async () => {
+    try {
+      const [progress, submissions] = await Promise.all([
+        adminFetch(`/api/volunteer-tasks/programs/${programId}/progress`),
+        adminFetch(`/api/volunteer-tasks/submissions?programId=${programId}&status=PENDING`),
+      ]);
+      setProgramProgress(progress?.items || []);
+      setPendingSubmissions(submissions?.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "tracking") loadTracking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const reviewSubmissionTask = async (submissionId, action) => {
+    try {
+      await adminFetch(`/api/volunteer-tasks/submissions/${submissionId}/${action}`, {
+        method: "PATCH",
+        body: JSON.stringify({}),
+      });
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors du traitement de la soumission");
+    }
+  };
+
   if (loading) return <p className="text-center text-gray-500 p-6">Chargement...</p>;
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
@@ -457,6 +541,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               <option value="APPLICATION">Sur candidature (examinée par le staff)</option>
               <option value="OPEN">Accès ouvert (admission immédiate)</option>
             </select>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Seuil de validation automatique de la mission (%)</label>
+              <p className="text-xs text-gray-500 mb-1">
+                Quand un volontaire atteint ce % de tâches dues et approuvées (voir l'onglet "Tâches"), son statut
+                passe automatiquement à "Mission validée" — sans action manuelle supplémentaire.
+              </p>
+              <input type="number" min="0" max="100" value={meta.missionValidationThreshold}
+                onChange={(e) => setMeta({ ...meta, missionValidationThreshold: e.target.value })}
+                className="w-full border border-yellow-300 rounded-xl p-3" />
+            </div>
 
             {meta.accessMode === "APPLICATION" && (
               <>
@@ -662,6 +757,60 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
           )
         )}
 
+        {activeTab === "tasks" && (
+          <div className="space-y-6">
+            <p className="text-sm text-gray-600">
+              Ces tâches s'appliquent à tout volontaire accepté sur ce programme. "Une fois" = à faire une seule
+              fois ; "Quotidienne"/"Hebdomadaire" = une échéance chaque jour/semaine, de la date d'acceptation du
+              volontaire jusqu'à la fin du programme (ou aujourd'hui si le programme est encore en cours).
+            </p>
+
+            <div className="space-y-2">
+              {tasks.length === 0 && <p className="text-gray-500">Aucune tâche pour l'instant.</p>}
+              {tasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-3 border border-gray-200 rounded-xl p-3">
+                  <div className="flex-1">
+                    <strong>{task.title}</strong>
+                    <span className="text-xs text-gray-500 ml-2">{RECURRENCE_LABELS[task.recurrence]}</span>
+                    {task.description && <p className="text-sm text-gray-600 mt-1">{task.description}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => editTask(task)} className="text-blue-600 hover:underline text-sm">Éditer</button>
+                    <button type="button" onClick={() => deleteTask(task.id)} className="text-red-600 hover:underline text-sm">Supprimer</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={submitTaskForm} className="border-t pt-4 space-y-3">
+              <h3 className="font-semibold">{editingTaskId ? "Modifier la tâche" : "Ajouter une tâche"}</h3>
+              <input type="text" placeholder="Titre de la tâche" value={taskForm.title}
+                onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required
+                className="w-full border border-gray-300 rounded-xl p-2" />
+              <textarea placeholder="Description (optionnel)" rows={2} value={taskForm.description}
+                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                className="w-full border border-gray-300 rounded-xl p-2" />
+              <select value={taskForm.recurrence} onChange={(e) => setTaskForm({ ...taskForm, recurrence: e.target.value })}
+                className="w-full border border-gray-300 rounded-xl p-2">
+                <option value="ONCE">Une fois</option>
+                <option value="DAILY">Quotidienne</option>
+                <option value="WEEKLY">Hebdomadaire</option>
+              </select>
+              <div className="flex gap-3">
+                <button type="submit" className="flex-1 bg-yellow-600 text-white font-bold py-2 rounded-xl hover:bg-yellow-700">
+                  {editingTaskId ? "Enregistrer la tâche" : "Ajouter la tâche"}
+                </button>
+                {editingTaskId && (
+                  <button type="button" onClick={() => { setEditingTaskId(null); setTaskForm(emptyTaskForm); }}
+                    className="bg-gray-200 px-4 rounded-xl">
+                    Annuler
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        )}
+
         {activeTab === "applications" && (
           <div>
             <h3 className="font-semibold mb-3">Candidatures ({applications.length})</h3>
@@ -712,6 +861,88 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "tracking" && (
+          <div className="space-y-8">
+            <div>
+              <h3 className="font-semibold mb-3">Soumissions en attente ({pendingSubmissions.length})</h3>
+              {pendingSubmissions.length === 0 ? (
+                <p className="text-gray-500">Aucune soumission en attente.</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingSubmissions.map((s) => (
+                    <div key={s._id} className="border border-gray-200 rounded-xl p-3">
+                      <div className="flex justify-between items-start gap-3 flex-wrap">
+                        <div>
+                          <strong>{s.volunteerName}</strong> <span className="text-sm text-gray-600">— {s.taskTitle}</span>
+                          {s.occurrenceDate && (
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
+                            </span>
+                          )}
+                          <p className="text-sm text-gray-700 mt-1 whitespace-pre-line">{s.proofText}</p>
+                          {s.proofUrl && (
+                            <a href={s.proofUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
+                              Voir la preuve →
+                            </a>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-shrink-0">
+                          <button onClick={() => reviewSubmissionTask(s._id, "accept")}
+                            className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+                            Approuver
+                          </button>
+                          <button onClick={() => reviewSubmissionTask(s._id, "reject")}
+                            className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+                            Rejeter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-3">Progression par volontaire</h3>
+              {programProgress.length === 0 ? (
+                <p className="text-gray-500">Aucun volontaire accepté sur ce programme pour l'instant.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-3 py-2 border text-left">Volontaire</th>
+                        <th className="px-3 py-2 border text-left">Progression</th>
+                        <th className="px-3 py-2 border text-left">Statut mission</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {programProgress.map((p) => (
+                        <tr key={p.volunteerId}>
+                          <td className="px-3 py-2 border">
+                            {p.prenom} {p.nom}
+                            <div className="text-xs text-gray-500">{p.email}</div>
+                          </td>
+                          <td className="px-3 py-2 border">{p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)</td>
+                          <td className="px-3 py-2 border">
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                              p.statut === "Mission validée" ? "bg-green-100 text-green-700" :
+                              p.statut === "Refusé" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
+                            }`}>
+                              {p.statut}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

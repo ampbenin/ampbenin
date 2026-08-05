@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/BaseLayout.astro';
+import ProgramProgress from '../../../components/volunteer/ProgramProgress.jsx';
+
+const { id } = Astro.params;
+---
+
+<Layout
+  title="Ma progression — Mon espace volontaire | AMP BENIN"
+  description="Suivez votre progression sur les tâches de ce programme de volontariat."
+  url={`https://ampbenin.netlify.app/mon-espace/programme/${id}`}
+>
+  <ProgramProgress programId={id} client:load />
+</Layout>

@@ -87,12 +87,15 @@ export default function Dashboard() {
         ) : (
           <div className="dash-list">
             {profile.programs.map((p, i) => (
-              <div key={p.programId || i} className="dash-row">
+              <a key={p.programId || i} href={`/mon-espace/programme/${p.programId}`} className="dash-row dash-row--clickable">
                 <strong>{p.programTitle || "Programme"}</strong>
-                <span className={`dash-badge ${MISSION_STATUS_CLASS[p.statut] || "dash-badge--pending"}`}>
-                  {p.statut}
+                <span className="dash-row__right">
+                  <span className={`dash-badge ${MISSION_STATUS_CLASS[p.statut] || "dash-badge--pending"}`}>
+                    {p.statut}
+                  </span>
+                  <span className="dash-row__chevron" aria-hidden="true">→</span>
                 </span>
-              </div>
+              </a>
             ))}
           </div>
         )}
@@ -156,8 +159,12 @@ export default function Dashboard() {
         .dash-row {
           display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
           background: var(--col-white); border: 1px solid var(--col-border-light); border-radius: var(--r-lg);
-          padding: var(--sp-4);
+          padding: var(--sp-4); text-decoration: none; color: inherit;
         }
+        .dash-row--clickable { cursor: pointer; transition: border-color var(--tr-base), transform var(--tr-base); }
+        .dash-row--clickable:hover { border-color: var(--col-primary); transform: translateX(2px); }
+        .dash-row__right { display: flex; align-items: center; gap: var(--sp-3); }
+        .dash-row__chevron { color: var(--col-text-muted); font-weight: 700; }
         .dash-row__meta { display: block; font-size: var(--text-xs); color: var(--col-text-muted); margin-top: 2px; }
 
         .dash-badge { font-size: var(--text-xs); font-weight: 700; padding: var(--sp-1) var(--sp-3); border-radius: var(--r-full); white-space: nowrap; }
