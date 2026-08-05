@@ -46,6 +46,17 @@ export default function VolunteerApplicationsInbox() {
     }
   };
 
+  const deleteApplication = async (id) => {
+    if (!confirm("Supprimer définitivement cette candidature ? (le profil volontaire, si déjà accepté, n'est pas affecté)")) return;
+    try {
+      await adminFetch(`/api/volunteer-applications/${id}`, { method: "DELETE" });
+      setSelectedId(null);
+      fetchApplications();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const selected = applications.find((a) => a._id === selectedId) || null;
   const responseEntries = selected ? Object.entries(selected.responses || {}) : [];
 
@@ -69,11 +80,19 @@ export default function VolunteerApplicationsInbox() {
                 <div><strong>{a.applicantFirstName} {a.applicantLastName}</strong> — {a.applicantEmail}</div>
                 <div className="text-sm text-gray-500">{a.applicantPhone || "—"}</div>
               </div>
-              <div className={`self-center px-2 py-1 rounded-full text-xs font-bold ${
-                a.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
-                a.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
-              }`}>
-                {STATUS_LABELS[a.status]}
+              <div className="self-center flex items-center gap-3">
+                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  a.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
+                  a.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
+                }`}>
+                  {STATUS_LABELS[a.status]}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteApplication(a._id); }}
+                  className="text-red-600 hover:underline text-sm"
+                >
+                  Supprimer
+                </button>
               </div>
             </div>
           ))}
@@ -108,7 +127,12 @@ export default function VolunteerApplicationsInbox() {
             ) : (
               <p className="text-sm text-gray-500">Statut : {STATUS_LABELS[selected.status]}</p>
             )}
-            <button onClick={() => setSelectedId(null)} className="mt-3 text-sm text-gray-500 hover:underline">Fermer</button>
+            <div className="mt-3 flex items-center justify-between">
+              <button onClick={() => setSelectedId(null)} className="text-sm text-gray-500 hover:underline">Fermer</button>
+              <button onClick={() => deleteApplication(selected._id)} className="text-sm text-red-600 hover:underline">
+                🗑 Supprimer cette candidature
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -336,6 +336,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  const deleteApplication = async (applicationId) => {
+    if (!confirm("Supprimer définitivement cette candidature ? (le profil volontaire, si déjà accepté, n'est pas affecté)")) return;
+    try {
+      await adminFetch(`/api/volunteer-applications/${applicationId}`, { method: "DELETE" });
+      setSelectedApplicationId(null);
+      load();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la suppression de la candidature");
+    }
+  };
+
   if (loading) return <p className="text-center text-gray-500 p-6">Chargement...</p>;
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
@@ -666,6 +677,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       <th className="px-3 py-2 border text-left">Téléphone</th>
                       {customFormFields.map((f) => <th key={f.id} className="px-3 py-2 border text-left">{f.label}</th>)}
                       <th className="px-3 py-2 border text-left">Statut</th>
+                      <th className="px-3 py-2 border text-left">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -685,6 +697,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                           }`}>
                             {APPLICATION_STATUS_LABELS[a.status]}
                           </span>
+                        </td>
+                        <td className="px-3 py-2 border">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteApplication(a._id); }}
+                            className="text-red-600 hover:underline text-sm"
+                          >
+                            Supprimer
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -727,9 +747,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
             ) : (
               <p className="text-sm text-gray-500">Statut : {APPLICATION_STATUS_LABELS[selectedApplication.status]}</p>
             )}
-            <button onClick={() => setSelectedApplicationId(null)} className="mt-3 text-sm text-gray-500 hover:underline">
-              Fermer
-            </button>
+            <div className="mt-3 flex items-center justify-between">
+              <button onClick={() => setSelectedApplicationId(null)} className="text-sm text-gray-500 hover:underline">
+                Fermer
+              </button>
+              <button onClick={() => deleteApplication(selectedApplication._id)} className="text-sm text-red-600 hover:underline">
+                🗑 Supprimer cette candidature
+              </button>
+            </div>
           </div>
         </div>
       )}
