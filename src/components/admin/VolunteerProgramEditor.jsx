@@ -64,11 +64,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [error, setError] = useState("");
 
   const [meta, setMeta] = useState({
-    title: "", description: "", location: "", startDate: "", endDate: "",
+    title: "", description: "", coverImageUrl: "", location: "", startDate: "", endDate: "",
     capacity: "", accessMode: "APPLICATION", applicationDeadline: "",
     status: "DRAFT", brandColor: "", contactWhatsapp: "", contactEmail: "",
     admissionInstructions: "",
   });
+  const [copied, setCopied] = useState(false);
 
   const [formFields, setFormFields] = useState([]);
   const [estimatedDuration, setEstimatedDuration] = useState("");
@@ -86,6 +87,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setMeta({
         title: data.title || "",
         description: data.description || "",
+        coverImageUrl: data.coverImageUrl || "",
         location: data.location || "",
         startDate: data.startDate ? data.startDate.slice(0, 10) : "",
         endDate: data.endDate ? data.endDate.slice(0, 10) : "",
@@ -129,6 +131,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       alert("Informations enregistrées.");
     } catch (err) {
       alert(err.message || "Erreur lors de l'enregistrement");
+    }
+  };
+
+  const copyLink = async () => {
+    const url = `${window.location.origin}/volontaires/candidature/${programId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copiez ce lien :", url);
     }
   };
 
@@ -341,9 +354,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   return (
     <div className="p-6 bg-gradient-to-br from-green-50 via-blue-50 to-violet-50 min-h-screen rounded-lg shadow-md">
-      <div className="flex items-center justify-between mb-4 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-4 max-w-4xl mx-auto flex-wrap gap-2">
         <button onClick={onBack} className="text-blue-600 hover:underline">← Retour aux programmes</button>
         <h2 className="text-xl font-extrabold text-yellow-700">{program.title}</h2>
+        <button onClick={copyLink}
+          className={`px-3 py-1 rounded-lg text-white text-sm ${copied ? "bg-green-600" : "bg-violet-600 hover:bg-violet-700"}`}>
+          {copied ? "✓ Lien copié" : "🔗 Copier le lien de candidature"}
+        </button>
       </div>
 
       <div className="flex gap-2 justify-center mb-6 flex-wrap">
@@ -372,6 +389,16 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
             <textarea placeholder="Description" rows={3} value={meta.description}
               onChange={(e) => setMeta({ ...meta, description: e.target.value })}
               className="w-full border border-yellow-300 rounded-xl p-3" />
+            <div>
+              <input type="url" placeholder="URL de l'image de couverture (aperçu affiché sur le catalogue public)"
+                value={meta.coverImageUrl} onChange={(e) => setMeta({ ...meta, coverImageUrl: e.target.value })}
+                className="w-full border border-yellow-300 rounded-xl p-3" />
+              {meta.coverImageUrl && (
+                <img src={meta.coverImageUrl} alt="Aperçu" onError={(e) => (e.target.style.display = "none")}
+                  onLoad={(e) => (e.target.style.display = "block")}
+                  className="mt-2 h-28 w-full max-w-xs object-cover rounded-lg border border-gray-200" />
+              )}
+            </div>
             <input type="text" placeholder="Lieu" value={meta.location}
               onChange={(e) => setMeta({ ...meta, location: e.target.value })}
               className="w-full border border-yellow-300 rounded-xl p-3" />

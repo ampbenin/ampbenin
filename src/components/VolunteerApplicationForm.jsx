@@ -629,7 +629,7 @@ function VolunteerApplicationFormStyles({ palette }) {
       }
       .tf-modal {
         position: relative; width: 100%; max-width: 32rem; max-height: 85vh; overflow-y: auto;
-        background: var(--col-card); color: var(--col-text); border-radius: var(--r-xl);
+        background: var(--col-white); color: var(--col-text); border-radius: var(--r-xl);
         padding: var(--sp-8); text-align: left; box-shadow: 0 24px 64px rgba(0,0,0,0.35);
       }
       .tf-modal__close {

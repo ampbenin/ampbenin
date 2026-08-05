@@ -15,7 +15,7 @@ const STATUS_COLORS = {
 };
 
 const emptyForm = {
-  title: "", location: "", startDate: "", endDate: "", capacity: "",
+  title: "", coverImageUrl: "", location: "", startDate: "", endDate: "", capacity: "",
   accessMode: "APPLICATION", applicationDeadline: "", status: "DRAFT",
 };
 
@@ -26,6 +26,18 @@ export default function VolunteerProgramsManager() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedProgramId, setSelectedProgramId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  const copyLink = async (program) => {
+    const url = `${window.location.origin}/volontaires/candidature/${program._id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(program._id);
+      setTimeout(() => setCopiedId((id) => (id === program._id ? null : id)), 2000);
+    } catch {
+      window.prompt("Copiez ce lien :", url);
+    }
+  };
 
   const fetchPrograms = async () => {
     try {
@@ -107,6 +119,18 @@ export default function VolunteerProgramsManager() {
           onChange={handleChange} required
           className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
         />
+        <div>
+          <input
+            type="url" name="coverImageUrl" placeholder="URL de l'image de couverture (aperçu affiché sur le catalogue public)"
+            value={form.coverImageUrl} onChange={handleChange}
+            className="w-full border border-yellow-300 rounded-xl p-3 focus:ring-2 focus:ring-yellow-400 outline-none shadow-sm"
+          />
+          {form.coverImageUrl && (
+            <img src={form.coverImageUrl} alt="Aperçu" onError={(e) => (e.target.style.display = "none")}
+              onLoad={(e) => (e.target.style.display = "block")}
+              className="mt-2 h-28 w-full max-w-xs object-cover rounded-lg border border-gray-200" />
+          )}
+        </div>
         <input
           type="text" name="location" placeholder="Lieu" value={form.location}
           onChange={handleChange}
@@ -197,6 +221,10 @@ export default function VolunteerProgramsManager() {
                       <button onClick={() => setSelectedProgramId(p._id)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg">
                         Gérer →
+                      </button>
+                      <button onClick={() => copyLink(p)}
+                        className={`px-3 py-1 rounded-lg text-white ${copiedId === p._id ? "bg-green-600" : "bg-violet-600 hover:bg-violet-700"}`}>
+                        {copiedId === p._id ? "✓ Copié" : "🔗 Copier le lien"}
                       </button>
                       {p.status === "PUBLISHED" ? (
                         <button onClick={() => toggleStatus(p, "DRAFT")}
