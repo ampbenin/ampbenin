@@ -20,11 +20,25 @@ const FIELD_TYPES = [
   { value: "CHECKBOX", label: "Case à cocher" },
 ];
 
+// Types dédiés au formulaire de preuve d'une tâche — volontairement
+// DISTINCT de FIELD_TYPES (formulaire de candidature) : URL/IMAGE
+// n'apparaissent jamais comme option dans le constructeur de candidature,
+// que l'assistant candidat (VolunteerApplicationForm.jsx) ne sait pas rendre.
+const PROOF_FIELD_TYPES = [
+  ...FIELD_TYPES,
+  { value: "URL", label: "URL (avec aperçu du lien)" },
+  { value: "IMAGE", label: "Image (upload)" },
+];
+
 const CONDITIONAL_TRIGGER_TYPES = ["SELECT", "CHECKBOX"];
 const APPLICANT_FIELD_IDS = ["applicantFirstName", "applicantLastName", "applicantEmail", "applicantPhone"];
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
-const emptyTaskForm = { title: "", description: "", recurrence: "ONCE" };
+const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", proofFields: [] };
+const emptyProofFieldForm = {
+  label: "", type: "TEXTAREA", required: true, optionsText: "",
+  minLength: "", maxLength: "", pattern: "", min: "", max: "", maxImages: "",
+};
 
 const canMoveFieldUp = (fields, index) =>
   index > 0 && fields[index].conditional?.fieldId !== fields[index - 1].id;
@@ -86,6 +100,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [tasks, setTasks] = useState([]);
   const [taskForm, setTaskForm] = useState(emptyTaskForm);
   const [editingTaskId, setEditingTaskId] = useState(null);
+  const [proofFieldForm, setProofFieldForm] = useState(emptyProofFieldForm);
+  const [editingProofFieldIndex, setEditingProofFieldIndex] = useState(null);
   const [programProgress, setProgramProgress] = useState([]);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
 
@@ -381,6 +397,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       title: taskForm.title,
       description: taskForm.description,
       recurrence: taskForm.recurrence,
+      proofForm: { fields: taskForm.proofFields },
     };
     const nextTasks = editingTaskId
       ? tasks.map((t) => (t.id === editingTaskId ? task : t))
@@ -389,16 +406,78 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     await saveTasks(nextTasks);
     setTaskForm(emptyTaskForm);
     setEditingTaskId(null);
+    setProofFieldForm(emptyProofFieldForm);
+    setEditingProofFieldIndex(null);
   };
 
   const editTask = (task) => {
     setEditingTaskId(task.id);
-    setTaskForm({ title: task.title, description: task.description || "", recurrence: task.recurrence });
+    setTaskForm({
+      title: task.title, description: task.description || "", recurrence: task.recurrence,
+      proofFields: task.proofForm?.fields || [],
+    });
+    setProofFieldForm(emptyProofFieldForm);
+    setEditingProofFieldIndex(null);
   };
 
   const deleteTask = async (taskId) => {
     if (!confirm("Supprimer cette tâche ? Les soumissions déjà faites par les volontaires restent enregistrées mais ne compteront plus dans la progression.")) return;
     await saveTasks(tasks.filter((t) => t.id !== taskId));
+  };
+
+  const submitProofField = (e) => {
+    e.preventDefault();
+    if (!proofFieldForm.label.trim()) return;
+
+    const field = {
+      id: editingProofFieldIndex !== null
+        ? taskForm.proofFields[editingProofFieldIndex].id
+        : `pf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      label: proofFieldForm.label,
+      type: proofFieldForm.type,
+      required: proofFieldForm.required,
+      locked: false,
+      options: proofFieldForm.type === "SELECT"
+        ? proofFieldForm.optionsText.split(",").map((o) => o.trim()).filter(Boolean)
+        : [],
+      validation: {
+        minLength: proofFieldForm.minLength ? Number(proofFieldForm.minLength) : null,
+        maxLength: proofFieldForm.maxLength ? Number(proofFieldForm.maxLength) : null,
+        pattern: proofFieldForm.pattern || "",
+        min: proofFieldForm.min ? Number(proofFieldForm.min) : null,
+        max: proofFieldForm.max ? Number(proofFieldForm.max) : null,
+        maxImages: proofFieldForm.maxImages ? Number(proofFieldForm.maxImages) : null,
+      },
+      conditional: { fieldId: "", values: [] },
+    };
+
+    const nextProofFields = editingProofFieldIndex !== null
+      ? taskForm.proofFields.map((f, i) => (i === editingProofFieldIndex ? field : f))
+      : [...taskForm.proofFields, field];
+
+    setTaskForm({ ...taskForm, proofFields: nextProofFields });
+    setProofFieldForm(emptyProofFieldForm);
+    setEditingProofFieldIndex(null);
+  };
+
+  const editProofFieldAt = (index) => {
+    const f = taskForm.proofFields[index];
+    setEditingProofFieldIndex(index);
+    setProofFieldForm({
+      label: f.label, type: f.type, required: f.required,
+      optionsText: (f.options || []).join(", "),
+      minLength: f.validation?.minLength ?? "", maxLength: f.validation?.maxLength ?? "",
+      pattern: f.validation?.pattern || "", min: f.validation?.min ?? "", max: f.validation?.max ?? "",
+      maxImages: f.validation?.maxImages ?? "",
+    });
+  };
+
+  const removeProofFieldAt = (index) => {
+    setTaskForm({ ...taskForm, proofFields: taskForm.proofFields.filter((_, i) => i !== index) });
+    if (editingProofFieldIndex === index) {
+      setEditingProofFieldIndex(null);
+      setProofFieldForm(emptyProofFieldForm);
+    }
   };
 
   const loadTracking = async () => {
@@ -772,6 +851,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <div className="flex-1">
                     <strong>{task.title}</strong>
                     <span className="text-xs text-gray-500 ml-2">{RECURRENCE_LABELS[task.recurrence]}</span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      {task.proofForm?.fields?.length > 0
+                        ? `${task.proofForm.fields.length} champ(s) de preuve`
+                        : "Formulaire de preuve par défaut (Description)"}
+                    </span>
                     {task.description && <p className="text-sm text-gray-600 mt-1">{task.description}</p>}
                   </div>
                   <div className="flex gap-2">
@@ -796,12 +880,103 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 <option value="DAILY">Quotidienne</option>
                 <option value="WEEKLY">Hebdomadaire</option>
               </select>
+
+              <div className="border border-gray-200 rounded-xl p-3 space-y-3 bg-gray-50">
+                <div>
+                  <h4 className="font-semibold text-sm">Champs du formulaire de preuve</h4>
+                  <p className="text-xs text-gray-500">
+                    Ce que le volontaire doit remplir pour soumettre cette tâche à validation. Sans champ, un simple
+                    champ "Description" obligatoire est utilisé par défaut.
+                  </p>
+                </div>
+
+                {taskForm.proofFields.length > 0 && (
+                  <div className="space-y-1">
+                    {taskForm.proofFields.map((f, index) => (
+                      <div key={f.id} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2">
+                        <div className="flex-1 text-sm">
+                          <strong>{f.label}</strong>
+                          <span className="text-xs text-gray-500 ml-2">
+                            {PROOF_FIELD_TYPES.find((t) => t.value === f.type)?.label} {f.required && "· obligatoire"}
+                            {f.type === "IMAGE" && f.validation?.maxImages ? ` · max ${f.validation.maxImages}` : ""}
+                          </span>
+                        </div>
+                        <button type="button" onClick={() => editProofFieldAt(index)} className="text-blue-600 hover:underline text-xs">Éditer</button>
+                        <button type="button" onClick={() => removeProofFieldAt(index)} className="text-red-600 hover:underline text-xs">Suppr.</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="space-y-2 border-t border-gray-200 pt-3">
+                  <input type="text" placeholder="Libellé du champ" value={proofFieldForm.label}
+                    onChange={(e) => setProofFieldForm({ ...proofFieldForm, label: e.target.value })}
+                    className="w-full border border-gray-300 rounded-xl p-2 text-sm" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select value={proofFieldForm.type} onChange={(e) => setProofFieldForm({ ...proofFieldForm, type: e.target.value })}
+                      className="border border-gray-300 rounded-xl p-2 text-sm">
+                      {PROOF_FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={proofFieldForm.required}
+                        onChange={(e) => setProofFieldForm({ ...proofFieldForm, required: e.target.checked })} />
+                      Obligatoire
+                    </label>
+                  </div>
+
+                  {proofFieldForm.type === "SELECT" && (
+                    <input type="text" placeholder="Options séparées par des virgules" value={proofFieldForm.optionsText}
+                      onChange={(e) => setProofFieldForm({ ...proofFieldForm, optionsText: e.target.value })}
+                      className="w-full border border-gray-300 rounded-xl p-2 text-sm" />
+                  )}
+                  {["TEXT", "TEXTAREA", "EMAIL", "PHONE", "URL"].includes(proofFieldForm.type) && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" placeholder="Longueur min" value={proofFieldForm.minLength}
+                        onChange={(e) => setProofFieldForm({ ...proofFieldForm, minLength: e.target.value })}
+                        className="border border-gray-300 rounded-xl p-2 text-sm" />
+                      <input type="number" placeholder="Longueur max" value={proofFieldForm.maxLength}
+                        onChange={(e) => setProofFieldForm({ ...proofFieldForm, maxLength: e.target.value })}
+                        className="border border-gray-300 rounded-xl p-2 text-sm" />
+                    </div>
+                  )}
+                  {proofFieldForm.type === "NUMBER" && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" placeholder="Min" value={proofFieldForm.min}
+                        onChange={(e) => setProofFieldForm({ ...proofFieldForm, min: e.target.value })}
+                        className="border border-gray-300 rounded-xl p-2 text-sm" />
+                      <input type="number" placeholder="Max" value={proofFieldForm.max}
+                        onChange={(e) => setProofFieldForm({ ...proofFieldForm, max: e.target.value })}
+                        className="border border-gray-300 rounded-xl p-2 text-sm" />
+                    </div>
+                  )}
+                  {proofFieldForm.type === "IMAGE" && (
+                    <input type="number" min="1" placeholder="Nombre maximum de photos (optionnel)" value={proofFieldForm.maxImages}
+                      onChange={(e) => setProofFieldForm({ ...proofFieldForm, maxImages: e.target.value })}
+                      className="w-full border border-gray-300 rounded-xl p-2 text-sm" />
+                  )}
+
+                  <div className="flex gap-2">
+                    <button type="button" onClick={submitProofField}
+                      className="flex-1 bg-gray-700 text-white text-sm font-semibold py-2 rounded-xl hover:bg-gray-800">
+                      {editingProofFieldIndex !== null ? "Enregistrer le champ" : "Ajouter le champ"}
+                    </button>
+                    {editingProofFieldIndex !== null && (
+                      <button type="button"
+                        onClick={() => { setEditingProofFieldIndex(null); setProofFieldForm(emptyProofFieldForm); }}
+                        className="bg-gray-200 px-3 rounded-xl text-sm">
+                        Annuler
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button type="submit" className="flex-1 bg-yellow-600 text-white font-bold py-2 rounded-xl hover:bg-yellow-700">
                   {editingTaskId ? "Enregistrer la tâche" : "Ajouter la tâche"}
                 </button>
                 {editingTaskId && (
-                  <button type="button" onClick={() => { setEditingTaskId(null); setTaskForm(emptyTaskForm); }}
+                  <button type="button" onClick={() => { setEditingTaskId(null); setTaskForm(emptyTaskForm); setProofFieldForm(emptyProofFieldForm); setEditingProofFieldIndex(null); }}
                     className="bg-gray-200 px-4 rounded-xl">
                     Annuler
                   </button>
@@ -882,12 +1057,33 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                               ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
                             </span>
                           )}
-                          <p className="text-sm text-gray-700 mt-1 whitespace-pre-line">{s.proofText}</p>
-                          {s.proofUrl && (
-                            <a href={s.proofUrl} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-sm">
-                              Voir la preuve →
-                            </a>
-                          )}
+                          <dl className="text-sm mt-1 space-y-1">
+                            {(s.proofFields || []).map((f) => {
+                              const value = s.responses?.[f.id];
+                              if (value === undefined || value === null || value === "" ||
+                                (Array.isArray(value) && value.length === 0)) return null;
+                              return (
+                                <div key={f.id}>
+                                  <dt className="inline font-semibold text-gray-700">{f.label} : </dt>
+                                  <dd className="inline text-gray-700">
+                                    {f.type === "URL" ? (
+                                      <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{value}</a>
+                                    ) : f.type === "IMAGE" ? (
+                                      <span className="inline-flex gap-2 flex-wrap align-middle">
+                                        {value.map((url, i) => (
+                                          <a key={i} href={url} target="_blank" rel="noreferrer">
+                                            <img src={url} alt="" className="h-14 w-14 object-cover rounded-lg border border-gray-200" />
+                                          </a>
+                                        ))}
+                                      </span>
+                                    ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : (
+                                      <span className="whitespace-pre-line">{String(value)}</span>
+                                    )}
+                                  </dd>
+                                </div>
+                              );
+                            })}
+                          </dl>
                         </div>
                         <div className="flex gap-2 flex-shrink-0">
                           <button onClick={() => reviewSubmissionTask(s._id, "accept")}

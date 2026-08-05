@@ -11,16 +11,20 @@ const MISSION_STATUS_CLASS = {
   "Mission validée": "pp-badge--approved",
 };
 
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
+
+const isUrlLike = (str) => /^https?:\/\/.+/i.test(String(str || ""));
+
 export default function ProgramProgress({ programId }) {
   const ready = useVolunteerGuard();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [openKey, setOpenKey] = useState(null);
-  const [proofText, setProofText] = useState("");
-  const [proofUrl, setProofUrl] = useState("");
+  const [responses, setResponses] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [uploadingFieldId, setUploadingFieldId] = useState(null);
 
   const load = async () => {
     try {
@@ -40,24 +44,54 @@ export default function ProgramProgress({ programId }) {
 
   const occurrenceKey = (taskId, occurrenceDate) => `${taskId}|${occurrenceDate || "once"}`;
 
-  const openSubmitForm = (taskId, occurrenceDate) => {
+  const openSubmitForm = (taskId, occurrenceDate, existingResponses) => {
     setOpenKey(occurrenceKey(taskId, occurrenceDate));
-    setProofText("");
-    setProofUrl("");
+    setResponses({ ...(existingResponses || {}) });
     setSubmitError("");
   };
 
-  const submit = async (taskId, occurrenceDate) => {
-    if (!proofText.trim() && !proofUrl.trim()) {
-      setSubmitError("Merci de fournir une preuve (texte ou lien).");
-      return;
+  const setFieldValue = (fieldId, value) => {
+    setResponses((prev) => ({ ...prev, [fieldId]: value }));
+  };
+
+  const uploadImage = async (fieldId, file, maxImages) => {
+    setUploadingFieldId(fieldId);
+    setSubmitError("");
+    try {
+      const token = localStorage.getItem("volunteer_token");
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API_BASE}/api/volunteer-tasks/upload-proof-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const uploaded = await res.json();
+      if (!res.ok) throw new Error(uploaded.message || "Erreur lors de l'upload de l'image");
+
+      setResponses((prev) => {
+        const current = Array.isArray(prev[fieldId]) ? prev[fieldId] : [];
+        if (maxImages && current.length >= maxImages) return prev;
+        return { ...prev, [fieldId]: [...current, uploaded.url] };
+      });
+    } catch (err) {
+      setSubmitError(err.message || "Erreur lors de l'upload de l'image");
+    } finally {
+      setUploadingFieldId(null);
     }
+  };
+
+  const removeImage = (fieldId, url) => {
+    setResponses((prev) => ({ ...prev, [fieldId]: (prev[fieldId] || []).filter((u) => u !== url) }));
+  };
+
+  const submit = async (taskId, occurrenceDate) => {
     setSubmitting(true);
     setSubmitError("");
     try {
       await volunteerFetch("/volunteer-tasks/submissions", {
         method: "POST",
-        body: JSON.stringify({ programId, taskId, occurrenceDate, proofText, proofUrl }),
+        body: JSON.stringify({ programId, taskId, occurrenceDate, responses }),
       });
       setOpenKey(null);
       load();
@@ -123,7 +157,7 @@ export default function ProgramProgress({ programId }) {
                         {canSubmit && openKey !== key && (
                           <button
                             className="pp-link-btn"
-                            onClick={() => openSubmitForm(task.id, occ.occurrenceDate)}
+                            onClick={() => openSubmitForm(task.id, occ.occurrenceDate, occ.responses)}
                           >
                             {occ.status === "REJECTED" ? "Resoumettre →" : "Soumettre →"}
                           </button>
@@ -137,20 +171,94 @@ export default function ProgramProgress({ programId }) {
                       {openKey === key && (
                         <div className="pp-submit-form">
                           {submitError && <p className="pp-error">{submitError}</p>}
-                          <textarea
-                            placeholder="Décrivez ce que vous avez fait..."
-                            rows={3}
-                            value={proofText}
-                            onChange={(e) => setProofText(e.target.value)}
-                            className="pp-input"
-                          />
-                          <input
-                            type="url"
-                            placeholder="Lien vers une preuve (photo, document...) — optionnel"
-                            value={proofUrl}
-                            onChange={(e) => setProofUrl(e.target.value)}
-                            className="pp-input"
-                          />
+
+                          {task.proofFields.map((field) => (
+                            <div key={field.id} className="pp-field">
+                              <label className="pp-field__label">
+                                {field.label} {field.required && <span className="pp-field__required">*</span>}
+                              </label>
+
+                              {field.type === "TEXTAREA" && (
+                                <textarea rows={3} className="pp-input" value={responses[field.id] || ""}
+                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                              )}
+
+                              {["TEXT", "EMAIL", "PHONE"].includes(field.type) && (
+                                <input type={field.type === "EMAIL" ? "email" : field.type === "PHONE" ? "tel" : "text"}
+                                  className="pp-input" value={responses[field.id] || ""}
+                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                              )}
+
+                              {field.type === "NUMBER" && (
+                                <input type="number" className="pp-input" value={responses[field.id] ?? ""}
+                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                              )}
+
+                              {field.type === "DATE" && (
+                                <input type="date" className="pp-input" value={responses[field.id] || ""}
+                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                              )}
+
+                              {field.type === "SELECT" && (
+                                <select className="pp-input" value={responses[field.id] || ""}
+                                  onChange={(e) => setFieldValue(field.id, e.target.value)}>
+                                  <option value="">-- Choisir --</option>
+                                  {(field.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                              )}
+
+                              {field.type === "CHECKBOX" && (
+                                <label className="pp-checkbox">
+                                  <input type="checkbox" checked={!!responses[field.id]}
+                                    onChange={(e) => setFieldValue(field.id, e.target.checked)} />
+                                  Oui
+                                </label>
+                              )}
+
+                              {field.type === "URL" && (
+                                <>
+                                  <input type="url" className="pp-input" placeholder="https://..."
+                                    value={responses[field.id] || ""}
+                                    onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                                  {isUrlLike(responses[field.id]) && (
+                                    <a href={responses[field.id]} target="_blank" rel="noreferrer" className="pp-url-preview">
+                                      {responses[field.id]}
+                                    </a>
+                                  )}
+                                </>
+                              )}
+
+                              {field.type === "IMAGE" && (
+                                <div className="pp-image-field">
+                                  <div className="pp-image-thumbs">
+                                    {(responses[field.id] || []).map((url) => (
+                                      <div key={url} className="pp-image-thumb">
+                                        <img src={url} alt="" />
+                                        <button type="button" onClick={() => removeImage(field.id, url)} aria-label="Retirer">✕</button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {(!field.validation?.maxImages || (responses[field.id] || []).length < field.validation.maxImages) && (
+                                    <label className="pp-image-upload-btn">
+                                      {uploadingFieldId === field.id ? "Envoi..." : "+ Ajouter une photo"}
+                                      <input type="file" accept="image/*" hidden disabled={uploadingFieldId === field.id}
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) uploadImage(field.id, file, field.validation?.maxImages);
+                                          e.target.value = "";
+                                        }} />
+                                    </label>
+                                  )}
+                                  {field.validation?.maxImages && (
+                                    <span className="pp-image-limit">
+                                      {(responses[field.id] || []).length}/{field.validation.maxImages} photo(s)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+
                           <div className="pp-submit-form__actions">
                             <button
                               className="pp-btn pp-btn--ghost"
@@ -162,7 +270,7 @@ export default function ProgramProgress({ programId }) {
                             <button
                               className="pp-btn pp-btn--primary"
                               onClick={() => submit(task.id, occ.occurrenceDate)}
-                              disabled={submitting}
+                              disabled={submitting || uploadingFieldId !== null}
                             >
                               {submitting ? "Envoi..." : "Envoyer la preuve"}
                             </button>
@@ -227,14 +335,34 @@ export default function ProgramProgress({ programId }) {
         .pp-link-btn { background: none; border: none; padding: 0; cursor: pointer; color: var(--col-primary); font-weight: 600; font-size: var(--text-sm); }
         .pp-link-btn:hover { text-decoration: underline; }
 
-        .pp-submit-form { margin-top: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-2); }
+        .pp-submit-form { margin-top: var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-3); }
+        .pp-field { display: flex; flex-direction: column; gap: var(--sp-1); }
+        .pp-field__label { font-size: var(--text-sm); font-weight: 600; color: var(--col-text); }
+        .pp-field__required { color: #dc2626; }
         .pp-input {
           width: 100%; padding: var(--sp-2) var(--sp-3); border: 1.5px solid var(--col-border); border-radius: var(--r-md);
           font-family: var(--font-body); font-size: var(--text-sm); color: var(--col-text); outline: none;
         }
         .pp-input:focus { border-color: var(--col-primary); }
+        .pp-checkbox { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--text-sm); }
+        .pp-url-preview { font-size: var(--text-xs); color: var(--col-primary); word-break: break-all; }
         .pp-error { color: #dc2626; font-size: var(--text-sm); font-weight: 600; }
         .pp-submit-form__actions { display: flex; gap: var(--sp-2); justify-content: flex-end; }
+
+        .pp-image-field { display: flex; flex-direction: column; gap: var(--sp-2); }
+        .pp-image-thumbs { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+        .pp-image-thumb { position: relative; width: 4.5rem; height: 4.5rem; }
+        .pp-image-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-md); border: 1px solid var(--col-border); }
+        .pp-image-thumb button {
+          position: absolute; top: -6px; right: -6px; width: 1.25rem; height: 1.25rem; border-radius: 999px;
+          background: #dc2626; color: #fff; border: none; font-size: 0.65rem; cursor: pointer; line-height: 1;
+        }
+        .pp-image-upload-btn {
+          display: inline-block; align-self: flex-start; background: var(--col-surface2); color: var(--col-text);
+          padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+        }
+        .pp-image-upload-btn:hover { background: var(--col-border); }
+        .pp-image-limit { font-size: var(--text-xs); color: var(--col-text-muted); }
 
         .pp-btn { padding: var(--sp-2) var(--sp-4); border-radius: var(--r-md); font-weight: 700; font-size: var(--text-sm); cursor: pointer; border: none; }
         .pp-btn--primary { background: var(--col-primary); color: var(--col-white); }
