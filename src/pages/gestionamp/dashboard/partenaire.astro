@@ -1,0 +1,30 @@
+---
+/**
+ * Dashboard PARTENAIRE — statistiques/impact des programmes suivis
+ * AMP BENIN
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+import PartnerDashboard from "@/components/gestionamp/dashboard/partenaire/PartnerDashboard.jsx";
+---
+
+<!-- Protection de la page (import fait ici, dans le script client, pour être
+     sûr qu'il soit résolu côté navigateur — voir le correctif apporté à
+     authRedirect.AMP.js) -->
+<script>
+  import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+  authRedirectAMP(["PARTENAIRE"]);
+</script>
+
+<Layout title="Dashboard Partenaire | AMP BENIN">
+  <main class="dashboard partenaire-dashboard">
+    <header class="dashboard-header">
+      <h1>Dashboard — Partenaire</h1>
+      <p>Statistiques, impact et résultats des programmes que vous suivez</p>
+    </header>
+
+    <section class="dashboard-section">
+      <PartnerDashboard client:load />
+    </section>
+  </main>
+</Layout>

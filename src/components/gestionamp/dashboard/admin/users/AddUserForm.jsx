@@ -93,7 +93,14 @@ export default function AddUserForm({ onUserCreated }) {
             <option value="EC">Émissaire Communautaire (EC)</option>
             <option value="IS">Institution Spécialisée (IS)</option>
             <option value="EDITOR">Éditeur de contenu (EDITOR)</option>
+            <option value="SUPERVISEUR">Superviseur (suivi des tâches)</option>
+            <option value="PARTENAIRE">Partenaire (statistiques/impact)</option>
           </select>
+          <p style={{ fontSize: "0.8rem", color: "#666", marginTop: 4 }}>
+            Si l'email existe déjà, le compte est simplement renommé avec ce rôle (pas de doublon) — sauf s'il
+            s'agit d'un compte ADMIN. L'affectation à un programme (superviseur : quels volontaires ; partenaire :
+            quels programmes) se fait ensuite depuis la fiche du programme concerné.
+          </p>
         </label>
 
         <label>

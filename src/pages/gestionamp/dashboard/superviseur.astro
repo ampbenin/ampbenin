@@ -1,0 +1,30 @@
+---
+/**
+ * Dashboard SUPERVISEUR — suivi des tâches des volontaires affectés
+ * AMP BENIN
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+import SupervisorDashboard from "@/components/gestionamp/dashboard/superviseur/SupervisorDashboard.jsx";
+---
+
+<!-- Protection de la page (import fait ici, dans le script client, pour être
+     sûr qu'il soit résolu côté navigateur — voir le correctif apporté à
+     authRedirect.AMP.js) -->
+<script>
+  import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+  authRedirectAMP(["SUPERVISEUR"]);
+</script>
+
+<Layout title="Dashboard Superviseur | AMP BENIN">
+  <main class="dashboard superviseur-dashboard">
+    <header class="dashboard-header">
+      <h1>Dashboard — Superviseur</h1>
+      <p>Suivi des tâches des volontaires qui vous sont affectés</p>
+    </header>
+
+    <section class="dashboard-section">
+      <SupervisorDashboard client:load />
+    </section>
+  </main>
+</Layout>

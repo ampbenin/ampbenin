@@ -72,6 +72,7 @@ const TABS = [
   { value: "tasks", label: "Tâches", icon: "✅" },
   { value: "applications", label: "Candidatures", icon: "📥" },
   { value: "tracking", label: "Suivi des tâches", icon: "📊" },
+  { value: "partners", label: "Partenaires", icon: "🤝" },
 ];
 
 export default function VolunteerProgramEditor({ programId, onBack }) {
@@ -104,6 +105,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [editingProofFieldIndex, setEditingProofFieldIndex] = useState(null);
   const [programProgress, setProgramProgress] = useState([]);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
+
+  const [staffUsers, setStaffUsers] = useState([]);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState("");
+  const [selectedSupervisedVolunteerIds, setSelectedSupervisedVolunteerIds] = useState([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState("");
+  const [partnerComments, setPartnerComments] = useState([]);
 
   const load = async () => {
     try {
@@ -482,12 +489,27 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   const loadTracking = async () => {
     try {
-      const [progress, submissions] = await Promise.all([
+      const [progress, submissions, staff] = await Promise.all([
         adminFetch(`/api/volunteer-tasks/programs/${programId}/progress`),
         adminFetch(`/api/volunteer-tasks/submissions?programId=${programId}&status=PENDING`),
+        adminFetch("/gestionamp/api/users"),
       ]);
       setProgramProgress(progress?.items || []);
       setPendingSubmissions(submissions?.items || []);
+      setStaffUsers(Array.isArray(staff) ? staff : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadPartnerTab = async () => {
+    try {
+      const [staff, comments] = await Promise.all([
+        adminFetch("/gestionamp/api/users"),
+        adminFetch(`/api/volunteer-partner/programs/${programId}/comments`),
+      ]);
+      setStaffUsers(Array.isArray(staff) ? staff : []);
+      setPartnerComments(comments?.items || []);
     } catch (err) {
       console.error(err);
     }
@@ -495,8 +517,50 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   useEffect(() => {
     if (activeTab === "tracking") loadTracking();
+    if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  const assignSupervisor = async () => {
+    if (!selectedSupervisorId) return;
+    try {
+      await adminFetch(`/api/volunteer-programs/${programId}/supervisors`, {
+        method: "PATCH",
+        body: JSON.stringify({ supervisorId: selectedSupervisorId, volunteerIds: selectedSupervisedVolunteerIds }),
+      });
+      setSelectedSupervisorId("");
+      setSelectedSupervisedVolunteerIds([]);
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'affectation du superviseur");
+    }
+  };
+
+  const unassignSupervisor = async (supervisorId) => {
+    if (!confirm("Retirer ce superviseur de ce programme ?")) return;
+    try {
+      await adminFetch(`/api/volunteer-programs/${programId}/supervisors`, {
+        method: "PATCH",
+        body: JSON.stringify({ supervisorId, volunteerIds: [] }),
+      });
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors du retrait du superviseur");
+    }
+  };
+
+  const togglePartnerAccess = async (partnerId, add) => {
+    try {
+      await adminFetch(`/api/volunteer-programs/${programId}/partners`, {
+        method: "PATCH",
+        body: JSON.stringify({ partnerId, action: add ? "add" : "remove" }),
+      });
+      setSelectedPartnerId("");
+      loadPartnerTab();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour du partenaire");
+    }
+  };
 
   const reviewSubmissionTask = async (submissionId, action) => {
     try {
@@ -507,6 +571,24 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       loadTracking();
     } catch (err) {
       alert(err.message || "Erreur lors du traitement de la soumission");
+    }
+  };
+
+  const rejectSubmissionWithNote = async (submissionId) => {
+    const reviewNote = window.prompt("Motif du rejet (obligatoire) :");
+    if (reviewNote === null) return; // annulé
+    if (!reviewNote.trim()) {
+      alert("Un motif de rejet est requis.");
+      return;
+    }
+    try {
+      await adminFetch(`/api/volunteer-tasks/submissions/${submissionId}/reject`, {
+        method: "PATCH",
+        body: JSON.stringify({ reviewNote: reviewNote.trim() }),
+      });
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors du rejet");
     }
   };
 
@@ -1090,7 +1172,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
                             Approuver
                           </button>
-                          <button onClick={() => reviewSubmissionTask(s._id, "reject")}
+                          <button onClick={() => rejectSubmissionWithNote(s._id)}
                             className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
                             Rejeter
                           </button>
@@ -1136,6 +1218,123 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3">Superviseurs de ce programme</h3>
+              {(() => {
+                const currentSupervisors = staffUsers.filter((u) =>
+                  u.role === "SUPERVISEUR" && (u.supervisedAssignments || []).some((a) => String(a.programId) === String(programId))
+                );
+                return currentSupervisors.length === 0 ? (
+                  <p className="text-gray-500 mb-3">Aucun superviseur affecté à ce programme.</p>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    {currentSupervisors.map((u) => {
+                      const assignment = (u.supervisedAssignments || []).find((a) => String(a.programId) === String(programId));
+                      const names = (assignment?.volunteerIds || []).map((vid) => {
+                        const p = programProgress.find((pp) => String(pp.volunteerId) === String(vid));
+                        return p ? `${p.prenom} ${p.nom}` : vid;
+                      });
+                      return (
+                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span> — supervise : {names.join(", ") || "aucun"}</div>
+                          <button onClick={() => unassignSupervisor(u._id)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              <select value={selectedSupervisorId} onChange={(e) => setSelectedSupervisorId(e.target.value)}
+                className="border border-gray-300 rounded-xl p-2 text-sm w-full mb-2">
+                <option value="">-- Affecter un superviseur --</option>
+                {staffUsers.filter((u) => u.role === "SUPERVISEUR").map((u) => (
+                  <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                ))}
+              </select>
+
+              {selectedSupervisorId && (
+                <div className="border border-gray-200 rounded-xl p-3">
+                  <p className="text-sm font-semibold mb-2">Volontaires à superviser :</p>
+                  {programProgress.length === 0 ? (
+                    <p className="text-gray-500 text-sm mb-3">Aucun volontaire accepté sur ce programme pour l'instant.</p>
+                  ) : (
+                    <div className="space-y-1 mb-3">
+                      {programProgress.map((p) => (
+                        <label key={p.volunteerId} className="flex items-center gap-2 text-sm">
+                          <input type="checkbox" checked={selectedSupervisedVolunteerIds.includes(p.volunteerId)}
+                            onChange={(e) => setSelectedSupervisedVolunteerIds((prev) =>
+                              e.target.checked ? [...prev, p.volunteerId] : prev.filter((id) => id !== p.volunteerId)
+                            )} />
+                          {p.prenom} {p.nom}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={assignSupervisor}
+                    className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800">
+                    Affecter
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "partners" && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-3">Partenaires de ce programme</h3>
+              {(() => {
+                const currentPartners = staffUsers.filter((u) =>
+                  u.role === "PARTENAIRE" && (u.partnerProgramIds || []).some((id) => String(id) === String(programId))
+                );
+                return currentPartners.length === 0 ? (
+                  <p className="text-gray-500 mb-3">Aucun partenaire affecté à ce programme.</p>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    {currentPartners.map((u) => (
+                      <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                        <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
+                        <button onClick={() => togglePartnerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <div className="flex gap-2">
+                <select value={selectedPartnerId} onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
+                  <option value="">-- Choisir un partenaire --</option>
+                  {staffUsers.filter((u) => u.role === "PARTENAIRE").map((u) => (
+                    <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                  ))}
+                </select>
+                <button onClick={() => togglePartnerAccess(selectedPartnerId, true)} disabled={!selectedPartnerId}
+                  className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                  Ajouter
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-3">Commentaires des partenaires ({partnerComments.length})</h3>
+              {partnerComments.length === 0 ? (
+                <p className="text-gray-500">Aucun commentaire pour l'instant.</p>
+              ) : (
+                <div className="space-y-2">
+                  {partnerComments.map((c) => (
+                    <div key={c._id} className="border border-gray-200 rounded-lg p-3 text-sm">
+                      <div className="text-gray-500 text-xs mb-1">
+                        {c.partnerName} ({c.partnerEmail}) — {new Date(c.createdAt).toLocaleDateString("fr-FR")}
+                      </div>
+                      <p className="whitespace-pre-line">{c.text}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

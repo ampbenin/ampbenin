@@ -45,6 +45,12 @@ export default function LoginForm() {
         case "IS":
           window.location.href = "/gestionamp/dashboard/is";
           break;
+        case "SUPERVISEUR":
+          window.location.href = "/gestionamp/dashboard/superviseur";
+          break;
+        case "PARTENAIRE":
+          window.location.href = "/gestionamp/dashboard/partenaire";
+          break;
         default:
           setError("Rôle utilisateur non reconnu");
       }
