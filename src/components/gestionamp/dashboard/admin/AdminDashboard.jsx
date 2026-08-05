@@ -30,7 +30,7 @@ export default function AdminDashboard() {
       </section>
 
       <section className="dashboard-section">
-        <h2>Gestion des espaces</h2>
+        <h2>🏛️ Gestion des espaces</h2>
         <SpacesManager
           endpoint="coordinations"
           title="Coordinations Communales"
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
       </section>
 
       <section className="dashboard-section">
-        <h2>Gestion des utilisateurs</h2>
+        <h2>👤 Gestion des utilisateurs</h2>
         <AddUserForm />
         <UsersTable />
       </section>
@@ -56,17 +56,17 @@ export default function AdminDashboard() {
       </section>
 
       <section className="dashboard-section">
-        <h2>Activités nationales</h2>
+        <h2>📋 Activités nationales</h2>
         <GlobalActivitiesTable />
       </section>
 
       <section className="dashboard-section">
-        <h2>Finances globales</h2>
+        <h2>💰 Finances globales</h2>
         <FinanceGlobalSummary />
       </section>
 
       <section className="dashboard-section">
-        <h2>Validation des activités</h2>
+        <h2>✅ Validation des activités</h2>
         <ValidationQueue />
       </section>
     </main>

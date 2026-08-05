@@ -64,8 +64,6 @@ export default function GlobalActivitiesTable() {
 
   return (
     <section className="global-activities">
-      <h2>Activités nationales</h2>
-
       <table className="activities-table">
         <thead>
           <tr>

@@ -64,7 +64,7 @@ export default function UsersTable() {
 
   return (
     <div className="users-table">
-      <h2>Gestion des utilisateurs (EC & IS)</h2>
+      <h3>Comptes existants</h3>
 
       <table>
         <thead>

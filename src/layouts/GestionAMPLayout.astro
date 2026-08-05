@@ -1,8 +1,11 @@
 ---
 /**
  * Layout principal de l'espace AMP
- * Utilisé par ADMIN, EC et IS
+ * Utilisé par ADMIN, EC, IS, SUPERVISEUR et PARTENAIRE
  */
+
+import "../styles/tokens.css";
+import LogoutButton from "@/components/gestionamp/common/LogoutButton.jsx";
 
 const { title = "AMP BENIN" } = Astro.props;
 ---
@@ -13,6 +16,13 @@ const { title = "AMP BENIN" } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+    />
   </head>
 
   <body>
@@ -28,8 +38,10 @@ const { title = "AMP BENIN" } = Astro.props;
       </nav>
 
       <div class="actions">
-        <!-- Bouton logout React -->
-        <slot name="logout" />
+        <!-- Bouton logout React (slot par défaut si la page n'en fournit pas) -->
+        <slot name="logout">
+          <LogoutButton client:load />
+        </slot>
       </div>
     </header>
 
@@ -72,54 +84,480 @@ const { title = "AMP BENIN" } = Astro.props;
   </body>
 </html>
 
-<style>
+<style is:global>
+  /* ═══════════════════════════════════════════════
+     Espace Gestion AMP — habillage partagé
+     (ADMIN, EC, IS, SUPERVISEUR, PARTENAIRE)
+     Réutilise les tokens de marque du site public
+     (src/styles/tokens.css) : vert forêt + or ambré.
+     ═══════════════════════════════════════════════ */
+
   body {
     margin: 0;
-    font-family: system-ui, sans-serif;
-    background: #f5f7fa;
+    font-family: var(--font-body);
+    background: var(--col-bg);
+    color: var(--col-text);
   }
 
+  /* ── En-tête ── */
   .amp-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    background: #0f172a;
-    color: white;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-8);
+    background: var(--col-primary-dark);
+    color: var(--col-text-inverted);
+  }
+
+  .amp-header .logo strong {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    letter-spacing: 0.02em;
   }
 
   .amp-header__tag {
     display: block;
-    font-size: 0.7rem;
-    opacity: 0.6;
+    font-size: var(--text-xs);
+    opacity: 0.65;
     font-weight: 400;
   }
 
+  .amp-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+
   .amp-nav a {
-    color: white;
-    margin-right: 1rem;
+    color: var(--col-text-inverted);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: var(--text-sm);
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--r-sm);
+    transition: background var(--tr-fast);
   }
 
   .amp-nav a:hover {
-    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .amp-nav__accent {
+    background: var(--col-accent);
+    color: var(--col-primary-dark) !important;
+    font-weight: 600;
+  }
+
+  .amp-nav__accent:hover {
+    background: var(--col-accent-light) !important;
+  }
+
+  .amp-header .actions button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: var(--col-text-inverted);
+    padding: 0.45rem 1rem;
+    border-radius: var(--r-sm);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--tr-fast), border-color var(--tr-fast);
+    float: none !important;
+  }
+
+  .amp-header .actions button:hover {
     background: rgba(255, 255, 255, 0.12);
-    padding: 0.35rem 0.75rem;
-    border-radius: 6px;
+    border-color: rgba(255, 255, 255, 0.6);
   }
 
+  /* ── Contenu ── */
   .amp-content {
-    padding: 2rem;
+    padding: var(--sp-8);
+    max-width: 1280px;
+    margin: 0 auto;
   }
 
+  /* ── Pied de page ── */
   .amp-footer {
     text-align: center;
-    padding: 1rem;
-    background: #e5e7eb;
-    font-size: 0.8rem;
+    padding: var(--sp-4);
+    background: var(--col-surface2);
+    color: var(--col-text-muted);
+    font-size: var(--text-xs);
+  }
+
+  /* ═══════════════════════════════════════════════
+     Dashboards (ADMIN/EC/IS/SUPERVISEUR/PARTENAIRE) —
+     classes communes rendues par les composants React
+     (client:load), donc stylées ici en global plutôt
+     que dans le <style> scopé de chaque page .astro.
+     ═══════════════════════════════════════════════ */
+
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-8);
+  }
+
+  .dashboard-header {
+    padding-bottom: var(--sp-5);
+    border-bottom: 2px solid var(--col-border);
+  }
+
+  .dashboard-header h1 {
+    font-family: var(--font-heading);
+    font-size: var(--text-3xl);
+    color: var(--col-primary-dark);
+    margin: 0 0 var(--sp-2);
+  }
+
+  .dashboard-header p {
+    color: var(--col-text-muted);
+    margin: 0;
+    font-size: var(--text-base);
+  }
+
+  .dashboard-section {
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-lg);
+    padding: var(--sp-6) var(--sp-8);
+    box-shadow: var(--sh-xs);
+  }
+
+  .dashboard-section > h2 {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--col-primary);
+    margin: 0 0 var(--sp-5);
+    padding-bottom: var(--sp-3);
+    border-bottom: 1px solid var(--col-border-light);
+  }
+
+  .dashboard-section > h2:not(:first-child) {
+    margin-top: var(--sp-8);
+  }
+
+  .dashboard-section h3 {
+    font-family: var(--font-heading);
+    color: var(--col-primary-dark);
+  }
+
+  /* ── Cartes de statistiques ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .stat-card {
+    background: var(--col-primary-bg);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-md);
+    padding: var(--sp-5);
+    text-align: center;
+    transition: transform var(--tr-fast), box-shadow var(--tr-fast);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sh-sm);
+  }
+
+  .stat-card h3 {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--col-text-sec);
+    margin: 0 0 var(--sp-2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .stat-card p {
+    font-family: var(--font-heading);
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--col-primary);
+    margin: 0;
+  }
+
+  /* ── Cartes financières ── */
+  .finance-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .finance-card {
+    border-radius: var(--r-md);
+    padding: var(--sp-5);
+    text-align: center;
+    border: 1px solid var(--col-border-light);
+  }
+
+  .finance-card h3 {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    margin: 0 0 var(--sp-2);
+    font-weight: 500;
+  }
+
+  .finance-card p {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .finance-card.income { background: var(--col-success-bg); }
+  .finance-card.income p { color: var(--col-success); }
+  .finance-card.expense { background: var(--col-error-bg); }
+  .finance-card.expense p { color: var(--col-error); }
+  .finance-card.balance { background: var(--col-accent-bg); }
+  .finance-card.balance p { color: var(--col-accent-dark); }
+
+  /* ── Formulaires ── */
+  .dashboard-section form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    align-items: flex-end;
+    margin-bottom: var(--sp-6);
+  }
+
+  .dashboard-section label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    font-weight: 500;
+    flex: 1 1 200px;
+  }
+
+  .dashboard-section input,
+  .dashboard-section select,
+  .dashboard-section textarea {
+    padding: 0.55rem var(--sp-3);
+    border: 1px solid var(--col-border);
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: var(--col-text);
+    background: var(--col-white);
+    transition: border-color var(--tr-fast), box-shadow var(--tr-fast);
+  }
+
+  .dashboard-section input:focus,
+  .dashboard-section select:focus,
+  .dashboard-section textarea:focus {
+    outline: none;
+    border-color: var(--col-primary-light);
+    box-shadow: 0 0 0 3px var(--col-primary-bg);
+  }
+
+  /* ── Boutons ── */
+  .dashboard-section button {
+    padding: 0.55rem var(--sp-5);
+    border-radius: var(--r-sm);
+    border: none;
+    background: var(--col-primary);
+    color: var(--col-white);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background var(--tr-fast);
+    white-space: nowrap;
+  }
+
+  .dashboard-section button:hover:not(:disabled) {
+    background: var(--col-primary-light);
+  }
+
+  .dashboard-section button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .dashboard-section button.danger {
+    background: var(--col-error);
+  }
+
+  .dashboard-section button.danger:hover:not(:disabled) {
+    background: #96101c;
+  }
+
+  /* Bouton secondaire (ex : "Annuler" dans SpacesManager) */
+  .dashboard-section button[type="button"]:not(.danger) {
+    background: transparent;
+    color: var(--col-text-sec);
+    border: 1px solid var(--col-border);
+  }
+
+  .dashboard-section button[type="button"]:not(.danger):hover {
+    background: var(--col-surface);
+  }
+
+  /* ── Tableaux ── */
+  .dashboard-section table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .dashboard-section thead th {
+    text-align: left;
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--col-surface);
+    color: var(--col-text-sec);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: var(--text-xs);
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid var(--col-border);
+  }
+
+  .dashboard-section tbody td {
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--col-border-light);
+    color: var(--col-text);
+    vertical-align: middle;
+  }
+
+  .dashboard-section tbody tr:hover {
+    background: var(--col-primary-bg);
+  }
+
+  .dashboard-section tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .dashboard-section td.actions {
+    display: flex;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+  }
+
+  /* ── Badges de statut ── */
+  .status {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: var(--r-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: capitalize;
+    background: var(--col-surface2);
+    color: var(--col-text-sec);
+  }
+
+  .status.active,
+  .status.validée,
+  .status.validee,
+  .status.réalisée,
+  .status.realisee,
+  .status.approved {
+    background: var(--col-success-bg);
+    color: var(--col-success);
+  }
+
+  .status.inactive,
+  .status.rejetée,
+  .status.rejetee,
+  .status.refusée,
+  .status.refusee,
+  .status.rejected {
+    background: var(--col-error-bg);
+    color: var(--col-error);
+  }
+
+  .status.pending,
+  .status.planifiée,
+  .status.planifiee,
+  .status.en-attente {
+    background: var(--col-accent-bg);
+    color: var(--col-accent-dark);
+  }
+
+  /* ── Barre de filtres ── */
+  .filter-bar {
+    background: var(--col-surface);
+    border-radius: var(--r-md);
+    padding: var(--sp-5);
+  }
+
+  .filter-bar h2 {
+    font-family: var(--font-heading);
+    font-size: var(--text-lg);
+    color: var(--col-primary-dark);
+    margin: 0 0 var(--sp-4);
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-5);
+  }
+
+  .filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+  }
+
+  .filter label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--col-text-sec);
+  }
+
+  /* ── États ── */
+  .error {
+    color: var(--col-error);
+    background: var(--col-error-bg);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-sm);
+    font-size: var(--text-sm);
+  }
+
+  .spaces-manager__error {
+    color: var(--col-error);
+    background: var(--col-error-bg);
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: var(--r-sm);
+    font-size: var(--text-sm);
+    flex-basis: 100%;
+  }
+
+  .dashboard-section > p,
+  .dashboard-section p:only-child {
+    color: var(--col-text-muted);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .amp-header {
+      padding: var(--sp-3) var(--sp-4);
+    }
+
+    .amp-content {
+      padding: var(--sp-4);
+    }
+
+    .dashboard-section {
+      padding: var(--sp-5);
+    }
+
+    .dashboard-section form {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 </style>

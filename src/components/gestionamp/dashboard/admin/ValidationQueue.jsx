@@ -64,8 +64,6 @@ export default function ValidationQueue() {
 
   return (
     <section className="validation-queue">
-      <h2>Activités en attente de validation</h2>
-
       {pendingActivities.length === 0 ? (
         <p>Aucune activité en attente</p>
       ) : (

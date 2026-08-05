@@ -5,7 +5,7 @@ export default function LogoutButton() {
   };
 
   return (
-    <button onClick={logout} style={{ float: "right" }}>
+    <button onClick={logout}>
       Déconnexion
     </button>
   );

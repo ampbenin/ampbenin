@@ -68,8 +68,6 @@ export default function FinanceGlobalSummary() {
 
   return (
     <section className="finance-summary">
-      <h2>Résumé financier national</h2>
-
       <div className="finance-cards">
         <div className="finance-card income">
           <h3>Entrées totales</h3>
