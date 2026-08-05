@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import Layout from '../../layouts/BaseLayout.astro';
+import SetPasswordForm from '../../components/volunteer/SetPasswordForm.jsx';
+---
+
+<Layout
+  title="Définir mon mot de passe — Mon espace volontaire | AMP BENIN"
+  description="Définissez le mot de passe de votre espace volontaire AMP BENIN."
+  url="https://ampbenin.netlify.app/mon-espace/definir-mot-de-passe"
+>
+  <SetPasswordForm client:load />
+</Layout>

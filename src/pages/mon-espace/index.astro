@@ -1,0 +1,13 @@
+---
+export const prerender = false;
+import Layout from '../../layouts/BaseLayout.astro';
+import Dashboard from '../../components/volunteer/Dashboard.jsx';
+---
+
+<Layout
+  title="Mon espace volontaire | AMP BENIN"
+  description="Suivez vos candidatures, vos missions et vos attestations AMP BENIN."
+  url="https://ampbenin.netlify.app/mon-espace"
+>
+  <Dashboard client:load />
+</Layout>

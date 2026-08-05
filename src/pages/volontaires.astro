@@ -50,9 +50,14 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'nu
           Parcourez nos programmes ouverts aux candidatures, ou manifestez votre intérêt général —
           notre équipe vous recontactera dès qu'une opportunité correspond à votre profil.
         </p>
-        <a href="/volontaires/candidature-spontanee" class="btn btn--accent btn--lg">
-          Candidature spontanée →
-        </a>
+        <div class="vol-head__actions">
+          <a href="/volontaires/candidature-spontanee" class="btn btn--accent btn--lg">
+            Candidature spontanée →
+          </a>
+          <a href="/mon-espace/login" class="vol-head__space-link">
+            Déjà volontaire ? Accédez à votre espace →
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -114,6 +119,21 @@ const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: 'nu
     line-height: 1.15;
     margin-bottom: var(--sp-4);
   }
+  .vol-head__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+  }
+  .vol-head__space-link {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .vol-head__space-link:hover { color: var(--col-primary-light); }
   .vol-head__subtitle {
     font-family: var(--font-body);
     font-size: var(--text-lg);
