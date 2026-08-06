@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuthAMP } from '../../../services/gestionamp/useAuthAMP';
 import PageZonesEditor from './PageZonesEditor.jsx';
 import ArticlesManager from './ArticlesManager.jsx';
 import SlugCollectionManager from './SlugCollectionManager.jsx';
@@ -44,19 +45,61 @@ const MISSIONS_TABS = [
   { id: 'certificates', label: 'Générer attestations' },
 ];
 
+// Tous les ids d'onglets valides (Contenu + Boîte de réception + Volontaires
+// & Missions) — utilisé pour valider un ?tab= venu de l'URL avant de s'y fier.
+const ALL_TAB_IDS = [...CONTENT_TABS, ...INBOX_TABS, ...MISSIONS_TABS].map((t) => t.id);
+
+// Lu une seule fois, en initialiseur paresseux de useState (donc pendant le
+// rendu, avant peinture) — pas dans un useEffect, pour éviter tout flash
+// visible de l'onglet par défaut avant de basculer sur le bon onglet.
+function getInitialTab() {
+  if (typeof window === 'undefined') return 'pages';
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  return ALL_TAB_IDS.includes(tab) ? tab : 'pages';
+}
+
 export default function AdminShell() {
-  const [active, setActive] = useState('pages');
+  // Revalide le token contre le backend (GET /gestionamp/api/auth/me) avant
+  // d'afficher quoi que ce soit — évite qu'un token expiré/absent laisse
+  // apparaître la coquille de l'admin (menu + contenu) le temps qu'un appel
+  // enfant échoue en 401 pour rediriger, et affiche un état de chargement
+  // explicite pendant l'attente au lieu de rien (voir l'écran plus bas).
+  const { loading: authLoading } = useAuthAMP(['ADMIN', 'EDITOR']);
+
+  const [active, setActiveState] = useState(getInitialTab);
   const [role, setRole] = useState(null);
 
   useEffect(() => {
     setRole(localStorage.getItem('amp_role'));
   }, []);
 
+  // Garde l'onglet actif dans l'URL (?tab=...) pour qu'un rafraîchissement
+  // de la page reste sur le même onglet au lieu de retomber sur "pages".
+  // replaceState (pas pushState) : change l'onglet ne doit pas empiler
+  // d'entrées dans l'historique de navigation.
+  const setActive = (tabId) => {
+    setActiveState(tabId);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tabId);
+    window.history.replaceState({}, '', url);
+  };
+
   const logout = () => {
     localStorage.removeItem('amp_token');
     localStorage.removeItem('amp_role');
     window.location.href = '/admin/login';
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin h-10 w-10 border-4 border-violet-600 border-t-transparent rounded-full mx-auto mb-3" />
+          <p className="text-gray-600">Chargement de l'espace admin...</p>
+        </div>
+      </div>
+    );
+  }
 
   const NavGroup = ({ title, tabs }) => (
     <div className="mb-4">
