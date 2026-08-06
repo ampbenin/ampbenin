@@ -17,6 +17,7 @@ import VolunteerProgramsManager from '../VolunteerProgramsManager.jsx';
 import VolunteerFormTemplatesManager from '../VolunteerFormTemplatesManager.jsx';
 import SaveVolunteers from '../../SaveVolunteers.jsx';
 import GenerateCertificate from '../../GenerateCertificate.jsx';
+import PartnerActivityOverview from '../PartnerActivityOverview.jsx';
 
 const CONTENT_TABS = [
   { id: 'pages', label: 'Pages du site' },
@@ -43,6 +44,7 @@ const MISSIONS_TABS = [
   { id: 'volunteers-roster', label: 'Volontaires (fichier)' },
   { id: 'save-volunteer', label: 'Enregistrer un volontaire' },
   { id: 'certificates', label: 'Générer attestations' },
+  { id: 'partner-activity', label: 'Activité des partenaires' },
 ];
 
 // Tous les ids d'onglets valides (Contenu + Boîte de réception + Volontaires
@@ -162,6 +164,7 @@ export default function AdminShell() {
         {active === 'volunteers-roster' && <VolunteersManager />}
         {active === 'save-volunteer' && <SaveVolunteers />}
         {active === 'certificates' && <GenerateCertificate />}
+        {active === 'partner-activity' && <PartnerActivityOverview />}
       </main>
     </div>
   );

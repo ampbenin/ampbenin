@@ -60,6 +60,28 @@ const formatResponseValue = (field, value) => {
   return String(value);
 };
 
+const ACTIVITY_ACTION_LABELS = {
+  LOGIN: "Connexion",
+  OPEN_DASHBOARD: "Ouverture dashboard",
+  VIEW_STATS: "Consultation stats",
+  VIEW_APPLICATIONS: "Consultation candidatures",
+  DOWNLOAD_REPORT: "Téléchargement PDF",
+  UPLOAD_LOGO: "Changement logo",
+  POST_COMMENT: "Commentaire envoyé",
+};
+
+function formatRelativeActivity(dateStr) {
+  if (!dateStr) return "Jamais connecté";
+  const minutes = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `il y a ${days} j`;
+  return new Date(dateStr).toLocaleDateString("fr-FR");
+}
+
 const emptyFieldForm = {
   id: "", label: "", type: "TEXT", required: false, optionsText: "",
   minLength: "", maxLength: "", pattern: "", min: "", max: "",
@@ -131,6 +153,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [selectedSupervisedVolunteerIds, setSelectedSupervisedVolunteerIds] = useState([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
   const [partnerComments, setPartnerComments] = useState([]);
+  const [partnerActivity, setPartnerActivity] = useState([]);
+  const [expandedActivityPartnerId, setExpandedActivityPartnerId] = useState(null);
+  const [partnerActivityTimeline, setPartnerActivityTimeline] = useState([]);
 
   const load = async () => {
     try {
@@ -726,15 +751,35 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   const loadPartnerTab = async () => {
     try {
-      const [staff, comments] = await Promise.all([
+      const [staff, comments, activity] = await Promise.all([
         adminFetch("/gestionamp/api/users"),
         adminFetch(`/api/volunteer-partner/programs/${programId}/comments`),
+        adminFetch(`/api/volunteer-partner/admin/activity-summary?programId=${programId}`),
       ]);
       setStaffUsers(Array.isArray(staff) ? staff : []);
       setPartnerComments(comments?.items || []);
+      setPartnerActivity(activity?.items || []);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const loadPartnerActivityTimeline = async (partnerId) => {
+    try {
+      const res = await adminFetch(`/api/volunteer-partner/admin/partners/${partnerId}/activity?programId=${programId}&limit=10`);
+      setPartnerActivityTimeline(res?.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleActivityDetail = (partnerId) => {
+    if (expandedActivityPartnerId === partnerId) {
+      setExpandedActivityPartnerId(null);
+      return;
+    }
+    setExpandedActivityPartnerId(partnerId);
+    loadPartnerActivityTimeline(partnerId);
   };
 
   useEffect(() => {
@@ -1762,17 +1807,57 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <p className="text-gray-500 mb-3">Aucun partenaire affecté à ce programme.</p>
                 ) : (
                   <div className="space-y-2 mb-4">
-                    {currentPartners.map((u) => (
-                      <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          {u.partnerLogoUrl && (
-                            <img src={u.partnerLogoUrl} alt="" className="w-8 h-8 rounded object-cover border border-gray-200" />
+                    {currentPartners.map((u) => {
+                      const activity = partnerActivity.find((a) => String(a.partnerId) === String(u._id));
+                      return (
+                        <div key={u._id} className="border border-gray-200 rounded-lg p-2 text-sm">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              {u.partnerLogoUrl && (
+                                <img src={u.partnerLogoUrl} alt="" className="w-8 h-8 rounded object-cover border border-gray-200" />
+                              )}
+                              <div>
+                                <strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span>
+                                {activity && (
+                                  activity.isOnline ? (
+                                    <span className="ml-2 bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">● En ligne</span>
+                                  ) : (
+                                    <span className="ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">Vu {formatRelativeActivity(activity.lastActiveAt)}</span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {activity && (
+                                <button onClick={() => toggleActivityDetail(u._id)} className="text-xs text-blue-600 hover:underline">
+                                  {activity.totalActions} action(s) — {expandedActivityPartnerId === u._id ? "masquer" : "détail"}
+                                </button>
+                              )}
+                              <button onClick={() => togglePartnerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                            </div>
+                          </div>
+                          {expandedActivityPartnerId === u._id && (
+                            <div className="mt-2 bg-gray-50 rounded-lg p-2">
+                              {partnerActivityTimeline.length === 0 ? (
+                                <p className="text-xs text-gray-500">Aucune activité sur ce programme.</p>
+                              ) : (
+                                <ul className="space-y-1 text-xs">
+                                  {partnerActivityTimeline.map((it) => (
+                                    <li key={it._id} className="flex justify-between border-b border-gray-200 pb-1">
+                                      <span>
+                                        <strong>{ACTIVITY_ACTION_LABELS[it.action] || it.action}</strong>
+                                        {it.metadata?.search && <span className="text-gray-400"> (recherche : "{it.metadata.search}")</span>}
+                                      </span>
+                                      <span className="text-gray-400 whitespace-nowrap ml-2">{new Date(it.createdAt).toLocaleString("fr-FR")}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                           )}
-                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
                         </div>
-                        <button onClick={() => togglePartnerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })()}
