@@ -34,7 +34,17 @@ const CONDITIONAL_TRIGGER_TYPES = ["SELECT", "CHECKBOX"];
 const APPLICANT_FIELD_IDS = ["applicantFirstName", "applicantLastName", "applicantEmail", "applicantPhone"];
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
-const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", proofFields: [] };
+const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", status: "PUBLISHED", scheduledPublishAt: "", proofFields: [] };
+const TASK_STATUS_LABELS = { DRAFT: "Brouillon", SCHEDULED: "Programmée", PUBLISHED: "Publiée" };
+
+// <input type="datetime-local"> attend "AAAA-MM-JJTHH:mm" en heure LOCALE
+// (sans info de fuseau) — toISOString() renverrait l'heure UTC affichée à
+// tort comme locale (décalage d'1h pour le Bénin/UTC+1). Getters locaux ici.
+function toDatetimeLocalValue(date) {
+  const d = new Date(date);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 const emptyProofFieldForm = {
   label: "", type: "TEXTAREA", required: true, optionsText: "",
   minLength: "", maxLength: "", pattern: "", min: "", max: "", maxImages: "",
@@ -644,12 +654,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const submitTaskForm = async (e) => {
     e.preventDefault();
     if (!taskForm.title.trim()) return;
+    if (taskForm.status === "SCHEDULED" && !taskForm.scheduledPublishAt) {
+      alert("Choisissez une date et une heure de publication pour une tâche programmée.");
+      return;
+    }
 
     const task = {
       id: editingTaskId || `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       title: taskForm.title,
       description: taskForm.description,
       recurrence: taskForm.recurrence,
+      status: taskForm.status,
+      scheduledPublishAt: taskForm.status === "SCHEDULED" ? new Date(taskForm.scheduledPublishAt).toISOString() : null,
       proofForm: { fields: taskForm.proofFields },
     };
     const nextTasks = editingTaskId
@@ -667,6 +683,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     setEditingTaskId(task.id);
     setTaskForm({
       title: task.title, description: task.description || "", recurrence: task.recurrence,
+      status: task.status || "PUBLISHED",
+      scheduledPublishAt: task.scheduledPublishAt ? toDatetimeLocalValue(task.scheduledPublishAt) : "",
       proofFields: task.proofForm?.fields || [],
     });
     setProofFieldForm(emptyProofFieldForm);
@@ -1231,6 +1249,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 <div key={task.id} className="flex items-center gap-3 border border-gray-200 rounded-xl p-3">
                   <div className="flex-1">
                     <strong>{task.title}</strong>
+                    <span className={`text-xs font-bold ml-2 px-2 py-0.5 rounded-full ${
+                      task.status === "PUBLISHED" ? "bg-green-100 text-green-700" :
+                      task.status === "SCHEDULED" ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-700"
+                    }`}>
+                      {TASK_STATUS_LABELS[task.status || "PUBLISHED"]}
+                      {task.status === "SCHEDULED" && task.scheduledPublishAt && ` — ${new Date(task.scheduledPublishAt).toLocaleString("fr-FR")}`}
+                    </span>
                     <span className="text-xs text-gray-500 ml-2">{RECURRENCE_LABELS[task.recurrence]}</span>
                     <span className="text-xs text-gray-400 ml-2">
                       {task.proofForm?.fields?.length > 0
@@ -1255,6 +1280,25 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               <textarea placeholder="Description (optionnel)" rows={2} value={taskForm.description}
                 onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
                 className="w-full border border-gray-300 rounded-xl p-2" />
+              <div className="flex gap-3 items-end">
+                <label className="flex-1 text-sm">
+                  <span className="block text-gray-600 mb-1">Statut de publication</span>
+                  <select value={taskForm.status} onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value })}
+                    className="w-full border border-gray-300 rounded-xl p-2">
+                    <option value="DRAFT">Brouillon (invisible des volontaires)</option>
+                    <option value="SCHEDULED">Programmée</option>
+                    <option value="PUBLISHED">Publiée (visible immédiatement)</option>
+                  </select>
+                </label>
+                {taskForm.status === "SCHEDULED" && (
+                  <label className="flex-1 text-sm">
+                    <span className="block text-gray-600 mb-1">Date et heure de publication</span>
+                    <input type="datetime-local" value={taskForm.scheduledPublishAt}
+                      onChange={(e) => setTaskForm({ ...taskForm, scheduledPublishAt: e.target.value })}
+                      required className="w-full border border-gray-300 rounded-xl p-2" />
+                  </label>
+                )}
+              </div>
               <select value={taskForm.recurrence} onChange={(e) => setTaskForm({ ...taskForm, recurrence: e.target.value })}
                 className="w-full border border-gray-300 rounded-xl p-2">
                 <option value="ONCE">Une fois</option>
