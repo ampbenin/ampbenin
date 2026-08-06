@@ -93,6 +93,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [fieldFilterValues, setFieldFilterValues] = useState({});
   const [showApplicationFiltersMenu, setShowApplicationFiltersMenu] = useState(false);
   const [selectedApplicationIds, setSelectedApplicationIds] = useState([]);
+
+  // Groupes de candidatures (organisation + raccourci d'affectation de
+  // superviseur) — voir loadApplicationGroups().
+  const [applicationGroups, setApplicationGroups] = useState([]);
+  const [showGroupPanel, setShowGroupPanel] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [selectedExistingGroupId, setSelectedExistingGroupId] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
 
   const [meta, setMeta] = useState({
@@ -205,6 +212,84 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  // Chargé à l'activation de l'onglet Candidatures (badges de groupe + panneau
+  // de groupement) ET de l'onglet Suivi (sélecteur "depuis un groupe" pour
+  // l'affectation de superviseur) — voir les deux useEffect concernés.
+  const loadApplicationGroups = async () => {
+    try {
+      const res = await adminFetch(`/api/volunteer-applications/groups?programId=${programId}`);
+      setApplicationGroups(res?.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const createApplicationGroup = async () => {
+    if (!newGroupName.trim() || selectedApplicationIds.length < 2) return;
+    try {
+      await adminFetch("/api/volunteer-applications/groups", {
+        method: "POST",
+        body: JSON.stringify({ programId, name: newGroupName.trim(), applicationIds: selectedApplicationIds }),
+      });
+      setNewGroupName("");
+      setShowGroupPanel(false);
+      loadApplicationGroups();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la création du groupe");
+    }
+  };
+
+  const addSelectionToExistingGroup = async () => {
+    if (!selectedExistingGroupId || selectedApplicationIds.length === 0) return;
+    try {
+      await adminFetch(`/api/volunteer-applications/groups/${selectedExistingGroupId}/members`, {
+        method: "PATCH",
+        body: JSON.stringify({ applicationIds: selectedApplicationIds, action: "add" }),
+      });
+      setSelectedExistingGroupId("");
+      setShowGroupPanel(false);
+      loadApplicationGroups();
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'ajout au groupe");
+    }
+  };
+
+  const removeFromGroup = async (groupId, applicationId) => {
+    try {
+      await adminFetch(`/api/volunteer-applications/groups/${groupId}/members`, {
+        method: "PATCH",
+        body: JSON.stringify({ applicationIds: [applicationId], action: "remove" }),
+      });
+      loadApplicationGroups();
+    } catch (err) {
+      alert(err.message || "Erreur lors du retrait du groupe");
+    }
+  };
+
+  const renameApplicationGroup = async (groupId, currentName) => {
+    const name = window.prompt("Nouveau nom du groupe :", currentName);
+    if (name === null || !name.trim()) return;
+    try {
+      await adminFetch(`/api/volunteer-applications/groups/${groupId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: name.trim() }),
+      });
+      loadApplicationGroups();
+    } catch (err) {
+      alert(err.message || "Erreur lors du renommage du groupe");
+    }
+  };
+
+  const deleteApplicationGroup = async (groupId) => {
+    if (!confirm("Supprimer ce groupe ? Les candidatures elles-mêmes ne sont pas affectées.")) return;
+    try {
+      await adminFetch(`/api/volunteer-applications/groups/${groupId}`, { method: "DELETE" });
+      loadApplicationGroups();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la suppression du groupe");
+    }
+  };
+
   // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche —
   // évite un appel réseau par frappe dans la barre de recherche.
   useEffect(() => {
@@ -215,7 +300,10 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   }, [activeTab, applicationFilters, fieldFilterValues, applicationSearch]);
 
   useEffect(() => {
-    if (activeTab === "applications") loadPendingCount();
+    if (activeTab === "applications") {
+      loadPendingCount();
+      loadApplicationGroups();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -630,6 +718,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setProgramProgress(progress?.items || []);
       setPendingSubmissions(submissions?.items || []);
       setStaffUsers(Array.isArray(staff) ? staff : []);
+      loadApplicationGroups(); // pour le sélecteur "Affecter depuis un groupe"
     } catch (err) {
       console.error(err);
     }
@@ -667,6 +756,19 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     } catch (err) {
       alert(err.message || "Erreur lors de l'affectation du superviseur");
     }
+  };
+
+  // Raccourci "Affecter depuis un groupe" : copie figée — ajoute (sans
+  // remplacer) les volunteerId des membres ACCEPTED du groupe choisi à la
+  // sélection de cases à cocher déjà affichée. Les membres pas encore
+  // acceptés (pas de volunteerId résolu) sont silencieusement ignorés.
+  const applyGroupToSupervisorSelection = (groupId) => {
+    const group = applicationGroups.find((g) => g._id === groupId);
+    if (!group) return;
+    const acceptedVolunteerIds = group.applicationIds
+      .filter((m) => m.status === "ACCEPTED" && m.volunteerId)
+      .map((m) => m.volunteerId);
+    setSelectedSupervisedVolunteerIds((prev) => Array.from(new Set([...prev, ...acceptedVolunteerIds])));
   };
 
   const unassignSupervisor = async (supervisorId) => {
@@ -1311,14 +1413,71 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
             {/* Actions en masse */}
             {selectedApplicationIds.length > 0 && (
-              <div className="flex items-center gap-2 mb-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                <span className="text-sm font-semibold">{selectedApplicationIds.length} sélectionnée(s)</span>
-                <button onClick={bulkAcceptApplications} className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
-                  Valider la sélection
-                </button>
-                <button onClick={bulkRejectApplications} className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
-                  Rejeter la sélection
-                </button>
+              <div className="mb-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-semibold">{selectedApplicationIds.length} sélectionnée(s)</span>
+                  <button onClick={bulkAcceptApplications} className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+                    Valider la sélection
+                  </button>
+                  <button onClick={bulkRejectApplications} className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+                    Rejeter la sélection
+                  </button>
+                  {selectedApplicationIds.length >= 2 && (
+                    <button onClick={() => setShowGroupPanel((v) => !v)} className="bg-violet-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-violet-700">
+                      👥 Grouper la sélection
+                    </button>
+                  )}
+                </div>
+
+                {showGroupPanel && selectedApplicationIds.length >= 2 && (
+                  <div className="mt-2 pt-2 border-t border-yellow-200 flex flex-wrap gap-4">
+                    <div className="flex items-end gap-2">
+                      <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">Nouveau groupe</label>
+                        <input type="text" placeholder="Nom du groupe" value={newGroupName}
+                          onChange={(e) => setNewGroupName(e.target.value)}
+                          className="border border-gray-300 rounded-lg p-2 text-sm" />
+                      </div>
+                      <button onClick={createApplicationGroup} disabled={!newGroupName.trim()}
+                        className="bg-violet-600 text-white text-sm font-bold px-3 py-2 rounded-lg hover:bg-violet-700 disabled:opacity-50">
+                        Créer le groupe
+                      </button>
+                    </div>
+
+                    {applicationGroups.length > 0 && (
+                      <div className="flex items-end gap-2">
+                        <div className="flex flex-col">
+                          <label className="text-xs text-gray-500 mb-1">Groupe existant</label>
+                          <select value={selectedExistingGroupId} onChange={(e) => setSelectedExistingGroupId(e.target.value)}
+                            className="border border-gray-300 rounded-lg p-2 text-sm">
+                            <option value="">-- Choisir --</option>
+                            {applicationGroups.map((g) => (
+                              <option key={g._id} value={g._id}>{g.name} ({g.applicationIds.length})</option>
+                            ))}
+                          </select>
+                        </div>
+                        <button onClick={addSelectionToExistingGroup} disabled={!selectedExistingGroupId}
+                          className="bg-gray-700 text-white text-sm font-bold px-3 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50">
+                          Ajouter au groupe
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Groupes existants de ce programme — gestion minimale (renommer/supprimer) */}
+            {applicationGroups.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {applicationGroups.map((g) => (
+                  <div key={g._id} className="flex items-center gap-1 bg-violet-50 border border-violet-200 rounded-full pl-3 pr-1 py-1 text-xs">
+                    <span className="font-semibold text-violet-800">{g.name}</span>
+                    <span className="text-violet-500">({g.applicationIds.length})</span>
+                    <button onClick={() => renameApplicationGroup(g._id, g.name)} title="Renommer" className="ml-1 text-violet-600 hover:text-violet-900 px-1">✎</button>
+                    <button onClick={() => deleteApplicationGroup(g._id)} title="Supprimer" className="text-red-500 hover:text-red-700 px-1">✕</button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -1351,7 +1510,19 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                           <input type="checkbox" checked={selectedApplicationIds.includes(a._id)}
                             onChange={() => toggleApplicationSelected(a._id)} />
                         </td>
-                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantFirstName} {a.applicantLastName}</td>
+                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>
+                          {a.applicantFirstName} {a.applicantLastName}
+                          {(() => {
+                            const memberGroups = applicationGroups.filter((g) => g.applicationIds.some((m) => String(m._id) === String(a._id)));
+                            return memberGroups.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {memberGroups.map((g) => (
+                                  <span key={g._id} className="bg-violet-100 text-violet-700 text-[10px] font-semibold rounded-full px-2 py-0.5">{g.name}</span>
+                                ))}
+                              </div>
+                            ) : null;
+                          })()}
+                        </td>
                         <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantEmail}</td>
                         <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantPhone || "—"}</td>
                         {customFormFields.map((f) => (
@@ -1534,6 +1705,25 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
               {selectedSupervisorId && (
                 <div className="border border-gray-200 rounded-xl p-3">
+                  {applicationGroups.length > 0 && (
+                    <div className="flex items-end gap-2 mb-3">
+                      <div className="flex flex-col flex-1">
+                        <label className="text-xs text-gray-500 mb-1">Affecter depuis un groupe</label>
+                        <select onChange={(e) => { if (e.target.value) applyGroupToSupervisorSelection(e.target.value); e.target.value = ""; }}
+                          defaultValue="" className="border border-gray-300 rounded-lg p-2 text-sm">
+                          <option value="">-- Choisir un groupe --</option>
+                          {applicationGroups.map((g) => {
+                            const acceptedCount = g.applicationIds.filter((m) => m.status === "ACCEPTED" && m.volunteerId).length;
+                            return (
+                              <option key={g._id} value={g._id}>
+                                {g.name} ({acceptedCount}/{g.applicationIds.length} membres acceptés)
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                   <p className="text-sm font-semibold mb-2">Volontaires à superviser :</p>
                   {programProgress.length === 0 ? (
                     <p className="text-gray-500 text-sm mb-3">Aucun volontaire accepté sur ce programme pour l'instant.</p>
