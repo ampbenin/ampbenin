@@ -91,6 +91,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [applicationFilters, setApplicationFilters] = useState({ status: "", dateFrom: "", dateTo: "" });
   const [applicationSearch, setApplicationSearch] = useState("");
   const [fieldFilterValues, setFieldFilterValues] = useState({});
+  const [showApplicationFiltersMenu, setShowApplicationFiltersMenu] = useState(false);
   const [selectedApplicationIds, setSelectedApplicationIds] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -744,6 +745,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   const isTextType = ["TEXT", "TEXTAREA", "EMAIL", "PHONE"].includes(fieldForm.type);
   const selectedApplication = applications.find((a) => a._id === selectedApplicationId) || null;
+  const activeApplicationFilterCount =
+    (applicationFilters.status ? 1 : 0) +
+    (applicationFilters.dateFrom ? 1 : 0) +
+    (applicationFilters.dateTo ? 1 : 0) +
+    Object.values(fieldFilterValues).filter(Boolean).length;
   const editingField = editingFieldId ? formFields.find((f) => f.id === editingFieldId) : null;
   const isEditingLocked = !!editingField?.locked;
   const customFormFields = formFields.filter((f) => !APPLICANT_FIELD_IDS.includes(f.id));
@@ -1223,55 +1229,84 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               </button>
             </div>
 
-            {/* Recherche + filtres */}
+            {/* Recherche (toujours visible) + bouton menu Filtres */}
             <div className="flex flex-wrap gap-2 mb-3 items-end">
-              <div className="flex flex-col">
+              <div className="flex flex-col flex-1 min-w-[200px]">
                 <label className="text-xs text-gray-500 mb-1">Recherche</label>
                 <input type="text" placeholder="Nom, email, téléphone..." value={applicationSearch}
                   onChange={(e) => setApplicationSearch(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 text-sm" />
+                  className="border border-gray-300 rounded-lg p-2 text-sm w-full" />
               </div>
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500 mb-1">Statut</label>
-                <select value={applicationFilters.status}
-                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
-                  className="border border-gray-300 rounded-lg p-2 text-sm">
-                  <option value="">Tous</option>
-                  <option value="PENDING">En attente</option>
-                  <option value="ACCEPTED">Acceptée</option>
-                  <option value="REJECTED">Rejetée</option>
-                </select>
-              </div>
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500 mb-1">Reçue depuis</label>
-                <input type="date" value={applicationFilters.dateFrom}
-                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
-                  className="border border-gray-300 rounded-lg p-2 text-sm" />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500 mb-1">Jusqu'au</label>
-                <input type="date" value={applicationFilters.dateTo}
-                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
-                  className="border border-gray-300 rounded-lg p-2 text-sm" />
-              </div>
-              {customFormFields.filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
-                <div key={f.id} className="flex flex-col">
-                  <label className="text-xs text-gray-500 mb-1">{f.label}</label>
-                  <select value={fieldFilterValues[f.id] || ""}
-                    onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
-                    className="border border-gray-300 rounded-lg p-2 text-sm">
-                    <option value="">Toutes</option>
-                    {f.type === "CHECKBOX" ? (
-                      <>
-                        <option value="true">Oui</option>
-                        <option value="false">Non</option>
-                      </>
-                    ) : (
-                      f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
+              <div className="relative">
+                <button
+                  onClick={() => setShowApplicationFiltersMenu((v) => !v)}
+                  className={`flex items-center gap-1 border rounded-lg px-3 py-2 text-sm font-semibold ${
+                    activeApplicationFilterCount > 0 ? "border-yellow-500 bg-yellow-50 text-yellow-800" : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  🎛️ Filtres
+                  {activeApplicationFilterCount > 0 && (
+                    <span className="bg-yellow-600 text-white text-xs rounded-full px-1.5">{activeApplicationFilterCount}</span>
+                  )}
+                  <span className="text-xs">{showApplicationFiltersMenu ? "▲" : "▼"}</span>
+                </button>
+
+                {showApplicationFiltersMenu && (
+                  <div className="absolute right-0 z-10 mt-1 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4 flex flex-col gap-3">
+                    <div className="flex flex-col">
+                      <label className="text-xs text-gray-500 mb-1">Statut</label>
+                      <select value={applicationFilters.status}
+                        onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
+                        className="border border-gray-300 rounded-lg p-2 text-sm">
+                        <option value="">Tous</option>
+                        <option value="PENDING">En attente</option>
+                        <option value="ACCEPTED">Acceptée</option>
+                        <option value="REJECTED">Rejetée</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex flex-col flex-1">
+                        <label className="text-xs text-gray-500 mb-1">Reçue depuis</label>
+                        <input type="date" value={applicationFilters.dateFrom}
+                          onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                          className="border border-gray-300 rounded-lg p-2 text-sm w-full" />
+                      </div>
+                      <div className="flex flex-col flex-1">
+                        <label className="text-xs text-gray-500 mb-1">Jusqu'au</label>
+                        <input type="date" value={applicationFilters.dateTo}
+                          onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                          className="border border-gray-300 rounded-lg p-2 text-sm w-full" />
+                      </div>
+                    </div>
+                    {customFormFields.filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
+                      <div key={f.id} className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">{f.label}</label>
+                        <select value={fieldFilterValues[f.id] || ""}
+                          onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                          className="border border-gray-300 rounded-lg p-2 text-sm">
+                          <option value="">Toutes</option>
+                          {f.type === "CHECKBOX" ? (
+                            <>
+                              <option value="true">Oui</option>
+                              <option value="false">Non</option>
+                            </>
+                          ) : (
+                            f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
+                          )}
+                        </select>
+                      </div>
+                    ))}
+                    {activeApplicationFilterCount > 0 && (
+                      <button
+                        onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "" }); setFieldFilterValues({}); }}
+                        className="text-xs text-red-600 hover:underline self-start"
+                      >
+                        Réinitialiser les filtres
+                      </button>
                     )}
-                  </select>
-                </div>
-              ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Actions en masse */}
