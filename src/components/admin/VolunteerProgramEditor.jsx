@@ -905,6 +905,24 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  const finalizeMissions = async () => {
+    const typed = window.prompt(
+      "Cette action est IRRÉVERSIBLE : chaque volontaire encore \"Non disponible\" sur ce programme passera " +
+      "définitivement à \"Mission validée\" (seuil atteint) ou \"Refusé\" (sinon), et plus aucune soumission de " +
+      "tâche ne sera acceptée ensuite.\n\nTapez TERMINER pour confirmer :"
+    );
+    if (typed === null) return;
+    if (typed.trim() !== "TERMINER") { alert("Confirmation incorrecte — rien n'a été fait."); return; }
+    try {
+      const res = await adminFetch(`/api/volunteer-tasks/programs/${programId}/finalize`, { method: "POST" });
+      alert(`${res?.validated || 0} volontaire(s) validé(s), ${res?.refused || 0} refusé(s).`);
+      load();
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la finalisation des missions");
+    }
+  };
+
   if (loading) return <p className="text-center text-gray-500 p-6">Chargement...</p>;
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
@@ -1716,6 +1734,26 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-2 border-t pt-4">
+              <div>
+                <h3 className="font-semibold">Fin de mission</h3>
+                {program.missionsFinalizedAt ? (
+                  <p className="text-sm text-gray-500">
+                    Missions terminées le {new Date(program.missionsFinalizedAt).toLocaleString("fr-FR")} — plus aucune soumission n'est acceptée.
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Tant que ce n'est pas fait, aucun volontaire ne passe automatiquement à "Mission validée" ou "Refusé".
+                  </p>
+                )}
+              </div>
+              {!program.missionsFinalizedAt && (
+                <button onClick={finalizeMissions} className="bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-700">
+                  🏁 Terminer les missions
+                </button>
               )}
             </div>
 
