@@ -12,6 +12,12 @@
 // temps (chart.js, utilisé ici de façon impérative — pas de wrapper React
 // installé dans ce projet), export PDF du rapport, historique des
 // commentaires avec réponse de l'équipe.
+//
+// Enrichi le 2026-08-06 : liste des candidatures du programme (recherche +
+// filtres, même logique que la vue staff), mais strictement lecture seule —
+// jamais les rejetées (contiennent les coordonnées de personnes non
+// retenues), pas de checkbox, pas de bouton d'action. Restreint côté
+// serveur (listPartnerApplications), pas seulement par absence d'UI ici.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import {
@@ -88,6 +94,20 @@ export default function PartnerDashboard() {
 
   const [downloadingReport, setDownloadingReport] = useState(false);
 
+  // Candidatures du programme — lecture seule (jamais les rejetées, voir
+  // controllers/volunteerProgramPartnerController.js#listPartnerApplications
+  // : restreint côté serveur, pas seulement par absence de bouton ici).
+  // Mêmes filtres/recherche/pagination que la vue staff.
+  const [applications, setApplications] = useState([]);
+  const [applicationsTotal, setApplicationsTotal] = useState(0);
+  const [applicationsPage, setApplicationsPage] = useState(1);
+  const [applicationsTotalPages, setApplicationsTotalPages] = useState(1);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [applicationSearch, setApplicationSearch] = useState("");
+  const [applicationFilters, setApplicationFilters] = useState({ status: "", dateFrom: "", dateTo: "" });
+  const [fieldFilterValues, setFieldFilterValues] = useState({});
+  const [showApplicationFiltersMenu, setShowApplicationFiltersMenu] = useState(false);
+
   const loadPrograms = async () => {
     try {
       const res = await adminFetch("/api/volunteer-partner/my-programs");
@@ -129,6 +149,39 @@ export default function PartnerDashboard() {
     }
   };
 
+  const loadApplications = async (page = 1) => {
+    if (!selectedProgramId) return;
+    setApplicationsLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: "10" });
+      if (applicationFilters.status) params.set("status", applicationFilters.status);
+      if (applicationFilters.dateFrom) params.set("dateFrom", applicationFilters.dateFrom);
+      if (applicationFilters.dateTo) params.set("dateTo", applicationFilters.dateTo);
+      if (applicationSearch.trim()) params.set("search", applicationSearch.trim());
+
+      // Les réponses CHECKBOX sont stockées en base comme de vrais booléens
+      // (pas les chaînes "true"/"false" que renvoie le <select>).
+      const customFields = data?.program?.applicationFormFields || [];
+      const fieldsById = new Map(customFields.map((f) => [f.id, f]));
+      const activeFieldFilters = Object.fromEntries(
+        Object.entries(fieldFilterValues)
+          .filter(([, v]) => v !== "" && v !== undefined && v !== null)
+          .map(([fieldId, v]) => [fieldId, fieldsById.get(fieldId)?.type === "CHECKBOX" ? v === "true" : v])
+      );
+      if (Object.keys(activeFieldFilters).length > 0) params.set("fieldFilters", JSON.stringify(activeFieldFilters));
+
+      const res = await adminFetch(`/api/volunteer-partner/programs/${selectedProgramId}/applications?${params.toString()}`);
+      setApplications(res?.items || []);
+      setApplicationsTotal(res?.total || 0);
+      setApplicationsTotalPages(res?.totalPages || 1);
+      setApplicationsPage(page);
+    } catch (err) {
+      console.error("Erreur chargement candidatures", err);
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadPrograms();
     loadMe();
@@ -139,7 +192,18 @@ export default function PartnerDashboard() {
     loadStats(selectedProgramId);
     loadMyComments(selectedProgramId);
     setComment("");
+    setApplicationSearch("");
+    setApplicationFilters({ status: "", dateFrom: "", dateTo: "" });
+    setFieldFilterValues({});
   }, [selectedProgramId]);
+
+  // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche.
+  useEffect(() => {
+    if (!selectedProgramId) return;
+    const timeout = setTimeout(() => loadApplications(1), 350);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgramId, applicationSearch, applicationFilters, fieldFilterValues]);
 
   const uploadLogo = async (e) => {
     const file = e.target.files?.[0];
@@ -312,6 +376,156 @@ export default function PartnerDashboard() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section style={{ marginBottom: 28 }}>
+        <h3>Candidatures reçues ({applicationsTotal})</h3>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12, alignItems: "flex-end" }}>
+          <input
+            type="text"
+            placeholder="Rechercher (nom, email, téléphone)..."
+            value={applicationSearch}
+            onChange={(e) => setApplicationSearch(e.target.value)}
+            style={{ flex: "1 1 220px", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}
+          />
+          <div style={{ position: "relative" }}>
+            {(() => {
+              const activeCount =
+                (applicationFilters.status ? 1 : 0) +
+                (applicationFilters.dateFrom ? 1 : 0) +
+                (applicationFilters.dateTo ? 1 : 0) +
+                Object.values(fieldFilterValues).filter(Boolean).length;
+              return (
+                <>
+                  <button
+                    onClick={() => setShowApplicationFiltersMenu((v) => !v)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8,
+                      border: activeCount > 0 ? "1px solid #C9903A" : "1px solid #ccc",
+                      background: activeCount > 0 ? "#FDF4E7" : "#fff", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem",
+                    }}
+                  >
+                    🎛️ Filtres
+                    {activeCount > 0 && (
+                      <span style={{ background: "#C9903A", color: "#fff", borderRadius: 999, fontSize: "0.7rem", padding: "1px 6px" }}>{activeCount}</span>
+                    )}
+                    <span style={{ fontSize: "0.7rem" }}>{showApplicationFiltersMenu ? "▲" : "▼"}</span>
+                  </button>
+
+                  {showApplicationFiltersMenu && (
+                    <div style={{
+                      position: "absolute", right: 0, zIndex: 10, marginTop: 4, width: 280, background: "#fff",
+                      border: "1px solid #ddd", borderRadius: 12, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: 16,
+                      display: "flex", flexDirection: "column", gap: 12,
+                    }}>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Statut</label>
+                        <select value={applicationFilters.status}
+                          onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
+                          style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}>
+                          <option value="">Toutes</option>
+                          <option value="PENDING">En attente</option>
+                          <option value="ACCEPTED">Acceptée</option>
+                        </select>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Reçue depuis</label>
+                          <input type="date" value={applicationFilters.dateFrom}
+                            onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Jusqu'au</label>
+                          <input type="date" value={applicationFilters.dateTo}
+                            onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }} />
+                        </div>
+                      </div>
+                      {(program.applicationFormFields || []).filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
+                        <div key={f.id}>
+                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>{f.label}</label>
+                          <select value={fieldFilterValues[f.id] || ""}
+                            onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}>
+                            <option value="">Toutes</option>
+                            {f.type === "CHECKBOX" ? (
+                              <>
+                                <option value="true">Oui</option>
+                                <option value="false">Non</option>
+                              </>
+                            ) : (
+                              f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
+                            )}
+                          </select>
+                        </div>
+                      ))}
+                      {activeCount > 0 && (
+                        <button
+                          onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "" }); setFieldFilterValues({}); }}
+                          style={{ background: "none", border: "none", color: "#dc2626", fontSize: "0.8rem", textAlign: "left", cursor: "pointer", padding: 0 }}
+                        >
+                          Réinitialiser les filtres
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        {applicationsLoading ? (
+          <p style={{ color: "#666" }}>Chargement...</p>
+        ) : applications.length === 0 ? (
+          <p style={{ color: "#666" }}>Aucune candidature ne correspond à ces critères.</p>
+        ) : (
+          <>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+                <thead>
+                  <tr style={{ background: "#F5F0E8", textAlign: "left" }}>
+                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Candidat</th>
+                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Email</th>
+                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Téléphone</th>
+                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applications.map((a) => (
+                    <tr key={a._id}>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantFirstName} {a.applicantLastName}</td>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantEmail}</td>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantPhone || "—"}</td>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>
+                        <span style={{
+                          padding: "2px 10px", borderRadius: 999, fontSize: "0.75rem", fontWeight: 700,
+                          background: a.status === "ACCEPTED" ? "#D8F3E3" : "#FDF4E7",
+                          color: a.status === "ACCEPTED" ? "#2D6A4F" : "#A87028",
+                        }}>
+                          {a.status === "ACCEPTED" ? "Acceptée" : "En attente"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, fontSize: "0.85rem" }}>
+              <button onClick={() => loadApplications(applicationsPage - 1)} disabled={applicationsPage <= 1}
+                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", cursor: applicationsPage <= 1 ? "not-allowed" : "pointer", opacity: applicationsPage <= 1 ? 0.4 : 1 }}>
+                ← Précédent
+              </button>
+              <span style={{ color: "#666" }}>Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} candidature(s)</span>
+              <button onClick={() => loadApplications(applicationsPage + 1)} disabled={applicationsPage >= applicationsTotalPages}
+                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", cursor: applicationsPage >= applicationsTotalPages ? "not-allowed" : "pointer", opacity: applicationsPage >= applicationsTotalPages ? 0.4 : 1 }}>
+                Suivant →
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section style={{ marginBottom: 28 }}>
