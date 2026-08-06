@@ -82,6 +82,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Onglet Candidatures : pagination serveur (10/page), recherche, filtres,
+  // sélection multiple (scopée à la page affichée) — voir loadApplications().
+  const [applicationsPage, setApplicationsPage] = useState(1);
+  const [applicationsTotal, setApplicationsTotal] = useState(0);
+  const [applicationsTotalPages, setApplicationsTotalPages] = useState(1);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [applicationFilters, setApplicationFilters] = useState({ status: "", dateFrom: "", dateTo: "" });
+  const [applicationSearch, setApplicationSearch] = useState("");
+  const [fieldFilterValues, setFieldFilterValues] = useState({});
+  const [selectedApplicationIds, setSelectedApplicationIds] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
+
   const [meta, setMeta] = useState({
     title: "", description: "", coverImageUrl: "", location: "", startDate: "", endDate: "",
     capacity: "", accessMode: "APPLICATION", applicationDeadline: "",
@@ -138,15 +150,135 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setEstimatedDuration(data.applicationForm?.estimatedDuration || "");
       setTasks(data.tasks || []);
 
-      const apps = await adminFetch(`/api/volunteer-applications?programId=${programId}`);
-      setApplications(apps?.items || []);
-
       const templates = await adminFetch("/api/volunteer-form-templates");
       setFormTemplates(templates?.items || []);
     } catch (err) {
       setError(err.message || "Erreur de chargement");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Candidatures : paginées côté serveur, chargées séparément de load()
+  // (déclenché à l'activation de l'onglet et à chaque changement de
+  // page/filtre/recherche — voir le useEffect dédié plus bas).
+  const loadApplications = async (page = 1) => {
+    setApplicationsLoading(true);
+    try {
+      const params = new URLSearchParams({ programId, page: String(page), limit: "10" });
+      if (applicationFilters.status) params.set("status", applicationFilters.status);
+      if (applicationFilters.dateFrom) params.set("dateFrom", applicationFilters.dateFrom);
+      if (applicationFilters.dateTo) params.set("dateTo", applicationFilters.dateTo);
+      if (applicationSearch.trim()) params.set("search", applicationSearch.trim());
+
+      // Les réponses CHECKBOX sont stockées en base comme de vrais booléens
+      // (pas les chaînes "true"/"false" que renvoie le <select>) — conversion
+      // nécessaire avant envoi, sinon la requête Mongo ne matche jamais.
+      const customFieldsById = new Map(customFormFields.map((f) => [f.id, f]));
+      const activeFieldFilters = Object.fromEntries(
+        Object.entries(fieldFilterValues)
+          .filter(([, v]) => v !== "" && v !== undefined && v !== null)
+          .map(([fieldId, v]) => [fieldId, customFieldsById.get(fieldId)?.type === "CHECKBOX" ? v === "true" : v])
+      );
+      if (Object.keys(activeFieldFilters).length > 0) params.set("fieldFilters", JSON.stringify(activeFieldFilters));
+
+      const res = await adminFetch(`/api/volunteer-applications?${params.toString()}`);
+      setApplications(res?.items || []);
+      setApplicationsTotal(res?.total || 0);
+      setApplicationsTotalPages(res?.totalPages || 1);
+      setApplicationsPage(page);
+      setSelectedApplicationIds([]);
+    } catch (err) {
+      setError(err.message || "Erreur de chargement des candidatures");
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
+  const loadPendingCount = async () => {
+    try {
+      const res = await adminFetch(`/api/volunteer-applications?programId=${programId}&status=PENDING&limit=1`);
+      setPendingCount(res?.total || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche —
+  // évite un appel réseau par frappe dans la barre de recherche.
+  useEffect(() => {
+    if (activeTab !== "applications") return;
+    const timeout = setTimeout(() => loadApplications(1), 350);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, applicationFilters, fieldFilterValues, applicationSearch]);
+
+  useEffect(() => {
+    if (activeTab === "applications") loadPendingCount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  const toggleApplicationSelected = (id) => {
+    setSelectedApplicationIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const toggleSelectAllOnPage = () => {
+    const pageIds = applications.map((a) => a._id);
+    const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedApplicationIds.includes(id));
+    setSelectedApplicationIds(allSelected ? [] : pageIds);
+  };
+
+  const bulkAcceptApplications = async () => {
+    if (selectedApplicationIds.length === 0) return;
+    if (!confirm(`Valider ${selectedApplicationIds.length} candidature(s) sélectionnée(s) ?`)) return;
+    try {
+      const res = await adminFetch("/api/volunteer-applications/bulk/accept", {
+        method: "PATCH",
+        body: JSON.stringify({ ids: selectedApplicationIds }),
+      });
+      if (res?.failed?.length > 0) {
+        alert(`${res.accepted} candidature(s) validée(s), ${res.failed.length} non traitée(s) (déjà traitées ou non autorisées).`);
+      }
+      loadApplications(applicationsPage);
+      loadPendingCount();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la validation en masse");
+    }
+  };
+
+  const bulkRejectApplications = async () => {
+    if (selectedApplicationIds.length === 0) return;
+    if (!confirm(`Rejeter ${selectedApplicationIds.length} candidature(s) sélectionnée(s) ?`)) return;
+    try {
+      const res = await adminFetch("/api/volunteer-applications/bulk/reject", {
+        method: "PATCH",
+        body: JSON.stringify({ ids: selectedApplicationIds }),
+      });
+      if (res?.failed?.length > 0) {
+        alert(`${res.rejected} candidature(s) rejetée(s), ${res.failed.length} non traitée(s) (déjà traitées ou non autorisées).`);
+      }
+      loadApplications(applicationsPage);
+      loadPendingCount();
+    } catch (err) {
+      alert(err.message || "Erreur lors du rejet en masse");
+    }
+  };
+
+  const wipeAllApplications = async () => {
+    const typed = window.prompt(
+      `Cette action supprime DÉFINITIVEMENT les ${applicationsTotal} candidature(s) de ce programme ` +
+      `(en attente, acceptées ET rejetées). Les volontaires déjà admis ne sont pas affectés — seule la ` +
+      `liste de candidatures est vidée pour repartir sur une base propre.\n\nTapez SUPPRIMER pour confirmer :`
+    );
+    if (typed === null) return;
+    if (typed.trim() !== "SUPPRIMER") { alert("Confirmation incorrecte — rien n'a été supprimé."); return; }
+    try {
+      const res = await adminFetch(`/api/volunteer-applications/bulk?programId=${programId}`, { method: "DELETE" });
+      alert(`${res?.deletedCount || 0} candidature(s) supprimée(s).`);
+      loadApplications(1);
+      loadPendingCount();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la suppression");
     }
   };
 
@@ -611,7 +743,6 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
   const isTextType = ["TEXT", "TEXTAREA", "EMAIL", "PHONE"].includes(fieldForm.type);
-  const pendingApplications = applications.filter((a) => a.status === "PENDING");
   const selectedApplication = applications.find((a) => a._id === selectedApplicationId) || null;
   const editingField = editingFieldId ? formFields.find((f) => f.id === editingFieldId) : null;
   const isEditingLocked = !!editingField?.locked;
@@ -644,8 +775,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
             }`}
           >
             {t.icon} {t.label}
-            {t.value === "applications" && pendingApplications.length > 0 && (
-              <span className="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">{pendingApplications.length}</span>
+            {t.value === "applications" && pendingCount > 0 && (
+              <span className="ml-2 bg-red-600 text-white text-xs rounded-full px-2 py-0.5">{pendingCount}</span>
             )}
           </button>
         ))}
@@ -1085,14 +1216,91 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
         {activeTab === "applications" && (
           <div>
-            <h3 className="font-semibold mb-3">Candidatures ({applications.length})</h3>
-            {applications.length === 0 ? (
-              <p className="text-gray-500">Aucune candidature pour l'instant.</p>
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+              <h3 className="font-semibold">Candidatures ({applicationsTotal})</h3>
+              <button onClick={wipeAllApplications} className="text-sm text-red-700 border border-red-300 rounded-lg px-3 py-1 hover:bg-red-50">
+                🗑️ Vider tout
+              </button>
+            </div>
+
+            {/* Recherche + filtres */}
+            <div className="flex flex-wrap gap-2 mb-3 items-end">
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500 mb-1">Recherche</label>
+                <input type="text" placeholder="Nom, email, téléphone..." value={applicationSearch}
+                  onChange={(e) => setApplicationSearch(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 text-sm" />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500 mb-1">Statut</label>
+                <select value={applicationFilters.status}
+                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
+                  className="border border-gray-300 rounded-lg p-2 text-sm">
+                  <option value="">Tous</option>
+                  <option value="PENDING">En attente</option>
+                  <option value="ACCEPTED">Acceptée</option>
+                  <option value="REJECTED">Rejetée</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500 mb-1">Reçue depuis</label>
+                <input type="date" value={applicationFilters.dateFrom}
+                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                  className="border border-gray-300 rounded-lg p-2 text-sm" />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500 mb-1">Jusqu'au</label>
+                <input type="date" value={applicationFilters.dateTo}
+                  onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                  className="border border-gray-300 rounded-lg p-2 text-sm" />
+              </div>
+              {customFormFields.filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
+                <div key={f.id} className="flex flex-col">
+                  <label className="text-xs text-gray-500 mb-1">{f.label}</label>
+                  <select value={fieldFilterValues[f.id] || ""}
+                    onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                    className="border border-gray-300 rounded-lg p-2 text-sm">
+                    <option value="">Toutes</option>
+                    {f.type === "CHECKBOX" ? (
+                      <>
+                        <option value="true">Oui</option>
+                        <option value="false">Non</option>
+                      </>
+                    ) : (
+                      f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
+                    )}
+                  </select>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions en masse */}
+            {selectedApplicationIds.length > 0 && (
+              <div className="flex items-center gap-2 mb-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                <span className="text-sm font-semibold">{selectedApplicationIds.length} sélectionnée(s)</span>
+                <button onClick={bulkAcceptApplications} className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+                  Valider la sélection
+                </button>
+                <button onClick={bulkRejectApplications} className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+                  Rejeter la sélection
+                </button>
+              </div>
+            )}
+
+            {applicationsLoading ? (
+              <p className="text-gray-500">Chargement...</p>
+            ) : applications.length === 0 ? (
+              <p className="text-gray-500">Aucune candidature ne correspond à ces critères.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-200 rounded-lg">
                   <thead className="bg-gray-100">
                     <tr>
+                      <th className="px-3 py-2 border text-center">
+                        <input type="checkbox"
+                          checked={applications.length > 0 && applications.every((a) => selectedApplicationIds.includes(a._id))}
+                          onChange={toggleSelectAllOnPage} />
+                      </th>
                       <th className="px-3 py-2 border text-left">Candidat</th>
                       <th className="px-3 py-2 border text-left">Email</th>
                       <th className="px-3 py-2 border text-left">Téléphone</th>
@@ -1103,15 +1311,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   </thead>
                   <tbody>
                     {applications.map((a) => (
-                      <tr key={a._id} onClick={() => setSelectedApplicationId(a._id)}
-                        className="cursor-pointer hover:bg-yellow-50">
-                        <td className="px-3 py-2 border">{a.applicantFirstName} {a.applicantLastName}</td>
-                        <td className="px-3 py-2 border">{a.applicantEmail}</td>
-                        <td className="px-3 py-2 border">{a.applicantPhone || "—"}</td>
+                      <tr key={a._id} className="cursor-pointer hover:bg-yellow-50">
+                        <td className="px-3 py-2 border text-center" onClick={(e) => e.stopPropagation()}>
+                          <input type="checkbox" checked={selectedApplicationIds.includes(a._id)}
+                            onChange={() => toggleApplicationSelected(a._id)} />
+                        </td>
+                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantFirstName} {a.applicantLastName}</td>
+                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantEmail}</td>
+                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{a.applicantPhone || "—"}</td>
                         {customFormFields.map((f) => (
-                          <td key={f.id} className="px-3 py-2 border">{formatResponseValue(f, a.responses?.[f.id])}</td>
+                          <td key={f.id} className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>{formatResponseValue(f, a.responses?.[f.id])}</td>
                         ))}
-                        <td className="px-3 py-2 border">
+                        <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>
                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                             a.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
                             a.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
@@ -1131,6 +1342,20 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     ))}
                   </tbody>
                 </table>
+
+                <div className="flex items-center justify-between mt-3 text-sm">
+                  <button onClick={() => loadApplications(applicationsPage - 1)} disabled={applicationsPage <= 1}
+                    className="px-3 py-1 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50">
+                    ← Précédent
+                  </button>
+                  <span className="text-gray-600">
+                    Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} candidature(s)
+                  </span>
+                  <button onClick={() => loadApplications(applicationsPage + 1)} disabled={applicationsPage >= applicationsTotalPages}
+                    className="px-3 py-1 rounded-lg border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50">
+                    Suivant →
+                  </button>
+                </div>
               </div>
             )}
           </div>
