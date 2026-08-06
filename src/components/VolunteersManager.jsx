@@ -4,6 +4,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { adminFetch } from "@/services/admin/api";
+import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 
 // Le champ "programs" (autrefois "missions") ne porte plus d'objet peuplé
 // (VolunteerProgram vit sur une connexion Mongo séparée de Volunteer — voir
@@ -373,6 +374,11 @@ export default function VolunteersManager() {
                       >
                         ✏️ Modifier
                       </button>
+                      {v.programs?.[0]?.programId && (
+                        <div className="px-4 py-2 hover:bg-red-50" onClick={() => setMenuOpen(null)}>
+                          <ReportVolunteerButton programId={v.programs[0].programId} volunteerId={v._id} label="Signaler" />
+                        </div>
+                      )}
                       <button
                         onClick={() => {
                           handleDelete(v._id);

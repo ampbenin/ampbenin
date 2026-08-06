@@ -18,6 +18,7 @@ import VolunteerFormTemplatesManager from '../VolunteerFormTemplatesManager.jsx'
 import SaveVolunteers from '../../SaveVolunteers.jsx';
 import GenerateCertificate from '../../GenerateCertificate.jsx';
 import PartnerActivityOverview from '../PartnerActivityOverview.jsx';
+import DisciplineManager from '../DisciplineManager.jsx';
 
 const CONTENT_TABS = [
   { id: 'pages', label: 'Pages du site' },
@@ -45,6 +46,10 @@ const MISSIONS_TABS = [
   { id: 'save-volunteer', label: 'Enregistrer un volontaire' },
   { id: 'certificates', label: 'Générer attestations' },
   { id: 'partner-activity', label: 'Activité des partenaires' },
+  // Traitement des signalements/sanctions réservé aux ADMIN (décision
+  // explicite de l'utilisateur) — retiré de la liste pour un EDITOR, voir
+  // missionsTabs plus bas.
+  { id: 'discipline', label: 'Discipline & sanctions', adminOnly: true },
 ];
 
 // Tous les ids d'onglets valides (Contenu + Boîte de réception + Volontaires
@@ -122,7 +127,7 @@ export default function AdminShell() {
 
         <NavGroup title="Contenu" tabs={CONTENT_TABS} />
         <NavGroup title="Boîte de réception" tabs={INBOX_TABS} />
-        <NavGroup title="Volontaires & Missions" tabs={MISSIONS_TABS} />
+        <NavGroup title="Volontaires & Missions" tabs={MISSIONS_TABS.filter((t) => !t.adminOnly || role === 'ADMIN')} />
 
         {role === 'ADMIN' && (
           <div className="mb-4">
@@ -165,6 +170,7 @@ export default function AdminShell() {
         {active === 'save-volunteer' && <SaveVolunteers />}
         {active === 'certificates' && <GenerateCertificate />}
         {active === 'partner-activity' && <PartnerActivityOverview />}
+        {active === 'discipline' && role === 'ADMIN' && <DisciplineManager />}
       </main>
     </div>
   );

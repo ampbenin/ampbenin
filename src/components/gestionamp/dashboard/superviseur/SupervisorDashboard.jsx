@@ -6,6 +6,7 @@
 // (/gestionamp/api/...) car ces routes vivent hors du sous-système gestionamp.
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
+import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 
 export default function SupervisorDashboard() {
   const [programs, setPrograms] = useState([]);
@@ -119,13 +120,14 @@ export default function SupervisorDashboard() {
                     })}
                   </dl>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
                   <button onClick={() => approve(s._id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
                     Approuver
                   </button>
                   <button onClick={() => reject(s._id)} style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
                     Rejeter
                   </button>
+                  <ReportVolunteerButton programId={selectedProgramId} volunteerId={s.volunteerId} />
                 </div>
               </div>
             </div>

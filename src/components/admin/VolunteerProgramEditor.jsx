@@ -8,6 +8,8 @@
 // volontariat).
 import React, { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
+import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
+import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
 
 const FIELD_TYPES = [
   { value: "TEXT", label: "Texte court" },
@@ -134,6 +136,10 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [selectedExistingGroupId, setSelectedExistingGroupId] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
 
+  // Liste noire des volontaires bannis — chargée une fois, croisée côté
+  // client (voir BlacklistWarning.jsx) sur les candidatures affichées.
+  const [blacklist, setBlacklist] = useState([]);
+
   const [meta, setMeta] = useState({
     title: "", description: "", coverImageUrl: "", location: "", startDate: "", endDate: "",
     capacity: "", accessMode: "APPLICATION", applicationDeadline: "",
@@ -259,6 +265,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  const loadBlacklist = async () => {
+    try {
+      const res = await adminFetch("/api/volunteer-discipline/blacklist");
+      setBlacklist(res?.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const createApplicationGroup = async () => {
     if (!newGroupName.trim() || selectedApplicationIds.length < 2) return;
     try {
@@ -338,6 +353,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     if (activeTab === "applications") {
       loadPendingCount();
       loadApplicationGroups();
+      loadBlacklist();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -1611,14 +1627,20 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {applications.map((a) => (
-                      <tr key={a._id} className="cursor-pointer hover:bg-yellow-50">
+                    {applications.map((a) => {
+                      const blacklistEntry = findBlacklistMatch(blacklist, {
+                        email: a.applicantEmail, phone: a.applicantPhone,
+                        firstName: a.applicantFirstName, lastName: a.applicantLastName,
+                      });
+                      return (
+                      <tr key={a._id} className={`cursor-pointer ${blacklistEntry ? "bg-red-50 hover:bg-red-100" : "hover:bg-yellow-50"}`}>
                         <td className="px-3 py-2 border text-center" onClick={(e) => e.stopPropagation()}>
                           <input type="checkbox" checked={selectedApplicationIds.includes(a._id)}
                             onChange={() => toggleApplicationSelected(a._id)} />
                         </td>
                         <td className="px-3 py-2 border" onClick={() => setSelectedApplicationId(a._id)}>
                           {a.applicantFirstName} {a.applicantLastName}
+                          {blacklistEntry && <BlacklistBadge entry={blacklistEntry} />}
                           {(() => {
                             const memberGroups = applicationGroups.filter((g) => g.applicationIds.some((m) => String(m._id) === String(a._id)));
                             return memberGroups.length > 0 ? (
@@ -1644,15 +1666,19 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                           </span>
                         </td>
                         <td className="px-3 py-2 border">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteApplication(a._id); }}
-                            className="text-red-600 hover:underline text-sm"
-                          >
-                            Supprimer
-                          </button>
+                          <div className="flex gap-2 items-center">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteApplication(a._id); }}
+                              className="text-red-600 hover:underline text-sm"
+                            >
+                              Supprimer
+                            </button>
+                            <ReportVolunteerButton programId={programId} applicationId={a._id} />
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
 
@@ -1769,6 +1795,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                         <th className="px-3 py-2 border text-left">Volontaire</th>
                         <th className="px-3 py-2 border text-left">Progression</th>
                         <th className="px-3 py-2 border text-left">Statut mission</th>
+                        <th className="px-3 py-2 border text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1786,6 +1813,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             }`}>
                               {p.statut}
                             </span>
+                          </td>
+                          <td className="px-3 py-2 border">
+                            <ReportVolunteerButton programId={programId} volunteerId={p.volunteerId} />
                           </td>
                         </tr>
                       ))}

@@ -14,6 +14,7 @@ export default function Dashboard() {
   const ready = useVolunteerGuard();
   const [profile, setProfile] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [warnings, setWarnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -25,6 +26,7 @@ export default function Dashboard() {
       ]);
       setProfile(me);
       setApplications(mine?.items || []);
+      setWarnings(me?.activeWarnings || []);
     } catch (err) {
       setError(err.message || "Erreur de chargement");
     } finally {
@@ -41,11 +43,36 @@ export default function Dashboard() {
     window.location.href = "/mon-espace/login";
   };
 
+  const acknowledgeWarning = async (id) => {
+    try {
+      await volunteerFetch(`/volunteer-auth/warnings/${id}/acknowledge`, { method: "POST" });
+      setWarnings((prev) => prev.filter((w) => w._id !== id));
+    } catch (err) {
+      alert(err.message || "Erreur lors de la validation");
+    }
+  };
+
   if (!ready || loading) return <p className="dash-loading">Chargement...</p>;
   if (error) return <p className="dash-loading dash-loading--error">{error}</p>;
 
   return (
     <div className="dash">
+      {warnings.length > 0 && (
+        <div className="dash-warnings">
+          {warnings.map((w) => (
+            <div key={w._id} className="dash-warning">
+              <div className="dash-warning__body">
+                <strong>⚠️ Avertissement de l'équipe AMP BENIN</strong>
+                <p>{w.reason}</p>
+              </div>
+              <button onClick={() => acknowledgeWarning(w._id)} className="dash-btn dash-btn--sm dash-warning__btn">
+                J'ai compris
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="dash-header">
         <div>
           <span className="dash-tagline">Mon espace volontaire</span>
@@ -127,6 +154,16 @@ export default function Dashboard() {
         .dash { max-width: 48rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
         .dash-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
         .dash-loading--error { color: #dc2626; }
+
+        .dash-warnings { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-6); }
+        .dash-warning {
+          display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;
+          background: #fef2f2; border: 1px solid #fca5a5; border-radius: var(--r-lg); padding: var(--sp-4);
+        }
+        .dash-warning__body strong { display: block; color: #b91c1c; margin-bottom: var(--sp-1); }
+        .dash-warning__body p { color: #7f1d1d; font-size: var(--text-sm); margin: 0; }
+        .dash-warning__btn { background: #b91c1c; color: var(--col-white); flex-shrink: 0; }
+        .dash-warning__btn:hover { background: #991b1b; }
 
         .dash-header {
           display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;

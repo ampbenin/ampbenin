@@ -20,6 +20,8 @@
 // serveur (listPartnerApplications), pas seulement par absence d'UI ici.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
+import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
+import { findBlacklistMatch, BlacklistBadge } from "@/components/admin/BlacklistWarning.jsx";
 import {
   Chart as ChartJS,
   BarController,
@@ -108,6 +110,10 @@ export default function PartnerDashboard() {
   const [fieldFilterValues, setFieldFilterValues] = useState({});
   const [showApplicationFiltersMenu, setShowApplicationFiltersMenu] = useState(false);
 
+  // Liste noire des volontaires bannis — chargée une fois, croisée côté
+  // client sur les candidatures affichées (voir BlacklistWarning.jsx).
+  const [blacklist, setBlacklist] = useState([]);
+
   const loadPrograms = async () => {
     try {
       const res = await adminFetch("/api/volunteer-partner/my-programs");
@@ -182,9 +188,19 @@ export default function PartnerDashboard() {
     }
   };
 
+  const loadBlacklist = async () => {
+    try {
+      const res = await adminFetch("/api/volunteer-discipline/blacklist");
+      setBlacklist(res?.items || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadPrograms();
     loadMe();
+    loadBlacklist();
   }, []);
 
   useEffect(() => {
@@ -491,12 +507,21 @@ export default function PartnerDashboard() {
                     <th style={{ padding: 8, border: "1px solid #ddd" }}>Email</th>
                     <th style={{ padding: 8, border: "1px solid #ddd" }}>Téléphone</th>
                     <th style={{ padding: 8, border: "1px solid #ddd" }}>Statut</th>
+                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {applications.map((a) => (
-                    <tr key={a._id}>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantFirstName} {a.applicantLastName}</td>
+                  {applications.map((a) => {
+                    const blacklistEntry = findBlacklistMatch(blacklist, {
+                      email: a.applicantEmail, phone: a.applicantPhone,
+                      firstName: a.applicantFirstName, lastName: a.applicantLastName,
+                    });
+                    return (
+                    <tr key={a._id} style={blacklistEntry ? { background: "#FFE8EA" } : undefined}>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>
+                        {a.applicantFirstName} {a.applicantLastName}
+                        {blacklistEntry && <BlacklistBadge entry={blacklistEntry} />}
+                      </td>
                       <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantEmail}</td>
                       <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantPhone || "—"}</td>
                       <td style={{ padding: 8, border: "1px solid #eee" }}>
@@ -508,8 +533,12 @@ export default function PartnerDashboard() {
                           {a.status === "ACCEPTED" ? "Acceptée" : "En attente"}
                         </span>
                       </td>
+                      <td style={{ padding: 8, border: "1px solid #eee" }}>
+                        <ReportVolunteerButton programId={selectedProgramId} applicationId={a._id} />
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -558,8 +587,9 @@ export default function PartnerDashboard() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {validatedVolunteers.map((v) => (
               <details key={v.volunteerId} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600 }}>
-                  {v.prenom} {v.nom} — {v.approvedTasks.length} tâche(s) approuvée(s)
+                <summary style={{ cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <span>{v.prenom} {v.nom} — {v.approvedTasks.length} tâche(s) approuvée(s)</span>
+                  <ReportVolunteerButton programId={selectedProgramId} volunteerId={v.volunteerId} />
                 </summary>
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
                   {v.approvedTasks.map((t, i) => (
