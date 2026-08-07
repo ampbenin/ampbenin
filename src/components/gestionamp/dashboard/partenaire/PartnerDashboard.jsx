@@ -132,12 +132,12 @@ export default function PartnerDashboard() {
   // l'en-tête co-brandé. null tant que l'ADMIN n'en a pas défini un —
   // aucune image de repli forcée, la mise en page s'adapte à son absence.
   const [ampLogoUrl, setAmpLogoUrl] = useState(null);
-  // Barre des partenaires — même réglage, mais affichée tout en bas de CET
-  // espace partenaire uniquement (pas du site public, voir Footer.astro —
-  // décision utilisateur du 2026-08-07 : "ça concerne uniquement l'espace
-  // du partenaire et non tout le site", corrigeant un premier placement
-  // dans le footer public).
-  const [partnersBarImageUrl, setPartnersBarImageUrl] = useState(null);
+  // Barre des partenaires : PAS un état séparé — propre à CHAQUE
+  // PROGRAMME (corrigé le 2026-08-07 : d'abord un réglage global comme le
+  // logo AMP BENIN, l'utilisateur a précisé "c'est une image propre à
+  // chaque programme, seuls les partenaires où ce programme a été affecté
+  // verront ça"), donc lue directement depuis `data.program.partnersBarImageUrl`
+  // (déjà chargé par loadStats) plutôt que depuis /api/site-settings.
 
   const [myComments, setMyComments] = useState([]);
   const [comment, setComment] = useState("");
@@ -265,7 +265,6 @@ export default function PartnerDashboard() {
     try {
       const res = await adminFetch("/api/site-settings");
       setAmpLogoUrl(res?.ampLogoUrl || null);
-      setPartnersBarImageUrl(res?.partnersBarImageUrl || null);
     } catch (err) {
       console.error("Erreur chargement réglages du site", err);
     }
@@ -792,12 +791,14 @@ export default function PartnerDashboard() {
         </button>
       </section>
 
-      {/* Barre des partenaires — tout en bas de CET espace uniquement (pas
-          du site public), pleine largeur, s'adapte à l'écran. Absente tant
-          qu'aucune image n'est définie côté ADMIN. */}
-      {partnersBarImageUrl && (
+      {/* Barre des partenaires — propre à CE programme (program.partnersBarImageUrl,
+          pas un réglage global), tout en bas de CET espace uniquement (pas
+          du site public). Change automatiquement si le partenaire bascule
+          sur un autre programme suivi. Absente tant qu'aucune image n'est
+          définie côté ADMIN pour ce programme. */}
+      {program.partnersBarImageUrl && (
         <div className="pd-partners-bar pd-fade" style={{ "--pd-delay": "380ms" }}>
-          <img src={partnersBarImageUrl} alt="Nos partenaires" />
+          <img src={program.partnersBarImageUrl} alt="Nos partenaires" />
         </div>
       )}
 

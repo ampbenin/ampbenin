@@ -11,6 +11,8 @@ import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
 
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
+
 const FIELD_TYPES = [
   { value: "TEXT", label: "Texte court" },
   { value: "TEXTAREA", label: "Texte long" },
@@ -172,6 +174,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [partnerActivity, setPartnerActivity] = useState([]);
   const [expandedActivityPartnerId, setExpandedActivityPartnerId] = useState(null);
   const [partnerActivityTimeline, setPartnerActivityTimeline] = useState([]);
+  const [uploadingPartnersBar, setUploadingPartnersBar] = useState(false);
 
   const load = async () => {
     try {
@@ -873,6 +876,34 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       loadPartnerTab();
     } catch (err) {
       alert(err.message || "Erreur lors de la mise à jour du partenaire");
+    }
+  };
+
+  // Barre des partenaires — propre à CE programme (corrigé le 2026-08-07 :
+  // d'abord un réglage global comme le logo AMP BENIN, l'utilisateur a
+  // précisé "c'est une image propre à chaque programme, seuls les
+  // partenaires où ce programme a été affecté verront ça"). adminFetch
+  // force Content-Type: JSON, donc un fetch brut est nécessaire ici
+  // (multipart), même pattern que uploadLogo côté PartnerDashboard.jsx.
+  const uploadPartnersBar = async (file) => {
+    if (!file) return;
+    setUploadingPartnersBar(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const token = localStorage.getItem("amp_token");
+      const res = await fetch(`${API_BASE}/api/volunteer-programs/${programId}/partners-bar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || "Erreur lors de l'envoi de l'image");
+      setProgram((prev) => ({ ...prev, partnersBarImageUrl: body.partnersBarImageUrl }));
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'envoi de l'image");
+    } finally {
+      setUploadingPartnersBar(false);
     }
   };
 
@@ -1909,6 +1940,28 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
         {activeTab === "partners" && (
           <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-3">Barre des partenaires de ce programme</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Une seule image (bannière/collage déjà composé), affichée tout en bas du tableau de bord
+                des partenaires suivant CE programme — et en pied de page de chaque page de leur rapport
+                PDF. Propre à ce programme : les partenaires d'un autre programme ne la verront pas.
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="border border-dashed border-gray-300 rounded-lg bg-gray-50 flex items-center justify-center" style={{ minHeight: 90, minWidth: 160, padding: 10 }}>
+                  {program?.partnersBarImageUrl ? (
+                    <img src={program.partnersBarImageUrl} alt="Barre des partenaires" style={{ maxHeight: 100, maxWidth: 260, objectFit: "contain" }} />
+                  ) : (
+                    <span className="text-xs text-gray-400">Aucune image définie</span>
+                  )}
+                </div>
+                <label className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 cursor-pointer">
+                  {uploadingPartnersBar ? "Envoi..." : program?.partnersBarImageUrl ? "Remplacer l'image" : "Envoyer une image"}
+                  <input type="file" accept="image/*" onChange={(e) => uploadPartnersBar(e.target.files?.[0])} disabled={uploadingPartnersBar} style={{ display: "none" }} />
+                </label>
+              </div>
+            </div>
+
             <div>
               <h3 className="font-semibold mb-3">Partenaires de ce programme</h3>
               {(() => {
