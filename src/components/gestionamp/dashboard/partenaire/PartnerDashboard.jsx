@@ -132,6 +132,12 @@ export default function PartnerDashboard() {
   // l'en-tête co-brandé. null tant que l'ADMIN n'en a pas défini un —
   // aucune image de repli forcée, la mise en page s'adapte à son absence.
   const [ampLogoUrl, setAmpLogoUrl] = useState(null);
+  // Barre des partenaires — même réglage, mais affichée tout en bas de CET
+  // espace partenaire uniquement (pas du site public, voir Footer.astro —
+  // décision utilisateur du 2026-08-07 : "ça concerne uniquement l'espace
+  // du partenaire et non tout le site", corrigeant un premier placement
+  // dans le footer public).
+  const [partnersBarImageUrl, setPartnersBarImageUrl] = useState(null);
 
   const [myComments, setMyComments] = useState([]);
   const [comment, setComment] = useState("");
@@ -259,6 +265,7 @@ export default function PartnerDashboard() {
     try {
       const res = await adminFetch("/api/site-settings");
       setAmpLogoUrl(res?.ampLogoUrl || null);
+      setPartnersBarImageUrl(res?.partnersBarImageUrl || null);
     } catch (err) {
       console.error("Erreur chargement réglages du site", err);
     }
@@ -785,6 +792,15 @@ export default function PartnerDashboard() {
         </button>
       </section>
 
+      {/* Barre des partenaires — tout en bas de CET espace uniquement (pas
+          du site public), pleine largeur, s'adapte à l'écran. Absente tant
+          qu'aucune image n'est définie côté ADMIN. */}
+      {partnersBarImageUrl && (
+        <div className="pd-partners-bar pd-fade" style={{ "--pd-delay": "380ms" }}>
+          <img src={partnersBarImageUrl} alt="Nos partenaires" />
+        </div>
+      )}
+
       <style>{PD_STYLES}</style>
     </div>
   );
@@ -1048,6 +1064,13 @@ const PD_STYLES = `
   .pd-bubble__reply p { margin: 4px 0 0; white-space: pre-line; }
   .pd-bubble__pending { margin: 0; font-size: 0.78rem; color: var(--col-text-muted, #7A7A7A); font-style: italic; }
   .pd-comment__cta { margin-top: 10px; }
+
+  /* ── Barre des partenaires (tout en bas de CET espace) ── */
+  .pd-partners-bar {
+    border-radius: 18px; overflow: hidden; border: 1px solid var(--col-border-light, #EEEAE3);
+    box-shadow: var(--sh-xs, 0 1px 3px rgba(27,67,50,0.06));
+  }
+  .pd-partners-bar img { display: block; width: 100%; height: auto; }
 
   /* ── Responsive ── */
   @media (max-width: 720px) {

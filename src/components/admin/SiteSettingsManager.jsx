@@ -79,9 +79,9 @@ export default function SiteSettingsManager() {
   return (
     <div className="ssm">
       <p className="ssm-intro">
-        Ces deux images sont utilisées à plusieurs endroits : le logo AMP BENIN apparaît à côté du logo de
-        chaque partenaire dans son espace et sur chaque page des rapports PDF téléchargés ; la barre des
-        partenaires s'affiche en pleine largeur tout en bas du site public.
+        Ces deux images sont utilisées uniquement dans l'espace partenaire : le logo AMP BENIN apparaît à
+        côté du logo de chaque partenaire dans son tableau de bord et sur chaque page des rapports PDF
+        téléchargés ; la barre des partenaires s'affiche en pleine largeur tout en bas de ce même espace.
       </p>
       <div className="ssm-grid">
         <ImageUploadCard
@@ -93,7 +93,7 @@ export default function SiteSettingsManager() {
         />
         <ImageUploadCard
           title="Barre des partenaires"
-          hint="Une seule image (bannière/collage déjà composé), affichée en pleine largeur tout en bas du site public — et en pied de page de chaque page des rapports PDF."
+          hint="Une seule image (bannière/collage déjà composé), affichée en pleine largeur tout en bas de l'espace partenaire — et en pied de page de chaque page des rapports PDF."
           currentUrl={settings?.partnersBarImageUrl}
           onUpload={(e) => upload("partnersBar", e)}
           uploading={uploadingField === "partnersBar"}
