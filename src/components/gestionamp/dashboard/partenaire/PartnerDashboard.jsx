@@ -18,6 +18,18 @@
 // jamais les rejetées (contiennent les coordonnées de personnes non
 // retenues), pas de checkbox, pas de bouton d'action. Restreint côté
 // serveur (listPartnerApplications), pas seulement par absence d'UI ici.
+//
+// Refonte visuelle premium le 2026-08-07 : l'espace utilisait les classes
+// globales de GestionAMPLayout.astro (.dashboard-section button {color:
+// var(--col-white)}) — plusieurs boutons ici fixaient un fond blanc en
+// style inline SANS fixer de couleur de texte, héritant donc du blanc
+// global → texte invisible sur fond blanc (pagination, "Annuler" du
+// signalement, filtres). Corrigé en abandonnant les styles inline ad-hoc
+// au profit d'une feuille de style scopée à ce composant (classes `pd-*`,
+// chaque bouton fixe explicitement sa couleur), avec un habillage premium
+// (dégradés de marque, cartes animées, compteurs, accordéon fluide) —
+// réutilise les tokens de marque (var(--col-*)) de tokens.css, chargé
+// globalement par GestionAMPLayout.astro.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
@@ -36,6 +48,26 @@ ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip,
 
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
+// Compteur animé (0 → valeur cible, easing cubique) — aucune dépendance
+// supplémentaire, juste requestAnimationFrame.
+function AnimatedNumber({ value, duration = 900 }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const to = Number(value) || 0;
+    let raf;
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(to * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <>{display}</>;
+}
+
 function ImpactChart({ data }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
@@ -53,7 +85,8 @@ function ImpactChart({ data }) {
             label: "Tâches approuvées",
             data: data.map((d) => d.count),
             backgroundColor: "#1B4332",
-            borderRadius: 6,
+            hoverBackgroundColor: "#2D6A4F",
+            borderRadius: 8,
             maxBarThickness: 48,
           },
         ],
@@ -61,8 +94,12 @@ function ImpactChart({ data }) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: { duration: 700, easing: "easeOutQuart" },
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#EEEAE3" } },
+          x: { grid: { display: false } },
+        },
       },
     });
 
@@ -70,11 +107,11 @@ function ImpactChart({ data }) {
   }, [data]);
 
   if (!data || data.length === 0) {
-    return <p style={{ color: "#666" }}>Pas encore assez de données pour afficher un graphique.</p>;
+    return <p className="pd-muted">Pas encore assez de données pour afficher un graphique.</p>;
   }
 
   return (
-    <div style={{ height: 220 }}>
+    <div className="pd-chart">
       <canvas ref={canvasRef} />
     </div>
   );
@@ -95,6 +132,16 @@ export default function PartnerDashboard() {
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const [downloadingReport, setDownloadingReport] = useState(false);
+
+  // Accordéon des volontaires validés (fluide, voir .pd-acc dans le CSS).
+  const [openVolunteers, setOpenVolunteers] = useState(() => new Set());
+  const toggleVolunteer = (id) => {
+    setOpenVolunteers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   // Candidatures du programme — lecture seule (jamais les rejetées, voir
   // controllers/volunteerProgramPartnerController.js#listPartnerApplications
@@ -211,6 +258,7 @@ export default function PartnerDashboard() {
     setApplicationSearch("");
     setApplicationFilters({ status: "", dateFrom: "", dateTo: "" });
     setFieldFilterValues({});
+    setOpenVolunteers(new Set());
   }, [selectedProgramId]);
 
   // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche.
@@ -306,208 +354,217 @@ export default function PartnerDashboard() {
     return photos;
   }, [data]);
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p style={{ color: "#dc2626" }}>{error}</p>;
-  if (programs.length === 0) return <p>Aucun programme ne vous est associé pour l'instant.</p>;
-  if (!data) return <p>Chargement des statistiques...</p>;
+  if (loading) {
+    return (
+      <div className="pd-state">
+        <div className="pd-spinner" />
+        <p>Chargement de votre espace partenaire...</p>
+        <style>{PD_STYLES}</style>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="pd-state pd-state--error">
+        <span className="pd-state__icon">⚠️</span>
+        <p>{error}</p>
+        <style>{PD_STYLES}</style>
+      </div>
+    );
+  }
+  if (programs.length === 0) {
+    return (
+      <div className="pd-state">
+        <span className="pd-state__icon">🤝</span>
+        <p>Aucun programme ne vous est associé pour l'instant.</p>
+        <style>{PD_STYLES}</style>
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="pd-state">
+        <div className="pd-spinner" />
+        <p>Chargement des statistiques...</p>
+        <style>{PD_STYLES}</style>
+      </div>
+    );
+  }
 
   const { program, stats, validatedVolunteers, progressOverTime } = data;
 
+  const activeFilterCount =
+    (applicationFilters.status ? 1 : 0) +
+    (applicationFilters.dateFrom ? 1 : 0) +
+    (applicationFilters.dateTo ? 1 : 0) +
+    Object.values(fieldFilterValues).filter(Boolean).length;
+
+  const statCards = [
+    { icon: "🤝", label: "Volontaires acceptés", value: stats.totalVolunteers, suffix: "" },
+    { icon: "✅", label: "Mission validée", value: stats.validatedVolunteers, suffix: ` (${stats.percentValidated}%)` },
+    { icon: "📈", label: "Progression moyenne", value: stats.averageProgress, suffix: "%" },
+    { icon: "🗂️", label: "Tâches approuvées", value: stats.totalApprovedTasks, suffix: "" },
+  ];
+
   return (
-    <div className="partner-dashboard">
+    <div className="pd">
       {/* En-tête co-brandé */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
-        {me?.partnerLogoUrl ? (
-          <img
-            src={me.partnerLogoUrl}
-            alt="Logo"
-            style={{ height: 56, width: 56, borderRadius: 12, objectFit: "cover", border: "1px solid #ddd" }}
-          />
-        ) : (
-          <div
-            style={{
-              height: 56, width: 56, borderRadius: 12, background: "#1B4332", color: "#fff",
-              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", fontWeight: 700,
-            }}
-          >
-            {(me?.name || "P")[0].toUpperCase()}
+      <div className="pd-hero">
+        <div className="pd-hero__glow" aria-hidden="true" />
+        <div className="pd-hero__content">
+          {me?.partnerLogoUrl ? (
+            <img src={me.partnerLogoUrl} alt="Logo" className="pd-hero__logo pd-hero__logo--img" />
+          ) : (
+            <div className="pd-hero__logo pd-hero__logo--fallback">{(me?.name || "P")[0].toUpperCase()}</div>
+          )}
+          <div className="pd-hero__text">
+            <span className="pd-hero__tag">Espace partenaire</span>
+            <h2 className="pd-hero__title">{me?.name || "Partenaire"} <span className="pd-hero__x">×</span> AMP BENIN</h2>
+            <label className="pd-hero__logo-link">
+              {uploadingLogo ? "Envoi en cours..." : "✎ Changer mon logo"}
+              <input type="file" accept="image/*" onChange={uploadLogo} disabled={uploadingLogo} className="pd-sr-only" />
+            </label>
           </div>
-        )}
-        <div>
-          <h2 style={{ margin: 0 }}>Tableau de bord — {me?.name || "Partenaire"} × AMP BENIN</h2>
-          <label style={{ fontSize: "0.8rem", color: "#1B4332", cursor: "pointer", textDecoration: "underline" }}>
-            {uploadingLogo ? "Envoi..." : "Changer mon logo"}
-            <input type="file" accept="image/*" onChange={uploadLogo} disabled={uploadingLogo} style={{ display: "none" }} />
-          </label>
+        </div>
+
+        <div className="pd-hero__picker">
+          <label className="pd-hero__picker-label">Programme suivi</label>
+          <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)} className="pd-select pd-select--hero">
+            {programs.map((p) => <option key={p._id} value={p._id}>{p.title}</option>)}
+          </select>
         </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <label>
-          Programme suivi :{" "}
-          <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}>
-            {programs.map((p) => <option key={p._id} value={p._id}>{p.title}</option>)}
-          </select>
-        </label>
+      {/* Phrase d'impact */}
+      <div className="pd-impact pd-fade" style={{ "--pd-delay": "60ms" }}>
+        <span className="pd-impact__mark" aria-hidden="true">”</span>
+        <p>
+          Grâce à votre soutien, <strong>{stats.validatedVolunteers} volontaire(s)</strong> ont validé leur mission et
+          accompli <strong>{stats.totalApprovedTasks} tâche(s)</strong> sur le terrain.
+        </p>
       </div>
 
-      {/* Phrase d'impact */}
-      <p style={{ fontSize: "1.15rem", fontWeight: 600, color: "#1B4332", marginBottom: 24 }}>
-        Grâce à votre soutien, {stats.validatedVolunteers} volontaire(s) ont validé leur mission et
-        accompli {stats.totalApprovedTasks} tâche(s) sur le terrain.
-      </p>
+      {/* Chiffres clés */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "100ms" }}>
+        <h3 className="pd-card__title">Chiffres clés</h3>
+        <div className="pd-stats">
+          {statCards.map((s, i) => (
+            <div key={s.label} className="pd-stat" style={{ "--pd-stat-delay": `${140 + i * 70}ms` }}>
+              <span className="pd-stat__icon">{s.icon}</span>
+              <div className="pd-stat__value"><AnimatedNumber value={s.value} />{s.suffix}</div>
+              <div className="pd-stat__label">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Galerie photo */}
-      <section style={{ marginBottom: 28 }}>
-        <h3>Aperçu en images ({gallery.length})</h3>
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "140ms" }}>
+        <h3 className="pd-card__title">Aperçu en images <span className="pd-count">({gallery.length})</span></h3>
         {gallery.length === 0 ? (
-          <p style={{ color: "#666" }}>Aucune photo pour l'instant.</p>
+          <p className="pd-muted">Aucune photo pour l'instant.</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+          <div className="pd-gallery">
             {gallery.map((photo, i) => (
-              <a key={i} href={photo.url} target="_blank" rel="noreferrer" title={`${photo.volunteerName} — ${photo.taskTitle}`}>
-                <img
-                  src={photo.url}
-                  alt={photo.taskTitle}
-                  style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8, border: "1px solid #ddd" }}
-                />
+              <a key={i} href={photo.url} target="_blank" rel="noreferrer" className="pd-gallery__item" style={{ "--pd-stat-delay": `${i * 40}ms` }}>
+                <img src={photo.url} alt={photo.taskTitle} loading="lazy" />
+                <span className="pd-gallery__caption">{photo.volunteerName} — {photo.taskTitle}</span>
               </a>
             ))}
           </div>
         )}
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h3>Chiffres clés</h3>
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          {[
-            ["Volontaires acceptés", stats.totalVolunteers],
-            ["Mission validée", `${stats.validatedVolunteers} (${stats.percentValidated}%)`],
-            ["Progression moyenne", `${stats.averageProgress}%`],
-            ["Tâches approuvées", stats.totalApprovedTasks],
-          ].map(([label, value]) => (
-            <div key={label} style={{ border: "1px solid #ddd", borderRadius: 8, padding: "12px 16px", minWidth: 140 }}>
-              <div style={{ fontSize: "1.4rem", fontWeight: 700 }}>{value}</div>
-              <div style={{ fontSize: "0.8rem", color: "#666" }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Candidatures */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "180ms" }}>
+        <h3 className="pd-card__title">Candidatures reçues <span className="pd-count">({applicationsTotal})</span></h3>
 
-      <section style={{ marginBottom: 28 }}>
-        <h3>Candidatures reçues ({applicationsTotal})</h3>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12, alignItems: "flex-end" }}>
+        <div className="pd-toolbar">
           <input
             type="text"
             placeholder="Rechercher (nom, email, téléphone)..."
             value={applicationSearch}
             onChange={(e) => setApplicationSearch(e.target.value)}
-            style={{ flex: "1 1 220px", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}
+            className="pd-input pd-toolbar__search"
           />
-          <div style={{ position: "relative" }}>
-            {(() => {
-              const activeCount =
-                (applicationFilters.status ? 1 : 0) +
-                (applicationFilters.dateFrom ? 1 : 0) +
-                (applicationFilters.dateTo ? 1 : 0) +
-                Object.values(fieldFilterValues).filter(Boolean).length;
-              return (
-                <>
-                  <button
-                    onClick={() => setShowApplicationFiltersMenu((v) => !v)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8,
-                      border: activeCount > 0 ? "1px solid #C9903A" : "1px solid #ccc",
-                      background: activeCount > 0 ? "#FDF4E7" : "#fff", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem",
-                    }}
-                  >
-                    🎛️ Filtres
-                    {activeCount > 0 && (
-                      <span style={{ background: "#C9903A", color: "#fff", borderRadius: 999, fontSize: "0.7rem", padding: "1px 6px" }}>{activeCount}</span>
-                    )}
-                    <span style={{ fontSize: "0.7rem" }}>{showApplicationFiltersMenu ? "▲" : "▼"}</span>
-                  </button>
+          <div className="pd-filters">
+            <button type="button" onClick={() => setShowApplicationFiltersMenu((v) => !v)} className={`pd-btn pd-btn--filter ${activeFilterCount > 0 ? "is-active" : ""}`}>
+              🎛️ Filtres
+              {activeFilterCount > 0 && <span className="pd-badge pd-badge--accent">{activeFilterCount}</span>}
+              <span className={`pd-chevron ${showApplicationFiltersMenu ? "is-open" : ""}`}>▾</span>
+            </button>
 
-                  {showApplicationFiltersMenu && (
-                    <div style={{
-                      position: "absolute", right: 0, zIndex: 10, marginTop: 4, width: 280, background: "#fff",
-                      border: "1px solid #ddd", borderRadius: 12, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", padding: 16,
-                      display: "flex", flexDirection: "column", gap: 12,
-                    }}>
-                      <div>
-                        <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Statut</label>
-                        <select value={applicationFilters.status}
-                          onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
-                          style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}>
-                          <option value="">Toutes</option>
-                          <option value="PENDING">En attente</option>
-                          <option value="ACCEPTED">Acceptée</option>
-                        </select>
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Reçue depuis</label>
-                          <input type="date" value={applicationFilters.dateFrom}
-                            onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
-                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>Jusqu'au</label>
-                          <input type="date" value={applicationFilters.dateTo}
-                            onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
-                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }} />
-                        </div>
-                      </div>
-                      {(program.applicationFormFields || []).filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
-                        <div key={f.id}>
-                          <label style={{ fontSize: "0.75rem", color: "#666", display: "block", marginBottom: 4 }}>{f.label}</label>
-                          <select value={fieldFilterValues[f.id] || ""}
-                            onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
-                            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}>
-                            <option value="">Toutes</option>
-                            {f.type === "CHECKBOX" ? (
-                              <>
-                                <option value="true">Oui</option>
-                                <option value="false">Non</option>
-                              </>
-                            ) : (
-                              f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
-                            )}
-                          </select>
-                        </div>
-                      ))}
-                      {activeCount > 0 && (
-                        <button
-                          onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "" }); setFieldFilterValues({}); }}
-                          style={{ background: "none", border: "none", color: "#dc2626", fontSize: "0.8rem", textAlign: "left", cursor: "pointer", padding: 0 }}
-                        >
-                          Réinitialiser les filtres
-                        </button>
+            {showApplicationFiltersMenu && (
+              <div className="pd-filters__panel">
+                <div className="pd-field">
+                  <label>Statut</label>
+                  <select value={applicationFilters.status}
+                    onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
+                    className="pd-select">
+                    <option value="">Toutes</option>
+                    <option value="PENDING">En attente</option>
+                    <option value="ACCEPTED">Acceptée</option>
+                  </select>
+                </div>
+                <div className="pd-field-row">
+                  <div className="pd-field">
+                    <label>Reçue depuis</label>
+                    <input type="date" value={applicationFilters.dateFrom}
+                      onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
+                      className="pd-input" />
+                  </div>
+                  <div className="pd-field">
+                    <label>Jusqu'au</label>
+                    <input type="date" value={applicationFilters.dateTo}
+                      onChange={(e) => setApplicationFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
+                      className="pd-input" />
+                  </div>
+                </div>
+                {(program.applicationFormFields || []).filter((f) => f.type === "SELECT" || f.type === "CHECKBOX").map((f) => (
+                  <div key={f.id} className="pd-field">
+                    <label>{f.label}</label>
+                    <select value={fieldFilterValues[f.id] || ""}
+                      onChange={(e) => setFieldFilterValues((prev) => ({ ...prev, [f.id]: e.target.value }))}
+                      className="pd-select">
+                      <option value="">Toutes</option>
+                      {f.type === "CHECKBOX" ? (
+                        <>
+                          <option value="true">Oui</option>
+                          <option value="false">Non</option>
+                        </>
+                      ) : (
+                        f.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)
                       )}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+                    </select>
+                  </div>
+                ))}
+                {activeFilterCount > 0 && (
+                  <button type="button"
+                    onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "" }); setFieldFilterValues({}); }}
+                    className="pd-btn pd-btn--linklike">
+                    Réinitialiser les filtres
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {applicationsLoading ? (
-          <p style={{ color: "#666" }}>Chargement...</p>
+          <p className="pd-muted">Chargement...</p>
         ) : applications.length === 0 ? (
-          <p style={{ color: "#666" }}>Aucune candidature ne correspond à ces critères.</p>
+          <p className="pd-muted">Aucune candidature ne correspond à ces critères.</p>
         ) : (
           <>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+            <div className="pd-table-wrap">
+              <table className="pd-table">
                 <thead>
-                  <tr style={{ background: "#F5F0E8", textAlign: "left" }}>
-                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Candidat</th>
-                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Email</th>
-                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Téléphone</th>
-                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Statut</th>
-                    <th style={{ padding: 8, border: "1px solid #ddd" }}>Actions</th>
+                  <tr>
+                    <th>Candidat</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -517,39 +574,33 @@ export default function PartnerDashboard() {
                       firstName: a.applicantFirstName, lastName: a.applicantLastName,
                     });
                     return (
-                    <tr key={a._id} style={blacklistEntry ? { background: "#FFE8EA" } : undefined}>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>
-                        {a.applicantFirstName} {a.applicantLastName}
-                        {blacklistEntry && <BlacklistBadge entry={blacklistEntry} />}
-                      </td>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantEmail}</td>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>{a.applicantPhone || "—"}</td>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>
-                        <span style={{
-                          padding: "2px 10px", borderRadius: 999, fontSize: "0.75rem", fontWeight: 700,
-                          background: a.status === "ACCEPTED" ? "#D8F3E3" : "#FDF4E7",
-                          color: a.status === "ACCEPTED" ? "#2D6A4F" : "#A87028",
-                        }}>
-                          {a.status === "ACCEPTED" ? "Acceptée" : "En attente"}
-                        </span>
-                      </td>
-                      <td style={{ padding: 8, border: "1px solid #eee" }}>
-                        <ReportVolunteerButton programId={selectedProgramId} applicationId={a._id} />
-                      </td>
-                    </tr>
+                      <tr key={a._id} className={blacklistEntry ? "pd-row--flagged" : ""}>
+                        <td>
+                          {a.applicantFirstName} {a.applicantLastName}
+                          {blacklistEntry && <BlacklistBadge entry={blacklistEntry} />}
+                        </td>
+                        <td>{a.applicantEmail}</td>
+                        <td>{a.applicantPhone || "—"}</td>
+                        <td>
+                          <span className={`pd-badge ${a.status === "ACCEPTED" ? "pd-badge--success" : "pd-badge--warning"}`}>
+                            {a.status === "ACCEPTED" ? "Acceptée" : "En attente"}
+                          </span>
+                        </td>
+                        <td>
+                          <ReportVolunteerButton programId={selectedProgramId} applicationId={a._id} />
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, fontSize: "0.85rem" }}>
-              <button onClick={() => loadApplications(applicationsPage - 1)} disabled={applicationsPage <= 1}
-                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", cursor: applicationsPage <= 1 ? "not-allowed" : "pointer", opacity: applicationsPage <= 1 ? 0.4 : 1 }}>
+            <div className="pd-pagination">
+              <button type="button" onClick={() => loadApplications(applicationsPage - 1)} disabled={applicationsPage <= 1} className="pd-btn pd-btn--ghost">
                 ← Précédent
               </button>
-              <span style={{ color: "#666" }}>Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} candidature(s)</span>
-              <button onClick={() => loadApplications(applicationsPage + 1)} disabled={applicationsPage >= applicationsTotalPages}
-                style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #ccc", background: "#fff", cursor: applicationsPage >= applicationsTotalPages ? "not-allowed" : "pointer", opacity: applicationsPage >= applicationsTotalPages ? 0.4 : 1 }}>
+              <span className="pd-pagination__info">Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} candidature(s)</span>
+              <button type="button" onClick={() => loadApplications(applicationsPage + 1)} disabled={applicationsPage >= applicationsTotalPages} className="pd-btn pd-btn--ghost">
                 Suivant →
               </button>
             </div>
@@ -557,100 +608,104 @@ export default function PartnerDashboard() {
         )}
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h3>Progression dans le temps</h3>
+      {/* Graphique */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "220ms" }}>
+        <h3 className="pd-card__title">Progression dans le temps</h3>
         <ImpactChart data={progressOverTime} />
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h2 style={{ marginBottom: 4 }}>{program.title}</h2>
-        {program.description && <p style={{ color: "#555", marginBottom: 4 }}>{program.description}</p>}
-        <p style={{ fontSize: "0.85rem", color: "#777" }}>
+      {/* Programme + rapport */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "260ms" }}>
+        <h2 className="pd-card__heading">{program.title}</h2>
+        {program.description && <p className="pd-muted pd-program__desc">{program.description}</p>}
+        <p className="pd-program__meta">
           {program.location && <>📍 {program.location} · </>}
           {program.startDate && <>Début : {new Date(program.startDate).toLocaleDateString("fr-FR")}</>}
           {program.endDate && <> · Fin : {new Date(program.endDate).toLocaleDateString("fr-FR")}</>}
         </p>
-        <button
-          onClick={downloadReport}
-          disabled={downloadingReport}
-          style={{ marginTop: 8, background: "#C9903A", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, cursor: "pointer" }}
-        >
+        <button type="button" onClick={downloadReport} disabled={downloadingReport} className="pd-btn pd-btn--accent pd-program__cta">
           {downloadingReport ? "Génération..." : "📄 Télécharger le rapport PDF"}
         </button>
       </section>
 
-      <section style={{ marginBottom: 28 }}>
-        <h3>Volontaires à mission validée ({validatedVolunteers.length})</h3>
+      {/* Volontaires validés */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "300ms" }}>
+        <h3 className="pd-card__title">Volontaires à mission validée <span className="pd-count">({validatedVolunteers.length})</span></h3>
         {validatedVolunteers.length === 0 ? (
-          <p style={{ color: "#666" }}>Aucun volontaire n'a encore validé sa mission sur ce programme.</p>
+          <p className="pd-muted">Aucun volontaire n'a encore validé sa mission sur ce programme.</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {validatedVolunteers.map((v) => (
-              <details key={v.volunteerId} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <span>{v.prenom} {v.nom} — {v.approvedTasks.length} tâche(s) approuvée(s)</span>
-                  <ReportVolunteerButton programId={selectedProgramId} volunteerId={v.volunteerId} />
-                </summary>
-                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {v.approvedTasks.map((t, i) => (
-                    <div key={i} style={{ borderTop: "1px solid #eee", paddingTop: 8 }}>
-                      <strong>{t.taskTitle}</strong>
-                      {t.occurrenceDate && (
-                        <span style={{ fontSize: "0.75rem", color: "#888", marginLeft: 8 }}>
-                          ({new Date(t.occurrenceDate).toLocaleDateString("fr-FR")})
-                        </span>
-                      )}
-                      <dl style={{ fontSize: "0.9rem", marginTop: 4 }}>
-                        {(t.proofFields || []).map((f) => {
-                          const value = t.responses?.[f.id];
-                          if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) return null;
-                          return (
-                            <div key={f.id}>
-                              <dt style={{ display: "inline", fontWeight: 600 }}>{f.label} : </dt>
-                              <dd style={{ display: "inline" }}>
-                                {f.type === "URL" ? (
-                                  <a href={value} target="_blank" rel="noreferrer">{value}</a>
-                                ) : f.type === "IMAGE" ? (
-                                  <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
-                                    {value.map((url, idx) => (
-                                      <a key={idx} href={url} target="_blank" rel="noreferrer">
-                                        <img src={url} alt="" style={{ height: 56, width: 56, objectFit: "cover", borderRadius: 6 }} />
-                                      </a>
-                                    ))}
-                                  </span>
-                                ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : String(value)}
-                              </dd>
-                            </div>
-                          );
-                        })}
-                      </dl>
+          <div className="pd-acc-list">
+            {validatedVolunteers.map((v) => {
+              const isOpen = openVolunteers.has(v.volunteerId);
+              return (
+                <div key={v.volunteerId} className={`pd-acc ${isOpen ? "pd-acc--open" : ""}`}>
+                  <button type="button" onClick={() => toggleVolunteer(v.volunteerId)} className="pd-acc__header">
+                    <span className="pd-acc__name">{v.prenom} {v.nom} <span className="pd-muted">— {v.approvedTasks.length} tâche(s) approuvée(s)</span></span>
+                    <span className="pd-acc__right">
+                      <ReportVolunteerButton programId={selectedProgramId} volunteerId={v.volunteerId} />
+                      <span className="pd-chevron pd-acc__chevron">▾</span>
+                    </span>
+                  </button>
+                  <div className="pd-acc__panel">
+                    <div className="pd-acc__panel-inner">
+                      {v.approvedTasks.map((t, i) => (
+                        <div key={i} className="pd-task">
+                          <strong>{t.taskTitle}</strong>
+                          {t.occurrenceDate && (
+                            <span className="pd-task__date">({new Date(t.occurrenceDate).toLocaleDateString("fr-FR")})</span>
+                          )}
+                          <dl className="pd-task__fields">
+                            {(t.proofFields || []).map((f) => {
+                              const value = t.responses?.[f.id];
+                              if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) return null;
+                              return (
+                                <div key={f.id} className="pd-task__field">
+                                  <dt>{f.label} : </dt>
+                                  <dd>
+                                    {f.type === "URL" ? (
+                                      <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                                    ) : f.type === "IMAGE" ? (
+                                      <span className="pd-task__thumbs">
+                                        {value.map((url, idx) => (
+                                          <a key={idx} href={url} target="_blank" rel="noreferrer">
+                                            <img src={url} alt="" />
+                                          </a>
+                                        ))}
+                                      </span>
+                                    ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : String(value)}
+                                  </dd>
+                                </div>
+                              );
+                            })}
+                          </dl>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </details>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
 
-      <section>
-        <h3>Vos échanges avec l'équipe AMP BENIN</h3>
+      {/* Échanges */}
+      <section className="pd-card pd-fade" style={{ "--pd-delay": "340ms" }}>
+        <h3 className="pd-card__title">Vos échanges avec l'équipe AMP BENIN</h3>
         {myComments.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+          <div className="pd-thread">
             {myComments.map((c) => (
-              <div key={c._id} style={{ border: "1px solid #eee", borderRadius: 8, padding: 12 }}>
-                <div style={{ fontSize: "0.75rem", color: "#888", marginBottom: 4 }}>
-                  {new Date(c.createdAt).toLocaleDateString("fr-FR")}
-                </div>
-                <p style={{ margin: "0 0 8px", whiteSpace: "pre-line" }}>{c.text}</p>
+              <div key={c._id} className="pd-bubble">
+                <div className="pd-bubble__date">{new Date(c.createdAt).toLocaleDateString("fr-FR")}</div>
+                <p className="pd-bubble__text">{c.text}</p>
                 {c.reply ? (
-                  <div style={{ background: "#F5F0E8", borderRadius: 6, padding: 8, fontSize: "0.9rem" }}>
+                  <div className="pd-bubble__reply">
                     <strong>Réponse de l'équipe</strong>
-                    {c.repliedAt && <span style={{ fontSize: "0.7rem", color: "#888", marginLeft: 6 }}>({new Date(c.repliedAt).toLocaleDateString("fr-FR")})</span>}
-                    <p style={{ margin: "4px 0 0", whiteSpace: "pre-line" }}>{c.reply}</p>
+                    {c.repliedAt && <span className="pd-bubble__reply-date">({new Date(c.repliedAt).toLocaleDateString("fr-FR")})</span>}
+                    <p>{c.reply}</p>
                   </div>
                 ) : (
-                  <p style={{ margin: 0, fontSize: "0.8rem", color: "#999", fontStyle: "italic" }}>En attente de réponse</p>
+                  <p className="pd-bubble__pending">En attente de réponse</p>
                 )}
               </div>
             ))}
@@ -661,13 +716,273 @@ export default function PartnerDashboard() {
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Suggestion, remarque, question..."
-          style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 8 }}
+          className="pd-textarea"
         />
-        <button onClick={submitComment} disabled={submittingComment || !comment.trim()}
-          style={{ marginTop: 8, background: "#1B4332", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, cursor: "pointer" }}>
+        <button type="button" onClick={submitComment} disabled={submittingComment || !comment.trim()} className="pd-btn pd-btn--primary pd-comment__cta">
           {submittingComment ? "Envoi..." : "Envoyer"}
         </button>
       </section>
+
+      <style>{PD_STYLES}</style>
     </div>
   );
 }
+
+const PD_STYLES = `
+  .pd { display: flex; flex-direction: column; gap: 22px; font-family: var(--font-body, sans-serif); color: var(--col-text, #1A1A1A); }
+
+  /* ── États (chargement / erreur / vide) ── */
+  .pd-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    padding: 64px 24px; color: var(--col-text-muted, #7A7A7A); text-align: center;
+  }
+  .pd-state--error { color: var(--col-error, #C1121F); }
+  .pd-state__icon { font-size: 2rem; }
+  .pd-spinner {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 3px solid var(--col-primary-bg, #E8F5EF); border-top-color: var(--col-primary, #1B4332);
+    animation: pd-spin 800ms linear infinite;
+  }
+  @keyframes pd-spin { to { transform: rotate(360deg); } }
+
+  .pd-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  .pd-muted { color: var(--col-text-muted, #7A7A7A); }
+  .pd-count { color: var(--col-text-muted, #7A7A7A); font-weight: 400; font-size: 0.85em; }
+
+  /* ── Animations d'entrée ── */
+  @keyframes pd-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .pd-fade { opacity: 0; animation: pd-fade-up 560ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; animation-delay: var(--pd-delay, 0ms); }
+
+  /* ── Hero co-brandé ── */
+  .pd-hero {
+    position: relative; overflow: hidden; border-radius: 24px; padding: 28px 32px;
+    background: linear-gradient(135deg, var(--col-primary-dark, #0F2A1E) 0%, var(--col-primary, #1B4332) 60%, var(--col-primary-light, #2D6A4F) 100%);
+    color: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
+    box-shadow: var(--sh-lg, 0 8px 40px rgba(27,67,50,0.16));
+    animation: pd-fade-up 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .pd-hero__glow {
+    position: absolute; top: -80px; right: -60px; width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,144,58,0.35) 0%, rgba(201,144,58,0) 70%);
+    pointer-events: none; animation: pd-glow 5s ease-in-out infinite alternate;
+  }
+  @keyframes pd-glow { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.15); opacity: 1; } }
+  .pd-hero__content { display: flex; align-items: center; gap: 16px; z-index: 1; }
+  .pd-hero__logo {
+    height: 64px; width: 64px; border-radius: 16px; flex-shrink: 0;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  .pd-hero__logo--img { object-fit: cover; border: 2px solid rgba(255,255,255,0.35); }
+  .pd-hero__logo--fallback {
+    background: rgba(255,255,255,0.14); border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700;
+  }
+  .pd-hero__tag {
+    display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    background: rgba(201,144,58,0.25); color: var(--col-accent-light, #E8C47A);
+    padding: 3px 10px; border-radius: 999px; font-weight: 700; margin-bottom: 6px;
+  }
+  .pd-hero__title {
+    font-family: var(--font-heading, serif); font-size: 1.5rem; font-weight: 600; margin: 0 0 6px;
+    line-height: 1.25;
+  }
+  .pd-hero__x { color: var(--col-accent-light, #E8C47A); }
+  .pd-hero__logo-link {
+    font-size: 0.78rem; color: rgba(255,255,255,0.75); cursor: pointer; text-decoration: underline;
+    text-underline-offset: 3px; transition: color 150ms ease;
+  }
+  .pd-hero__logo-link:hover { color: #fff; }
+  .pd-hero__picker {
+    z-index: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px; padding: 10px 16px; backdrop-filter: blur(6px);
+  }
+  .pd-hero__picker-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.65); margin-bottom: 4px; }
+  .pd-select--hero {
+    background: rgba(255,255,255,0.95); color: var(--col-primary-dark, #0F2A1E); border: none;
+    border-radius: 8px; padding: 7px 10px; font-weight: 600; min-width: 220px;
+  }
+
+  /* ── Phrase d'impact ── */
+  .pd-impact {
+    display: flex; align-items: flex-start; gap: 10px; padding: 18px 24px;
+    background: var(--col-accent-bg, #FDF4E7); border-left: 4px solid var(--col-accent, #C9903A);
+    border-radius: 14px; font-family: var(--font-heading, serif); font-size: 1.1rem; color: var(--col-primary-dark, #0F2A1E);
+  }
+  .pd-impact__mark { font-size: 2rem; line-height: 1; color: var(--col-accent, #C9903A); font-family: var(--font-heading, serif); }
+  .pd-impact p { margin: 4px 0 0; }
+
+  /* ── Cartes génériques ── */
+  .pd-card {
+    background: #fff; border: 1px solid var(--col-border-light, #EEEAE3); border-radius: 18px;
+    padding: 24px 28px; box-shadow: var(--sh-xs, 0 1px 3px rgba(27,67,50,0.06));
+    transition: box-shadow 250ms ease;
+  }
+  .pd-card:hover { box-shadow: var(--sh-sm, 0 2px 8px rgba(27,67,50,0.09)); }
+  .pd-card__title {
+    font-family: var(--font-heading, serif); color: var(--col-primary-dark, #0F2A1E); font-size: 1.1rem;
+    margin: 0 0 16px; font-weight: 600;
+  }
+  .pd-card__heading { font-family: var(--font-heading, serif); color: var(--col-primary-dark, #0F2A1E); margin: 0 0 4px; }
+
+  /* ── Chiffres clés ── */
+  .pd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+  .pd-stat {
+    position: relative; background: var(--col-primary-bg, #E8F5EF); border-radius: 14px; padding: 18px;
+    text-align: center; overflow: hidden;
+    opacity: 0; animation: pd-fade-up 500ms cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+    animation-delay: var(--pd-stat-delay, 0ms);
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+  .pd-stat::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--col-primary, #1B4332), var(--col-accent, #C9903A));
+  }
+  .pd-stat:hover { transform: translateY(-3px); box-shadow: var(--sh-sm, 0 2px 8px rgba(27,67,50,0.09)); }
+  .pd-stat__icon { font-size: 1.4rem; display: block; margin-bottom: 6px; }
+  .pd-stat__value { font-family: var(--font-heading, serif); font-size: 1.9rem; font-weight: 700; color: var(--col-primary, #1B4332); }
+  .pd-stat__label { font-size: 0.78rem; color: var(--col-text-sec, #4A4A4A); margin-top: 4px; }
+
+  /* ── Galerie ── */
+  .pd-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .pd-gallery__item {
+    position: relative; display: block; border-radius: 12px; overflow: hidden; aspect-ratio: 1 / 1;
+    opacity: 0; animation: pd-fade-up 450ms ease forwards; animation-delay: var(--pd-stat-delay, 0ms);
+    box-shadow: var(--sh-xs, 0 1px 3px rgba(27,67,50,0.06));
+  }
+  .pd-gallery__item img { width: 100%; height: 100%; object-fit: cover; transition: transform 400ms cubic-bezier(0.25,0.46,0.45,0.94); display: block; }
+  .pd-gallery__item:hover img { transform: scale(1.12); }
+  .pd-gallery__caption {
+    position: absolute; inset: auto 0 0 0; padding: 8px 10px 6px; font-size: 0.7rem; color: #fff;
+    background: linear-gradient(0deg, rgba(15,42,30,0.85), rgba(15,42,30,0));
+    opacity: 0; transform: translateY(6px); transition: opacity 220ms ease, transform 220ms ease;
+  }
+  .pd-gallery__item:hover .pd-gallery__caption { opacity: 1; transform: translateY(0); }
+
+  /* ── Barre d'outils / filtres ── */
+  .pd-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: flex-start; }
+  .pd-toolbar__search { flex: 1 1 240px; }
+  .pd-filters { position: relative; }
+  .pd-filters__panel {
+    position: absolute; right: 0; z-index: 10; margin-top: 6px; width: 280px; background: #fff;
+    border: 1px solid var(--col-border-light, #EEEAE3); border-radius: 14px; box-shadow: var(--sh-lg, 0 8px 40px rgba(27,67,50,0.16));
+    padding: 18px; display: flex; flex-direction: column; gap: 14px;
+    animation: pd-fade-up 180ms ease;
+  }
+  .pd-field { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .pd-field label { font-size: 0.72rem; color: var(--col-text-muted, #7A7A7A); text-transform: uppercase; letter-spacing: 0.04em; }
+  .pd-field-row { display: flex; gap: 10px; }
+
+  /* ── Champs de formulaire ── */
+  .pd-input, .pd-select, .pd-textarea {
+    width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--col-border, #DDD8CE);
+    border-radius: 10px; font-family: inherit; font-size: 0.88rem; color: var(--col-text, #1A1A1A);
+    background: #fff; transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .pd-input:focus, .pd-select:focus, .pd-textarea:focus {
+    outline: none; border-color: var(--col-primary-light, #2D6A4F); box-shadow: 0 0 0 3px var(--col-primary-bg, #E8F5EF);
+  }
+  .pd-textarea { resize: vertical; }
+
+  /* ── Boutons ── */
+  .pd-btn {
+    display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 10px;
+    padding: 9px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    font-family: inherit;
+  }
+  .pd-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .pd-btn--primary { background: var(--col-primary, #1B4332); color: #fff; }
+  .pd-btn--primary:hover:not(:disabled) { background: var(--col-primary-light, #2D6A4F); transform: translateY(-1px); box-shadow: var(--sh-sm, 0 2px 8px rgba(27,67,50,0.09)); }
+  .pd-btn--accent { background: var(--col-accent, #C9903A); color: #fff; }
+  .pd-btn--accent:hover:not(:disabled) { background: var(--col-accent-dark, #A87028); transform: translateY(-1px); box-shadow: var(--sh-accent, 0 4px 24px rgba(201,144,58,0.28)); }
+  .pd-btn--ghost { background: #fff; color: var(--col-text-sec, #4A4A4A); border: 1px solid var(--col-border, #DDD8CE); }
+  .pd-btn--ghost:hover:not(:disabled) { background: var(--col-surface, #F5F0E8); border-color: var(--col-primary-light, #2D6A4F); color: var(--col-primary-dark, #0F2A1E); }
+  .pd-btn--filter { background: #fff; color: var(--col-text-sec, #4A4A4A); border: 1px solid var(--col-border, #DDD8CE); }
+  .pd-btn--filter.is-active { border-color: var(--col-accent, #C9903A); background: var(--col-accent-bg, #FDF4E7); color: var(--col-accent-xdark, #7A5018); }
+  .pd-btn--filter:hover { border-color: var(--col-accent, #C9903A); }
+  .pd-btn--linklike { background: none; color: var(--col-error, #C1121F); font-size: 0.78rem; text-align: left; padding: 0; }
+  .pd-btn--linklike:hover { text-decoration: underline; }
+  .pd-chevron { display: inline-block; transition: transform 200ms ease; font-size: 0.7rem; }
+  .pd-chevron.is-open { transform: rotate(180deg); }
+
+  /* ── Badges ── */
+  .pd-badge {
+    display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 0.74rem; font-weight: 700;
+  }
+  .pd-badge--success { background: var(--col-success-bg, #D8F3E3); color: var(--col-success, #40916C); }
+  .pd-badge--warning { background: var(--col-accent-bg, #FDF4E7); color: var(--col-accent-dark, #A87028); }
+  .pd-badge--accent { background: var(--col-accent, #C9903A); color: #fff; font-size: 0.65rem; padding: 1px 7px; margin-left: 4px; }
+
+  /* ── Tableau ── */
+  .pd-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--col-border-light, #EEEAE3); }
+  .pd-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  .pd-table thead th {
+    text-align: left; padding: 11px 14px; background: var(--col-surface, #F5F0E8); color: var(--col-text-sec, #4A4A4A);
+    font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.04em;
+    border-bottom: 2px solid var(--col-border, #DDD8CE);
+  }
+  .pd-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--col-border-light, #EEEAE3); vertical-align: middle; }
+  .pd-table tbody tr { transition: background 150ms ease; }
+  .pd-table tbody tr:hover { background: var(--col-primary-bg, #E8F5EF); }
+  .pd-table tbody tr:last-child td { border-bottom: none; }
+  .pd-row--flagged { background: var(--col-error-bg, #FFE8EA); box-shadow: inset 3px 0 0 var(--col-error, #C1121F); }
+  .pd-row--flagged:hover { background: #ffdadd; }
+
+  .pd-pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 0.85rem; }
+  .pd-pagination__info { color: var(--col-text-muted, #7A7A7A); }
+
+  /* ── Graphique ── */
+  .pd-chart { height: 240px; }
+
+  /* ── Programme / rapport ── */
+  .pd-program__desc { margin: 0 0 4px; }
+  .pd-program__meta { font-size: 0.85rem; color: var(--col-text-muted, #7A7A7A); margin: 0 0 14px; }
+
+  /* ── Accordéon volontaires ── */
+  .pd-acc-list { display: flex; flex-direction: column; gap: 10px; }
+  .pd-acc { border: 1px solid var(--col-border-light, #EEEAE3); border-radius: 14px; overflow: hidden; transition: border-color 200ms ease, box-shadow 200ms ease; }
+  .pd-acc--open { border-color: var(--col-primary-light, #2D6A4F); box-shadow: var(--sh-xs, 0 1px 3px rgba(27,67,50,0.06)); }
+  .pd-acc__header {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: #fff; border: none; padding: 14px 18px; cursor: pointer; text-align: left; font-family: inherit;
+    transition: background 150ms ease;
+  }
+  .pd-acc__header:hover { background: var(--col-surface, #F5F0E8); }
+  .pd-acc__name { font-weight: 700; color: var(--col-text, #1A1A1A); font-size: 0.92rem; }
+  .pd-acc__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .pd-acc__chevron { color: var(--col-primary, #1B4332); font-size: 0.85rem; }
+  .pd-acc__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms cubic-bezier(0.25,0.46,0.45,0.94); }
+  .pd-acc--open .pd-acc__panel { grid-template-rows: 1fr; }
+  .pd-acc__panel-inner { overflow: hidden; }
+  .pd-task { padding: 12px 18px; border-top: 1px solid var(--col-border-light, #EEEAE3); font-size: 0.88rem; }
+  .pd-task__date { font-size: 0.72rem; color: var(--col-text-muted, #7A7A7A); margin-left: 8px; }
+  .pd-task__fields { margin: 6px 0 0; }
+  .pd-task__field dt { display: inline; font-weight: 600; }
+  .pd-task__field dd { display: inline; margin: 0; }
+  .pd-task__thumbs { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .pd-task__thumbs img { height: 52px; width: 52px; object-fit: cover; border-radius: 8px; transition: transform 200ms ease; }
+  .pd-task__thumbs img:hover { transform: scale(1.08); }
+
+  /* ── Échanges ── */
+  .pd-thread { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .pd-bubble {
+    border: 1px solid var(--col-border-light, #EEEAE3); border-radius: 14px; padding: 14px 16px;
+    background: var(--col-bg, #FAFAF8);
+  }
+  .pd-bubble__date { font-size: 0.72rem; color: var(--col-text-muted, #7A7A7A); margin-bottom: 5px; }
+  .pd-bubble__text { margin: 0 0 8px; white-space: pre-line; }
+  .pd-bubble__reply { background: var(--col-primary-bg, #E8F5EF); border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; }
+  .pd-bubble__reply strong { color: var(--col-primary-dark, #0F2A1E); }
+  .pd-bubble__reply-date { font-size: 0.68rem; color: var(--col-text-muted, #7A7A7A); margin-left: 6px; }
+  .pd-bubble__reply p { margin: 4px 0 0; white-space: pre-line; }
+  .pd-bubble__pending { margin: 0; font-size: 0.78rem; color: var(--col-text-muted, #7A7A7A); font-style: italic; }
+  .pd-comment__cta { margin-top: 10px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .pd-hero { padding: 22px; flex-direction: column; align-items: flex-start; }
+    .pd-card { padding: 18px 16px; }
+    .pd-toolbar { flex-direction: column; align-items: stretch; }
+    .pd-filters__panel { position: static; width: 100%; margin-top: 10px; }
+  }
+`;

@@ -18,13 +18,34 @@ import PartnerDashboard from "@/components/gestionamp/dashboard/partenaire/Partn
 
 <Layout title="Dashboard Partenaire | AMP BENIN">
   <main class="dashboard partenaire-dashboard">
-    <header class="dashboard-header">
+    <header class="dashboard-header partenaire-header">
       <h1>Dashboard — Partenaire</h1>
       <p>Statistiques, impact et résultats des programmes que vous suivez</p>
     </header>
 
-    <section class="dashboard-section">
-      <PartnerDashboard client:load />
-    </section>
+    <PartnerDashboard client:load />
   </main>
 </Layout>
+
+<style>
+  /* Habillage premium scopé à cette seule page — n'affecte pas les autres
+     rôles (ADMIN/EC/IS/SUPERVISEUR) qui partagent GestionAMPLayout.astro.
+     Volontairement léger : PartnerDashboard.jsx affiche déjà son propre
+     bandeau (dégradé vert + logo co-brandé) juste en dessous — un second
+     bandeau sombre ici ferait doublon. On se contente d'un léger accent
+     doré sur le titre. Le contenu du tableau de bord est maintenant rendu
+     directement dans <main> (plus dans .dashboard-section, dont les
+     boutons/couleurs globaux causaient le bug de contraste "boutons
+     blancs illisibles") — PartnerDashboard.jsx a sa propre feuille de
+     style premium (classes pd-*), autosuffisante.
+   */
+  .partenaire-header h1 {
+    background: linear-gradient(90deg, var(--col-primary-dark), var(--col-primary-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .partenaire-header {
+    border-bottom-color: var(--col-accent);
+  }
+</style>

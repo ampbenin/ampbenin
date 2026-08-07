@@ -25,32 +25,37 @@ export function BlacklistBadge({ entry }) {
   if (!entry) return null;
 
   return (
-    <span style={{ position: "relative", display: "inline-block", marginLeft: 6 }}>
-      <button
-        onClick={(e) => { e.stopPropagation(); setShow((v) => !v); }}
-        style={{
-          background: "#dc2626", color: "#fff", border: "none", borderRadius: 6,
-          padding: "2px 8px", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer",
-        }}
-      >
+    <span className="bkl-wrap">
+      <button type="button" onClick={(e) => { e.stopPropagation(); setShow((v) => !v); }} className="bkl-trigger">
         ⚠️ Voir la sanction
       </button>
       {show && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: "absolute", zIndex: 20, top: "120%", left: 0, width: 260,
-            background: "#fff", border: "1px solid #dc2626", borderRadius: 10,
-            padding: 12, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", fontSize: "0.8rem",
-          }}
-        >
-          <strong style={{ color: "#dc2626" }}>Volontaire banni</strong>
-          <p style={{ margin: "4px 0", color: "#666" }}>
-            Le {new Date(entry.bannedAt).toLocaleDateString("fr-FR")}
-          </p>
-          <p style={{ margin: 0, whiteSpace: "pre-line" }}>{entry.reason}</p>
+        <div onClick={(e) => e.stopPropagation()} className="bkl-popover">
+          <strong className="bkl-popover__title">Volontaire banni</strong>
+          <p className="bkl-popover__date">Le {new Date(entry.bannedAt).toLocaleDateString("fr-FR")}</p>
+          <p className="bkl-popover__reason">{entry.reason}</p>
         </div>
       )}
+
+      <style>{`
+        .bkl-wrap { position: relative; display: inline-block; margin-left: 6px; }
+        .bkl-trigger {
+          background: var(--col-error, #C1121F); color: #fff; border: none; border-radius: 999px;
+          padding: 3px 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+          transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+        }
+        .bkl-trigger:hover { background: #96101c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(193, 18, 31, 0.3); }
+        .bkl-popover {
+          position: absolute; z-index: 20; top: 130%; left: 0; width: 260px;
+          background: #fff; border: 1px solid rgba(193, 18, 31, 0.35); border-radius: 12px;
+          padding: 14px; box-shadow: 0 12px 32px rgba(15, 42, 30, 0.2); font-size: 0.8rem;
+          animation: bkl-pop 180ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .bkl-popover__title { color: var(--col-error, #C1121F); display: block; margin-bottom: 4px; }
+        .bkl-popover__date { margin: 4px 0; color: var(--col-text-muted, #666); }
+        .bkl-popover__reason { margin: 0; color: var(--col-text, #1A1A1A); white-space: pre-line; }
+        @keyframes bkl-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </span>
   );
 }
