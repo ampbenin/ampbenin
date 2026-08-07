@@ -127,11 +127,22 @@ export default function PartnerDashboard() {
   const [me, setMe] = useState(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
+  // Logo AMP BENIN — réglage global piloté depuis l'espace ADMIN (voir
+  // SiteSettingsManager.jsx), affiché à côté du logo du partenaire dans
+  // l'en-tête co-brandé. null tant que l'ADMIN n'en a pas défini un —
+  // aucune image de repli forcée, la mise en page s'adapte à son absence.
+  const [ampLogoUrl, setAmpLogoUrl] = useState(null);
+
   const [myComments, setMyComments] = useState([]);
   const [comment, setComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const [downloadingReport, setDownloadingReport] = useState(false);
+  const [downloadingBeneficiaries, setDownloadingBeneficiaries] = useState(false);
+  // Décochée par défaut (décision utilisateur, 2026-08-07) : la liste des
+  // bénéficiaires n'apparaît dans le rapport complet que si explicitement
+  // demandée.
+  const [includeBeneficiaries, setIncludeBeneficiaries] = useState(false);
 
   // Accordéon des volontaires validés (fluide, voir .pd-acc dans le CSS).
   const [openVolunteers, setOpenVolunteers] = useState(() => new Set());
@@ -244,10 +255,20 @@ export default function PartnerDashboard() {
     }
   };
 
+  const loadSiteSettings = async () => {
+    try {
+      const res = await adminFetch("/api/site-settings");
+      setAmpLogoUrl(res?.ampLogoUrl || null);
+    } catch (err) {
+      console.error("Erreur chargement réglages du site", err);
+    }
+  };
+
   useEffect(() => {
     loadPrograms();
     loadMe();
     loadBlacklist();
+    loadSiteSettings();
   }, []);
 
   useEffect(() => {
@@ -310,29 +331,44 @@ export default function PartnerDashboard() {
     }
   };
 
-  const downloadReport = async () => {
-    setDownloadingReport(true);
+  // downloadPdf() est partagé par les 2 boutons de téléchargement (rapport
+  // complet / liste des bénéficiaires seule) — même endpoint côté serveur,
+  // seuls les query params et le préfixe de nom de fichier changent (voir
+  // controllers/volunteerProgramPartnerController.js#downloadImpactReport).
+  const downloadPdf = async ({ query, filenamePrefix, setDownloading }) => {
+    setDownloading(true);
     try {
       const token = localStorage.getItem("amp_token");
-      const res = await fetch(`${API_BASE}/api/volunteer-partner/programs/${selectedProgramId}/report.pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const url = `${API_BASE}/api/volunteer-partner/programs/${selectedProgramId}/report.pdf${query}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Erreur lors de la génération du rapport");
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `rapport-impact-${(data?.program?.title || "programme").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`;
+      a.href = blobUrl;
+      a.download = `${filenamePrefix}-${(data?.program?.title || "programme").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(blobUrl);
     } catch (err) {
       alert(err.message || "Erreur lors du téléchargement du rapport");
     } finally {
-      setDownloadingReport(false);
+      setDownloading(false);
     }
   };
+
+  const downloadReport = () => downloadPdf({
+    query: includeBeneficiaries ? "?includeBeneficiaries=true" : "",
+    filenamePrefix: "rapport-impact",
+    setDownloading: setDownloadingReport,
+  });
+
+  const downloadBeneficiariesList = () => downloadPdf({
+    query: "?onlyBeneficiaries=true",
+    filenamePrefix: "liste-beneficiaires",
+    setDownloading: setDownloadingBeneficiaries,
+  });
 
   // Galerie photo : dérivée des preuves de type IMAGE déjà chargées dans
   // `data.validatedVolunteers` — aucun appel réseau supplémentaire.
@@ -408,15 +444,23 @@ export default function PartnerDashboard() {
 
   return (
     <div className="pd">
-      {/* En-tête co-brandé */}
+      {/* En-tête co-brandé — logo AMP BENIN (réglage admin) + logo du partenaire côte à côte */}
       <div className="pd-hero">
         <div className="pd-hero__glow" aria-hidden="true" />
         <div className="pd-hero__content">
-          {me?.partnerLogoUrl ? (
-            <img src={me.partnerLogoUrl} alt="Logo" className="pd-hero__logo pd-hero__logo--img" />
-          ) : (
-            <div className="pd-hero__logo pd-hero__logo--fallback">{(me?.name || "P")[0].toUpperCase()}</div>
-          )}
+          <div className="pd-hero__logos">
+            {ampLogoUrl ? (
+              <img src={ampLogoUrl} alt="AMP BENIN" className="pd-hero__logo pd-hero__logo--img" />
+            ) : (
+              <div className="pd-hero__logo pd-hero__logo--fallback">A</div>
+            )}
+            <span className="pd-hero__x" aria-hidden="true">×</span>
+            {me?.partnerLogoUrl ? (
+              <img src={me.partnerLogoUrl} alt="Logo du partenaire" className="pd-hero__logo pd-hero__logo--img" />
+            ) : (
+              <div className="pd-hero__logo pd-hero__logo--fallback">{(me?.name || "P")[0].toUpperCase()}</div>
+            )}
+          </div>
           <div className="pd-hero__text">
             <span className="pd-hero__tag">Espace partenaire</span>
             <h2 className="pd-hero__title">{me?.name || "Partenaire"} <span className="pd-hero__x">×</span> AMP BENIN</h2>
@@ -475,9 +519,12 @@ export default function PartnerDashboard() {
         )}
       </section>
 
-      {/* Candidatures */}
+      {/* Liste des bénéficiaires — renommé le 2026-08-07 (décision utilisateur) :
+          les candidatures reçues sur ce programme, PENDING = "Bénéficiaire
+          indirect", ACCEPTED = "Bénéficiaire". Toujours restreint côté
+          serveur aux mêmes statuts qu'avant (jamais les rejetées). */}
       <section className="pd-card pd-fade" style={{ "--pd-delay": "180ms" }}>
-        <h3 className="pd-card__title">Candidatures reçues <span className="pd-count">({applicationsTotal})</span></h3>
+        <h3 className="pd-card__title">Liste des bénéficiaires directs et indirects <span className="pd-count">({applicationsTotal})</span></h3>
 
         <div className="pd-toolbar">
           <input
@@ -501,9 +548,9 @@ export default function PartnerDashboard() {
                   <select value={applicationFilters.status}
                     onChange={(e) => setApplicationFilters((prev) => ({ ...prev, status: e.target.value }))}
                     className="pd-select">
-                    <option value="">Toutes</option>
-                    <option value="PENDING">En attente</option>
-                    <option value="ACCEPTED">Acceptée</option>
+                    <option value="">Tous</option>
+                    <option value="PENDING">Bénéficiaire indirect</option>
+                    <option value="ACCEPTED">Bénéficiaire</option>
                   </select>
                 </div>
                 <div className="pd-field-row">
@@ -553,14 +600,14 @@ export default function PartnerDashboard() {
         {applicationsLoading ? (
           <p className="pd-muted">Chargement...</p>
         ) : applications.length === 0 ? (
-          <p className="pd-muted">Aucune candidature ne correspond à ces critères.</p>
+          <p className="pd-muted">Aucun bénéficiaire ne correspond à ces critères.</p>
         ) : (
           <>
             <div className="pd-table-wrap">
               <table className="pd-table">
                 <thead>
                   <tr>
-                    <th>Candidat</th>
+                    <th>Nom</th>
                     <th>Email</th>
                     <th>Téléphone</th>
                     <th>Statut</th>
@@ -583,7 +630,7 @@ export default function PartnerDashboard() {
                         <td>{a.applicantPhone || "—"}</td>
                         <td>
                           <span className={`pd-badge ${a.status === "ACCEPTED" ? "pd-badge--success" : "pd-badge--warning"}`}>
-                            {a.status === "ACCEPTED" ? "Acceptée" : "En attente"}
+                            {a.status === "ACCEPTED" ? "Bénéficiaire" : "Bénéficiaire indirect"}
                           </span>
                         </td>
                         <td>
@@ -599,7 +646,7 @@ export default function PartnerDashboard() {
               <button type="button" onClick={() => loadApplications(applicationsPage - 1)} disabled={applicationsPage <= 1} className="pd-btn pd-btn--ghost">
                 ← Précédent
               </button>
-              <span className="pd-pagination__info">Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} candidature(s)</span>
+              <span className="pd-pagination__info">Page {applicationsPage} / {applicationsTotalPages} — {applicationsTotal} bénéficiaire(s)</span>
               <button type="button" onClick={() => loadApplications(applicationsPage + 1)} disabled={applicationsPage >= applicationsTotalPages} className="pd-btn pd-btn--ghost">
                 Suivant →
               </button>
@@ -623,9 +670,24 @@ export default function PartnerDashboard() {
           {program.startDate && <>Début : {new Date(program.startDate).toLocaleDateString("fr-FR")}</>}
           {program.endDate && <> · Fin : {new Date(program.endDate).toLocaleDateString("fr-FR")}</>}
         </p>
-        <button type="button" onClick={downloadReport} disabled={downloadingReport} className="pd-btn pd-btn--accent pd-program__cta">
-          {downloadingReport ? "Génération..." : "📄 Télécharger le rapport PDF"}
-        </button>
+        <div className="pd-downloads">
+          <label className="pd-checkbox">
+            <input
+              type="checkbox"
+              checked={includeBeneficiaries}
+              onChange={(e) => setIncludeBeneficiaries(e.target.checked)}
+            />
+            Inclure la liste des bénéficiaires dans le rapport
+          </label>
+          <div className="pd-downloads__buttons">
+            <button type="button" onClick={downloadReport} disabled={downloadingReport} className="pd-btn pd-btn--accent">
+              {downloadingReport ? "Génération..." : "📄 Télécharger le rapport"}
+            </button>
+            <button type="button" onClick={downloadBeneficiariesList} disabled={downloadingBeneficiaries} className="pd-btn pd-btn--ghost">
+              {downloadingBeneficiaries ? "Génération..." : "📋 Télécharger la liste des bénéficiaires"}
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* Volontaires validés */}
@@ -768,14 +830,16 @@ const PD_STYLES = `
   }
   @keyframes pd-glow { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.15); opacity: 1; } }
   .pd-hero__content { display: flex; align-items: center; gap: 16px; z-index: 1; }
+  .pd-hero__logos { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .pd-hero__logos .pd-hero__x { font-size: 1.1rem; font-weight: 700; }
   .pd-hero__logo {
-    height: 64px; width: 64px; border-radius: 16px; flex-shrink: 0;
+    height: 56px; width: 56px; border-radius: 14px; flex-shrink: 0;
     box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   }
   .pd-hero__logo--img { object-fit: cover; border: 2px solid rgba(255,255,255,0.35); }
   .pd-hero__logo--fallback {
     background: rgba(255,255,255,0.14); border: 2px solid rgba(255,255,255,0.3);
-    display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700;
   }
   .pd-hero__tag {
     display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
@@ -937,6 +1001,13 @@ const PD_STYLES = `
   /* ── Programme / rapport ── */
   .pd-program__desc { margin: 0 0 4px; }
   .pd-program__meta { font-size: 0.85rem; color: var(--col-text-muted, #7A7A7A); margin: 0 0 14px; }
+  .pd-downloads { display: flex; flex-direction: column; gap: 10px; }
+  .pd-checkbox {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem;
+    color: var(--col-text-sec, #4A4A4A); cursor: pointer; width: fit-content;
+  }
+  .pd-checkbox input { width: 16px; height: 16px; accent-color: var(--col-primary, #1B4332); cursor: pointer; }
+  .pd-downloads__buttons { display: flex; flex-wrap: wrap; gap: 10px; }
 
   /* ── Accordéon volontaires ── */
   .pd-acc-list { display: flex; flex-direction: column; gap: 10px; }

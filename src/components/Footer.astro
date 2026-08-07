@@ -2,6 +2,25 @@
 import { useTranslations, resolveLang } from '../i18n/utils';
 const lang = resolveLang(Astro);
 const t = useTranslations(lang);
+
+// Barre des partenaires — une seule image composée par l'ADMIN (voir
+// src/components/admin/SiteSettingsManager.jsx), affichée en pleine
+// largeur tout en bas du site public (ajouté 2026-08-07, décision
+// utilisateur : footer public entier, pas seulement l'espace partenaire).
+// Récupérée côté serveur (frontmatter Astro), même pattern que le
+// contenu CMS de pages/index.astro — silencieusement absente si l'API
+// est indisponible ou qu'aucune image n'a encore été définie par l'ADMIN.
+let partnersBarImageUrl: string | null = null;
+try {
+  const apiBase = import.meta.env.PUBLIC_API_BASE || '';
+  const res = await fetch(`${apiBase}/api/site-settings`);
+  if (res.ok) {
+    const settingsData = await res.json();
+    partnersBarImageUrl = settingsData?.partnersBarImageUrl || null;
+  }
+} catch {
+  // API indisponible → pas de barre affichée, le reste du footer reste inchangé.
+}
 ---
 
 <footer class="ftr" aria-label={t('common', 'footerAriaLabel')}>
@@ -103,6 +122,15 @@ const t = useTranslations(lang);
     <span class="ftr__legal-sep" aria-hidden="true">·</span>
     <a href="/contact" class="ftr__legal-link">{t('footer', 'terms')}</a>
   </div>
+
+  <!-- Barre des partenaires — tout en bas du site, pleine largeur,
+       s'adapte à l'écran (voir .ftr__partners-bar-img ci-dessous).
+       Absente tant qu'aucune image n'est définie côté ADMIN. -->
+  {partnersBarImageUrl && (
+    <div class="ftr__partners-bar">
+      <img src={partnersBarImageUrl} alt="Nos partenaires" class="ftr__partners-bar-img" />
+    </div>
+  )}
 
 </footer>
 
@@ -299,5 +327,18 @@ const t = useTranslations(lang);
 
   @media (max-width: 639px) {
     .ftr__col--brand { order: 1; }
+  }
+
+  /* ── Barre des partenaires ── */
+  .ftr__partners-bar {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .ftr__partners-bar-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
   }
 </style>

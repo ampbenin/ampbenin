@@ -19,6 +19,7 @@ import SaveVolunteers from '../../SaveVolunteers.jsx';
 import GenerateCertificate from '../../GenerateCertificate.jsx';
 import PartnerActivityOverview from '../PartnerActivityOverview.jsx';
 import DisciplineManager from '../DisciplineManager.jsx';
+import SiteSettingsManager from '../SiteSettingsManager.jsx';
 
 const CONTENT_TABS = [
   { id: 'pages', label: 'Pages du site' },
@@ -29,6 +30,9 @@ const CONTENT_TABS = [
   { id: 'jobs', label: 'Recrutement' },
   { id: 'campaign', label: 'Campagne 16 jours' },
   { id: 'media', label: 'Médiathèque' },
+  // Écriture réservée ADMIN côté serveur (routes/siteSettingsRoute.js) —
+  // retiré de la nav pour un EDITOR, même logique que l'onglet Discipline.
+  { id: 'site-settings', label: 'Réglages du site', adminOnly: true },
 ];
 
 const INBOX_TABS = [
@@ -125,7 +129,7 @@ export default function AdminShell() {
       <aside className="flex flex-col w-full md:w-64 bg-violet-700 text-white p-4 md:sticky md:top-0 md:h-screen">
         <h2 className="text-xl font-bold mb-6">📊 Admin AMP BENIN</h2>
 
-        <NavGroup title="Contenu" tabs={CONTENT_TABS} />
+        <NavGroup title="Contenu" tabs={CONTENT_TABS.filter((t) => !t.adminOnly || role === 'ADMIN')} />
         <NavGroup title="Boîte de réception" tabs={INBOX_TABS} />
         <NavGroup title="Volontaires & Missions" tabs={MISSIONS_TABS.filter((t) => !t.adminOnly || role === 'ADMIN')} />
 
@@ -157,6 +161,7 @@ export default function AdminShell() {
         {active === 'jobs' && <JobPostingsManager />}
         {active === 'campaign' && <CampaignEditor />}
         {active === 'media' && <MediaLibrary />}
+        {active === 'site-settings' && role === 'ADMIN' && <SiteSettingsManager />}
 
         {active === 'contacts' && <ContactManager />}
         {active === 'members' && <MemberManager />}
