@@ -15,6 +15,25 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
 const isUrlLike = (str) => /^https?:\/\/.+/i.test(String(str || ""));
 
+// Sous-champs conditionnels du formulaire de preuve (voir
+// VolunteerProgramEditor.jsx, onglet Tâches) — copie exacte de la même
+// fonction dans VolunteerApplicationForm.jsx (formulaire de candidature),
+// pas de module partagé entre les deux côté frontend dans ce projet.
+const isFieldVisible = (field, answers, fieldsById, guard = new Set()) => {
+  if (!field.conditional?.fieldId) return true;
+  if (guard.has(field.id)) return false;
+
+  const parent = fieldsById.get(field.conditional.fieldId);
+  if (!parent) return false;
+
+  guard.add(field.id);
+  if (!isFieldVisible(parent, answers, fieldsById, guard)) return false;
+
+  const rawParentValue = answers[parent.id];
+  const parentValueStr = typeof rawParentValue === "boolean" ? String(rawParentValue) : (rawParentValue ?? "");
+  return (field.conditional.values || []).includes(parentValueStr);
+};
+
 export default function ProgramProgress({ programId }) {
   const ready = useVolunteerGuard();
   const [data, setData] = useState(null);
@@ -133,7 +152,9 @@ export default function ProgramProgress({ programId }) {
         <p className="pp-empty">Aucune tâche définie pour ce programme pour l'instant.</p>
       ) : (
         <div className="pp-tasks">
-          {data.tasks.map((task) => (
+          {data.tasks.map((task) => {
+            const proofFieldsById = new Map((task.proofFields || []).map((f) => [f.id, f]));
+            return (
             <div key={task.id} className="pp-task">
               <div className="pp-task__head">
                 <strong>{task.title}</strong>
@@ -172,7 +193,9 @@ export default function ProgramProgress({ programId }) {
                         <div className="pp-submit-form">
                           {submitError && <p className="pp-error">{submitError}</p>}
 
-                          {task.proofFields.map((field) => (
+                          {task.proofFields
+                            .filter((field) => isFieldVisible(field, responses, proofFieldsById))
+                            .map((field) => (
                             <div key={field.id} className="pp-field">
                               <label className="pp-field__label">
                                 {field.label} {field.required && <span className="pp-field__required">*</span>}
@@ -282,7 +305,8 @@ export default function ProgramProgress({ programId }) {
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

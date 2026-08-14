@@ -52,6 +52,7 @@ function toDatetimeLocalValue(date) {
 const emptyProofFieldForm = {
   label: "", type: "TEXTAREA", required: true, optionsText: "",
   minLength: "", maxLength: "", pattern: "", min: "", max: "", maxImages: "",
+  conditionalFieldId: "", conditionalValues: [],
 };
 
 const canMoveFieldUp = (fields, index) =>
@@ -636,6 +637,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }));
   };
 
+  const toggleProofConditionalValue = (value) => {
+    setProofFieldForm((prev) => ({
+      ...prev,
+      conditionalValues: prev.conditionalValues.includes(value)
+        ? prev.conditionalValues.filter((v) => v !== value)
+        : [...prev.conditionalValues, value],
+    }));
+  };
+
   const reviewApplication = async (applicationId, action) => {
     try {
       await adminFetch(`/api/volunteer-applications/${applicationId}/${action}`, { method: "PATCH" });
@@ -738,7 +748,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
         max: proofFieldForm.max ? Number(proofFieldForm.max) : null,
         maxImages: proofFieldForm.maxImages ? Number(proofFieldForm.maxImages) : null,
       },
-      conditional: { fieldId: "", values: [] },
+      conditional: !proofFieldForm.conditionalFieldId
+        ? { fieldId: "", values: [] }
+        : { fieldId: proofFieldForm.conditionalFieldId, values: proofFieldForm.conditionalValues },
     };
 
     const nextProofFields = editingProofFieldIndex !== null
@@ -759,14 +771,28 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       minLength: f.validation?.minLength ?? "", maxLength: f.validation?.maxLength ?? "",
       pattern: f.validation?.pattern || "", min: f.validation?.min ?? "", max: f.validation?.max ?? "",
       maxImages: f.validation?.maxImages ?? "",
+      conditionalFieldId: f.conditional?.fieldId || "",
+      conditionalValues: f.conditional?.values || [],
     });
   };
 
   const removeProofFieldAt = (index) => {
-    setTaskForm({ ...taskForm, proofFields: taskForm.proofFields.filter((_, i) => i !== index) });
+    const removedId = taskForm.proofFields[index].id;
+    // Un sous-champ qui dépendait de ce champ redevient toujours visible
+    // (pas de dépendance orpheline) — même principe que deleteField pour
+    // le formulaire de candidature.
+    const dependents = taskForm.proofFields.filter((f) => f.conditional?.fieldId === removedId);
+    const remaining = taskForm.proofFields
+      .filter((_, i) => i !== index)
+      .map((f) => (f.conditional?.fieldId === removedId ? { ...f, conditional: { fieldId: "", values: [] } } : f));
+
+    setTaskForm({ ...taskForm, proofFields: remaining });
     if (editingProofFieldIndex === index) {
       setEditingProofFieldIndex(null);
       setProofFieldForm(emptyProofFieldForm);
+    }
+    if (dependents.length > 0) {
+      alert(`${dependents.length} sous-champ(s) dépendaient de ce champ : ils redeviennent toujours affichés.`);
     }
   };
 
@@ -989,6 +1015,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     (f, idx) => CONDITIONAL_TRIGGER_TYPES.includes(f.type) && idx < editingFieldIndex
   );
   const conditionalTriggerField = fieldsById.get(fieldForm.conditionalFieldId);
+
+  // Même principe que pour le formulaire de candidature ci-dessus, appliqué
+  // au formulaire de preuve d'une tâche (taskForm.proofFields) — un
+  // sous-champ ne peut dépendre que d'un champ SELECT/CHECKBOX déjà présent
+  // AVANT lui dans le tableau (les nouveaux champs sont toujours ajoutés en
+  // fin de liste, donc l'ordre reste toujours cohérent sans réordonnancement manuel).
+  const proofFieldsById = new Map(taskForm.proofFields.map((f) => [f.id, f]));
+  const eligibleProofTriggerFields = taskForm.proofFields.filter(
+    (f, idx) => CONDITIONAL_TRIGGER_TYPES.includes(f.type) && idx < (editingProofFieldIndex ?? taskForm.proofFields.length)
+  );
+  const conditionalProofTriggerField = proofFieldsById.get(proofFieldForm.conditionalFieldId);
 
   return (
     <div className="p-6 bg-gradient-to-br from-green-50 via-blue-50 to-violet-50 min-h-screen rounded-lg shadow-md">
@@ -1382,19 +1419,27 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
                 {taskForm.proofFields.length > 0 && (
                   <div className="space-y-1">
-                    {taskForm.proofFields.map((f, index) => (
-                      <div key={f.id} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2">
-                        <div className="flex-1 text-sm">
-                          <strong>{f.label}</strong>
-                          <span className="text-xs text-gray-500 ml-2">
-                            {PROOF_FIELD_TYPES.find((t) => t.value === f.type)?.label} {f.required && "· obligatoire"}
-                            {f.type === "IMAGE" && f.validation?.maxImages ? ` · max ${f.validation.maxImages}` : ""}
-                          </span>
+                    {taskForm.proofFields.map((f, index) => {
+                      const depth = getFieldDepth(f, proofFieldsById);
+                      const parentField = f.conditional?.fieldId ? proofFieldsById.get(f.conditional.fieldId) : null;
+                      return (
+                        <div key={f.id} className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2"
+                          style={{ marginLeft: depth * 24 }}>
+                          <div className="flex-1 text-sm">
+                            <strong>{f.label}</strong>
+                            <span className="text-xs text-gray-500 ml-2">
+                              {PROOF_FIELD_TYPES.find((t) => t.value === f.type)?.label} {f.required && "· obligatoire"}
+                              {f.type === "IMAGE" && f.validation?.maxImages ? ` · max ${f.validation.maxImages}` : ""}
+                            </span>
+                            {parentField && (
+                              <div className="text-xs text-blue-600">↳ Visible si « {parentField.label} » = {(f.conditional.values || []).join(", ")}</div>
+                            )}
+                          </div>
+                          <button type="button" onClick={() => editProofFieldAt(index)} className="text-blue-600 hover:underline text-xs">Éditer</button>
+                          <button type="button" onClick={() => removeProofFieldAt(index)} className="text-red-600 hover:underline text-xs">Suppr.</button>
                         </div>
-                        <button type="button" onClick={() => editProofFieldAt(index)} className="text-blue-600 hover:underline text-xs">Éditer</button>
-                        <button type="button" onClick={() => removeProofFieldAt(index)} className="text-red-600 hover:underline text-xs">Suppr.</button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1444,6 +1489,32 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       onChange={(e) => setProofFieldForm({ ...proofFieldForm, maxImages: e.target.value })}
                       className="w-full border border-gray-300 rounded-xl p-2 text-sm" />
                   )}
+
+                  {/* Sous-champ conditionnel : n'apparaît côté volontaire que
+                      si un champ SELECT/CHECKBOX déjà ajouté a une valeur
+                      précise — même mécanisme que le formulaire de
+                      candidature (ApplicationFieldSchema.conditional, déjà
+                      géré par le backend pour proofForm.fields aussi). */}
+                  <div className="border border-gray-200 rounded-xl p-3 bg-white">
+                    <label className="text-sm font-semibold text-gray-700">Afficher ce champ seulement si...</label>
+                    <select value={proofFieldForm.conditionalFieldId}
+                      onChange={(e) => setProofFieldForm({ ...proofFieldForm, conditionalFieldId: e.target.value, conditionalValues: [] })}
+                      className="w-full border border-gray-300 rounded-xl p-2 mt-1 text-sm">
+                      <option value="">-- Toujours visible --</option>
+                      {eligibleProofTriggerFields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+                    </select>
+                    {proofFieldForm.conditionalFieldId && conditionalProofTriggerField && (
+                      <div className="mt-2 flex gap-3 flex-wrap">
+                        {(conditionalProofTriggerField.type === "CHECKBOX" ? ["true", "false"] : conditionalProofTriggerField.options || []).map((opt) => (
+                          <label key={opt} className="flex items-center gap-1 text-sm">
+                            <input type="checkbox" checked={proofFieldForm.conditionalValues.includes(opt)}
+                              onChange={() => toggleProofConditionalValue(opt)} />
+                            {conditionalProofTriggerField.type === "CHECKBOX" ? (opt === "true" ? "si coché" : "si non coché") : opt}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div className="flex gap-2">
                     <button type="button" onClick={submitProofField}
