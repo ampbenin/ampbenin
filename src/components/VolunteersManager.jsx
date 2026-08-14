@@ -100,6 +100,7 @@ export default function VolunteersManager() {
         nom: vol.nom,
         prenom: vol.prenom,
         telephone: vol.telephone,
+        dateNaissance: vol.dateNaissance || null,
         programs: vol.programs?.map((p) => ({
           programId: p.programId,
           statut: p.statut || "Non disponible",
@@ -439,6 +440,12 @@ export default function VolunteersManager() {
             <p>
               <b>Téléphone :</b> {detailsVolunteer.telephone}
             </p>
+            <p>
+              <b>Date de naissance :</b>{" "}
+              {detailsVolunteer.dateNaissance
+                ? new Date(detailsVolunteer.dateNaissance).toLocaleDateString("fr-FR")
+                : "Non renseignée"}
+            </p>
             <div>
               <b>Programmes :</b>
               <ul>
@@ -508,6 +515,23 @@ export default function VolunteersManager() {
                 setEditingVolunteer({
                   ...editingVolunteer,
                   telephone: e.target.value,
+                })
+              }
+              className="border px-3 py-2 mb-2 w-full rounded"
+            />
+
+            {/* Date de naissance — optionnelle, sert de question de contrôle
+                ("Âge") pour la réinitialisation d'urgence (voir
+                EmergencyResetManager.jsx). Vide par défaut pour les fiches
+                existantes tant que le staff ne la renseigne pas ici. */}
+            <label className="block text-xs text-gray-500 mb-1">Date de naissance (optionnel)</label>
+            <input
+              type="date"
+              value={editingVolunteer.dateNaissance ? editingVolunteer.dateNaissance.slice(0, 10) : ""}
+              onChange={(e) =>
+                setEditingVolunteer({
+                  ...editingVolunteer,
+                  dateNaissance: e.target.value,
                 })
               }
               className="border px-3 py-2 mb-2 w-full rounded"

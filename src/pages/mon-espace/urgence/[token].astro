@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/BaseLayout.astro';
+import EmergencyResetForm from '../../../components/volunteer/EmergencyResetForm.jsx';
+
+const { token } = Astro.params;
+---
+
+<Layout
+  title="Réinitialisation d'urgence — Mon espace volontaire | AMP BENIN"
+  description="Réinitialisez votre mot de passe volontaire suite à un lien expiré."
+  url={`https://ampbenin.netlify.app/mon-espace/urgence/${token}`}
+>
+  <EmergencyResetForm token={token} client:load />
+</Layout>

@@ -20,6 +20,7 @@ import GenerateCertificate from '../../GenerateCertificate.jsx';
 import PartnerActivityOverview from '../PartnerActivityOverview.jsx';
 import DisciplineManager from '../DisciplineManager.jsx';
 import SiteSettingsManager from '../SiteSettingsManager.jsx';
+import EmergencyResetManager from '../EmergencyResetManager.jsx';
 
 const CONTENT_TABS = [
   { id: 'pages', label: 'Pages du site' },
@@ -54,6 +55,8 @@ const MISSIONS_TABS = [
   // explicite de l'utilisateur) — retiré de la liste pour un EDITOR, voir
   // missionsTabs plus bas.
   { id: 'discipline', label: 'Discipline & sanctions', adminOnly: true },
+  // Outil de contournement d'authentification — réservé ADMIN, jamais EDITOR.
+  { id: 'emergency-reset', label: 'Réinitialisation d\'urgence', adminOnly: true },
 ];
 
 // Tous les ids d'onglets valides (Contenu + Boîte de réception + Volontaires
@@ -176,6 +179,7 @@ export default function AdminShell() {
         {active === 'certificates' && <GenerateCertificate />}
         {active === 'partner-activity' && <PartnerActivityOverview />}
         {active === 'discipline' && role === 'ADMIN' && <DisciplineManager />}
+        {active === 'emergency-reset' && role === 'ADMIN' && <EmergencyResetManager />}
       </main>
     </div>
   );

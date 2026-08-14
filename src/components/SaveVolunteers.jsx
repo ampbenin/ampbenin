@@ -9,6 +9,7 @@ export default function SaveVolunteers() {
     nom: "",
     prenom: "",
     telephone: "",
+    dateNaissance: "",
     programs: [], // { programId, statut }
   });
 
@@ -53,6 +54,7 @@ export default function SaveVolunteers() {
       nom: volunteer.nom || "",
       prenom: volunteer.prenom || "",
       telephone: volunteer.telephone || "",
+      dateNaissance: volunteer.dateNaissance ? volunteer.dateNaissance.slice(0, 10) : "",
       programs: [],
     });
 
@@ -97,6 +99,7 @@ export default function SaveVolunteers() {
         nom: form.nom,
         prenom: form.prenom,
         telephone: form.telephone,
+        dateNaissance: form.dateNaissance || null,
         programs: form.programs,
       };
 
@@ -113,7 +116,7 @@ export default function SaveVolunteers() {
       });
 
       setEmail("");
-      setForm({ nom: "", prenom: "", telephone: "", programs: [] });
+      setForm({ nom: "", prenom: "", telephone: "", dateNaissance: "", programs: [] });
       setAssignedPrograms([]);
       setVolunteerId(null);
     } catch (err) {
@@ -188,6 +191,15 @@ export default function SaveVolunteers() {
           className="w-full border p-3 rounded-xl"
           value={form.telephone}
           onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+        />
+        {/* Optionnelle — sert de question de contrôle ("Âge") pour la
+            réinitialisation d'urgence, voir EmergencyResetManager.jsx. */}
+        <label className="block text-xs text-gray-500 -mb-2">Date de naissance (optionnel)</label>
+        <input
+          type="date"
+          className="w-full border p-3 rounded-xl"
+          value={form.dateNaissance}
+          onChange={(e) => setForm({ ...form, dateNaissance: e.target.value })}
         />
 
         {/* TABLE PROGRAMMES */}
