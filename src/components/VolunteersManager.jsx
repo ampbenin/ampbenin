@@ -17,6 +17,14 @@ export default function VolunteersManager() {
   const [search, setSearch] = useState("");
   const [filterProgram, setFilterProgram] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
+  const [filterGroup, setFilterGroup] = useState("");
+  // Groupes du programme actuellement sélectionné dans filterProgram —
+  // chargés à la demande (les groupes n'existent qu'au sein d'un programme,
+  // voir controllers/volunteerApplicationGroupController.js) et croisés
+  // avec `volunteers` côté client via l'id du volontaire de chaque membre
+  // peuplé (`applicationIds[].volunteerId`).
+  const [programGroups, setProgramGroups] = useState([]);
+  const [volunteerGroupByProgram, setVolunteerGroupByProgram] = useState(new Map());
   const [editingVolunteer, setEditingVolunteer] = useState(null);
   const [detailsVolunteer, setDetailsVolunteer] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
@@ -25,6 +33,13 @@ export default function VolunteersManager() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const volunteersPerPage = 10;
+
+  // Retour à la page 1 dès qu'un filtre/recherche change, pour cohérence
+  // avec les autres vues (Admin/Superviseur/Partenaire) — sinon on peut se
+  // retrouver sur une page vide après avoir réduit les résultats.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterProgram, filterStatut, filterGroup]);
 
   // Charger tous les volontaires
   useEffect(() => {
@@ -40,6 +55,45 @@ export default function VolunteersManager() {
     };
     fetchVolunteers();
   }, []);
+
+  // Charger les groupes du programme sélectionné (filtre groupe) — résout
+  // d'abord le programId réel à partir du titre stocké dans filterProgram
+  // (voir commentaire sur `programs` en tête de fichier), puis récupère les
+  // groupes et construit une map volontaireId -> nom du groupe.
+  useEffect(() => {
+    setFilterGroup("");
+    setProgramGroups([]);
+    setVolunteerGroupByProgram(new Map());
+    if (!filterProgram) return;
+
+    const programId = volunteers
+      .flatMap((v) => v.programs || [])
+      .find((p) => (p.programTitle || p.programId || "").toLowerCase() === filterProgram.toLowerCase())
+      ?.programId;
+    if (!programId) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminFetch(`/api/volunteer-applications/groups?programId=${programId}`);
+        if (cancelled) return;
+        const groups = Array.isArray(data.items) ? data.items : [];
+        setProgramGroups(groups.map((g) => g.name));
+        const map = new Map();
+        groups.forEach((g) => {
+          g.applicationIds?.forEach((app) => {
+            if (app?.volunteerId) map.set(String(app.volunteerId), g.name);
+          });
+        });
+        setVolunteerGroupByProgram(map);
+      } catch (err) {
+        console.error("Erreur chargement groupes :", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [filterProgram, volunteers]);
 
   // Fermer le menu en cliquant ailleurs
   useEffect(() => {
@@ -70,6 +124,8 @@ export default function VolunteersManager() {
     if (!program) return false;
 
     if (filterStatut && program.statut !== filterStatut) return false;
+
+    if (filterGroup && volunteerGroupByProgram.get(String(v._id)) !== filterGroup) return false;
 
     return matchSearch;
   });
@@ -207,6 +263,20 @@ export default function VolunteersManager() {
           <option>Non disponible</option>
           <option>Refusé</option>
           <option>Mission validée</option>
+        </select>
+
+        <select
+          disabled={!filterProgram || programGroups.length === 0}
+          value={filterGroup}
+          onChange={(e) => setFilterGroup(e.target.value)}
+          className="border px-3 py-2 rounded focus:ring-2 focus:ring-violet-400"
+        >
+          <option value="">👥 Tous les groupes</option>
+          {programGroups.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
         </select>
 
         {/* Export Menu */}
