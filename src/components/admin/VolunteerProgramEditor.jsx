@@ -183,6 +183,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [selectedSupervisorId, setSelectedSupervisorId] = useState("");
   const [selectedSupervisedVolunteerIds, setSelectedSupervisedVolunteerIds] = useState([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState("");
+  // Affectation EDITOR — réservée ADMIN (voir toggleEditorAccess) : un
+  // EDITOR affecté obtient exactement les mêmes pouvoirs qu'un ADMIN sur ce
+  // programme (routes/volunteerProgramRoute.js#/:id/editors, ADMIN uniquement).
+  const [selectedEditorId, setSelectedEditorId] = useState("");
+  const currentRole = typeof window !== "undefined" ? localStorage.getItem("amp_role") : null;
   const [partnerComments, setPartnerComments] = useState([]);
   const [partnerActivity, setPartnerActivity] = useState([]);
   const [expandedActivityPartnerId, setExpandedActivityPartnerId] = useState(null);
@@ -917,6 +922,22 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       loadPartnerTab();
     } catch (err) {
       alert(err.message || "Erreur lors de la mise à jour du partenaire");
+    }
+  };
+
+  // Réservé ADMIN côté backend (routes/volunteerProgramRoute.js) — un EDITOR
+  // affecté obtient les mêmes pouvoirs qu'un ADMIN sur CE programme, donc
+  // seul un ADMIN peut accorder/retirer cette affectation.
+  const toggleEditorAccess = async (editorId, add) => {
+    try {
+      await adminFetch(`/api/volunteer-programs/${programId}/editors`, {
+        method: "PATCH",
+        body: JSON.stringify({ editorId, action: add ? "add" : "remove" }),
+      });
+      setSelectedEditorId("");
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour de l'éditeur");
     }
   };
 
@@ -2108,6 +2129,52 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 </div>
               )}
             </div>
+
+            {/* Réservé ADMIN — un EDITOR affecté obtient exactement les
+                mêmes pouvoirs qu'un ADMIN sur ce programme (voir
+                canReviewProgram côté backend), donc seul un ADMIN peut
+                décider de cette affectation. */}
+            {currentRole === "ADMIN" && (
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Éditeurs affectés à ce programme</h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  Un compte EDITOR ne gère plus tous les programmes par défaut : il ne peut
+                  gérer que ceux affectés ici, mais y a alors exactement les mêmes pouvoirs
+                  qu'un ADMIN (réglages, tâches, candidatures, groupes, suivi, finaliser les
+                  missions...).
+                </p>
+                {(() => {
+                  const currentEditors = staffUsers.filter((u) =>
+                    u.role === "EDITOR" && (program?.editorIds || []).some((id) => String(id) === String(u._id))
+                  );
+                  return currentEditors.length === 0 ? (
+                    <p className="text-gray-500 mb-3">Aucun éditeur affecté à ce programme.</p>
+                  ) : (
+                    <div className="space-y-2 mb-4">
+                      {currentEditors.map((u) => (
+                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
+                          <button onClick={() => toggleEditorAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                <div className="flex gap-2">
+                  <select value={selectedEditorId} onChange={(e) => setSelectedEditorId(e.target.value)}
+                    className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
+                    <option value="">-- Choisir un éditeur --</option>
+                    {staffUsers.filter((u) => u.role === "EDITOR").map((u) => (
+                      <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                    ))}
+                  </select>
+                  <button onClick={() => toggleEditorAccess(selectedEditorId, true)} disabled={!selectedEditorId}
+                    className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                    Affecter
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
