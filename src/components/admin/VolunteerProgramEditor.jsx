@@ -10,6 +10,12 @@ import React, { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
+// jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
+// VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export "Progression
+// par volontaire" en A4 paysage (décision utilisateur, 2026-08-17, appliquée
+// en parallèle sur les espaces SUPERVISEUR et PARTENAIRE).
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
@@ -1000,6 +1006,26 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
   const isTextType = ["TEXT", "TEXTAREA", "EMAIL", "PHONE"].includes(fieldForm.type);
+  // Classement "Progression par volontaire" du meilleur au moins avancé —
+  // copie, ne mute jamais l'ordre d'origine de programProgress.
+  const rankedProgramProgress = [...programProgress].sort((a, b) => b.progress.percent - a.progress.percent);
+  const exportProgramProgressPdf = () => {
+    const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+    doc.text(`Progression par volontaire — ${program?.title || "Programme"}`, 14, 14);
+    autoTable(doc, {
+      head: [["Rang", "Nom", "Email", "Progression", "Statut mission"]],
+      body: rankedProgramProgress.map((p, i) => [
+        i + 1,
+        `${p.prenom} ${p.nom}`,
+        p.email,
+        `${p.progress.approved}/${p.progress.totalDue} (${p.progress.percent}%)`,
+        p.statut,
+      ]),
+      startY: 20,
+    });
+    const slug = (program?.title || "programme").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
+    doc.save(`progression-${slug}.pdf`);
+  };
   const selectedApplication = applications.find((a) => a._id === selectedApplicationId) || null;
   const activeApplicationFilterCount =
     (applicationFilters.status ? 1 : 0) +
@@ -1886,7 +1912,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Progression par volontaire</h3>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <h3 className="font-semibold">Progression par volontaire</h3>
+                {programProgress.length > 0 && (
+                  <button onClick={exportProgramProgressPdf}
+                    className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-900">
+                    📄 Télécharger en PDF (A4 paysage)
+                  </button>
+                )}
+              </div>
               {programProgress.length === 0 ? (
                 <p className="text-gray-500">Aucun volontaire accepté sur ce programme pour l'instant.</p>
               ) : (
@@ -1894,6 +1928,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <table className="w-full border border-gray-200 rounded-lg">
                     <thead className="bg-gray-100">
                       <tr>
+                        <th className="px-3 py-2 border text-left">Rang</th>
                         <th className="px-3 py-2 border text-left">Volontaire</th>
                         <th className="px-3 py-2 border text-left">Progression</th>
                         <th className="px-3 py-2 border text-left">Statut mission</th>
@@ -1901,8 +1936,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {programProgress.map((p) => (
+                      {rankedProgramProgress.map((p, i) => (
                         <tr key={p.volunteerId}>
+                          <td className="px-3 py-2 border font-bold text-gray-500">{i + 1}</td>
                           <td className="px-3 py-2 border">
                             {p.prenom} {p.nom}
                             <div className="text-xs text-gray-500">{p.email}</div>

@@ -18,9 +18,26 @@
 // - Historique des soumissions — filtre de statut (En attente/Approuvées/
 //   Rejetées/Toutes) au lieu du seul status=PENDING codé en dur ;
 //   /api/volunteer-tasks/submissions accepte déjà un status optionnel.
+//
+// Enrichi à nouveau le 2026-08-17 (même jour) : la table "Progression par
+// volontaire" gagne téléphone/email/groupe — "il faut que le superviseur
+// ait les informations nécessaires des volontaires qui sont sur lui".
+// Le nom du groupe vient de VolunteerApplicationGroup, résolu côté backend
+// via la candidature du volontaire pour ce programme (aucun lien direct
+// groupe → volontaire, uniquement groupe → candidature).
+//
+// Enrichi une 3e fois le 2026-08-17 : classement des volontaires par
+// progression (du meilleur au moins avancé) + export PDF A4 paysage de la
+// table, même besoin appliqué en parallèle sur les espaces ADMIN
+// (VolunteerProgramEditor.jsx) et PARTENAIRE (PartnerDashboard.jsx).
+// jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
+// VolunteersManager.jsx#exportPDF) — repris tel quel, juste en orientation
+// paysage ({ orientation: "landscape" }).
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const SUBMISSION_FILTERS = [
   { value: "PENDING", label: "En attente" },
@@ -126,6 +143,30 @@ export default function SupervisorDashboard() {
   if (programs.length === 0) return <p>Aucun programme ne vous est affecté pour l'instant.</p>;
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
+  // Classement du meilleur au moins avancé — copie, ne mute jamais l'ordre
+  // d'origine de `progress` (utile si un jour on affiche aussi un ordre
+  // alphabétique ailleurs).
+  const rankedProgress = [...progress].sort((a, b) => b.progress.percent - a.progress.percent);
+
+  const exportProgressPdf = () => {
+    const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+    const title = selectedProgram?.title || "Programme";
+    doc.text(`Progression par volontaire — ${title}`, 14, 14);
+    autoTable(doc, {
+      head: [["Rang", "Nom", "Téléphone", "Email", "Groupe", "Progression", "Statut mission"]],
+      body: rankedProgress.map((p, i) => [
+        i + 1,
+        `${p.prenom} ${p.nom}`,
+        p.telephone || "-",
+        p.email,
+        p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "-",
+        `${p.progress.approved}/${p.progress.totalDue} (${p.progress.percent}%)`,
+        p.statut,
+      ]),
+      startY: 20,
+    });
+    doc.save(`progression-${title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-")}.pdf`);
+  };
 
   return (
     <div className="supervisor-dashboard">
@@ -151,26 +192,40 @@ export default function SupervisorDashboard() {
         </div>
       )}
 
-      <h3>Progression par volontaire {missionValidationThreshold !== null && `(seuil de validation : ${missionValidationThreshold}%)`}</h3>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <h3 style={{ margin: 0 }}>Progression par volontaire {missionValidationThreshold !== null && `(seuil de validation : ${missionValidationThreshold}%)`}</h3>
+        {progress.length > 0 && (
+          <button onClick={exportProgressPdf} style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 700, cursor: "pointer" }}>
+            📄 Télécharger en PDF (A4 paysage)
+          </button>
+        )}
+      </div>
       {progress.length === 0 ? (
         <p style={{ color: "#666" }}>Aucun volontaire suivi pour l'instant.</p>
       ) : (
-        <div style={{ overflowX: "auto", marginBottom: 28 }}>
+        <div style={{ overflowX: "auto", marginTop: 8, marginBottom: 28 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e5e7eb" }}>
             <thead style={{ background: "#f3f4f6" }}>
               <tr>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Volontaire</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Rang</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Nom</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Téléphone</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Email</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Groupe</th>
                 <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Progression</th>
                 <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Statut mission</th>
                 <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {progress.map((p) => (
+              {rankedProgress.map((p, i) => (
                 <tr key={p.volunteerId}>
+                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb", fontWeight: 700, color: "#6b7280" }}>{i + 1}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.prenom} {p.nom}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.telephone || "—"}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.email}</td>
                   <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
-                    {p.prenom} {p.nom}
-                    <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{p.email}</div>
+                    {p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "—"}
                   </td>
                   <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
                     {p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)

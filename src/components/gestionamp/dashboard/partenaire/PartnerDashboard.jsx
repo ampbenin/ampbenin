@@ -34,6 +34,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "@/components/admin/BlacklistWarning.jsx";
+// jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
+// VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export
+// "Volontaires à mission validée" en A4 paysage, classés par progression
+// (décision utilisateur, 2026-08-17, appliquée en parallèle sur les
+// espaces SUPERVISEUR et ADMIN).
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Chart as ChartJS,
   BarController,
@@ -434,6 +441,26 @@ export default function PartnerDashboard() {
   }
 
   const { program, stats, validatedVolunteers, progressOverTime } = data;
+  // Classement "Volontaires à mission validée" du meilleur au moins
+  // avancé — copie, ne mute jamais l'ordre d'origine de validatedVolunteers.
+  const rankedValidatedVolunteers = [...validatedVolunteers].sort((a, b) => b.progress.percent - a.progress.percent);
+
+  const exportValidatedVolunteersPdf = () => {
+    const doc = new jsPDF({ orientation: "landscape", format: "a4" });
+    doc.text(`Volontaires à mission validée — ${program.title}`, 14, 14);
+    autoTable(doc, {
+      head: [["Rang", "Nom", "Progression", "Tâches approuvées"]],
+      body: rankedValidatedVolunteers.map((v, i) => [
+        i + 1,
+        `${v.prenom} ${v.nom}`,
+        `${v.progress.approved}/${v.progress.totalDue} (${v.progress.percent}%)`,
+        v.approvedTasks.length,
+      ]),
+      startY: 20,
+    });
+    const slug = program.title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
+    doc.save(`volontaires-valides-${slug}.pdf`);
+  };
 
   const activeFilterCount =
     (applicationFilters.status ? 1 : 0) +
@@ -698,17 +725,27 @@ export default function PartnerDashboard() {
 
       {/* Volontaires validés */}
       <section className="pd-card pd-fade" style={{ "--pd-delay": "300ms" }}>
-        <h3 className="pd-card__title">Volontaires à mission validée <span className="pd-count">({validatedVolunteers.length})</span></h3>
+        <div className="pd-card__header-row">
+          <h3 className="pd-card__title">Volontaires à mission validée <span className="pd-count">({validatedVolunteers.length})</span></h3>
+          {validatedVolunteers.length > 0 && (
+            <button type="button" onClick={exportValidatedVolunteersPdf} className="pd-btn pd-btn--ghost pd-btn--sm">
+              📄 Télécharger en PDF (A4 paysage)
+            </button>
+          )}
+        </div>
         {validatedVolunteers.length === 0 ? (
           <p className="pd-muted">Aucun volontaire n'a encore validé sa mission sur ce programme.</p>
         ) : (
           <div className="pd-acc-list">
-            {validatedVolunteers.map((v) => {
+            {rankedValidatedVolunteers.map((v, i) => {
               const isOpen = openVolunteers.has(v.volunteerId);
               return (
                 <div key={v.volunteerId} className={`pd-acc ${isOpen ? "pd-acc--open" : ""}`}>
                   <button type="button" onClick={() => toggleVolunteer(v.volunteerId)} className="pd-acc__header">
-                    <span className="pd-acc__name">{v.prenom} {v.nom} <span className="pd-muted">— {v.approvedTasks.length} tâche(s) approuvée(s)</span></span>
+                    <span className="pd-acc__name">
+                      <span className="pd-acc__rank">#{i + 1}</span> {v.prenom} {v.nom}{" "}
+                      <span className="pd-muted">— {v.progress.percent}% ({v.approvedTasks.length} tâche(s) approuvée(s))</span>
+                    </span>
                     <span className="pd-acc__right">
                       <ReportVolunteerButton programId={selectedProgramId} volunteerId={v.volunteerId} />
                       <span className="pd-chevron pd-acc__chevron">▾</span>
@@ -983,8 +1020,14 @@ const PD_STYLES = `
   .pd-btn--filter:hover { border-color: var(--col-accent, #C9903A); }
   .pd-btn--linklike { background: none; color: var(--col-error, #C1121F); font-size: 0.78rem; text-align: left; padding: 0; }
   .pd-btn--linklike:hover { text-decoration: underline; }
+  .pd-btn--sm { padding: 6px 14px; font-size: 0.78rem; }
   .pd-chevron { display: inline-block; transition: transform 200ms ease; font-size: 0.7rem; }
   .pd-chevron.is-open { transform: rotate(180deg); }
+
+  /* ── En-tête de carte avec bouton d'export (ex: Volontaires validés) ── */
+  .pd-card__header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .pd-card__header-row .pd-card__title { margin: 0; }
+  .pd-acc__rank { display: inline-block; font-size: 0.75rem; font-weight: 800; color: var(--col-accent-dark, #A87028); margin-right: 2px; }
 
   /* ── Badges ── */
   .pd-badge {
