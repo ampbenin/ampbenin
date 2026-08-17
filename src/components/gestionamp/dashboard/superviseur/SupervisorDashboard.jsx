@@ -33,6 +33,16 @@
 // jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
 // VolunteersManager.jsx#exportPDF) — repris tel quel, juste en orientation
 // paysage ({ orientation: "landscape" }).
+//
+// Enrichi une 4e fois le 2026-08-17 : recherche + filtre par groupe +
+// filtre par statut de mission + pagination sur la table "Progression par
+// volontaire" — tout calculé côté client (décision utilisateur), les
+// données sont déjà toutes chargées en un seul appel. Le rang (#1, #2...)
+// reste calculé sur la liste COMPLÈTE avant filtrage, pour ne jamais se
+// renuméroter selon ce qui est affiché — un volontaire filtré garde le
+// même rang qu'il aurait sans filtre. L'export PDF suit la recherche/les
+// filtres actifs (comme VolunteersManager.jsx#exportPDF exporte déjà
+// filteredVolunteers, pas juste la page affichée).
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
@@ -60,6 +70,8 @@ const badgeStyle = (style) => ({
   display: "inline-block", fontSize: "0.75rem", fontWeight: 700, padding: "2px 10px",
   borderRadius: 999, ...style,
 });
+const MISSION_STATUSES = ["Non disponible", "Mission validée", "Refusé"];
+const PROGRESS_PAGE_SIZE = 10;
 
 export default function SupervisorDashboard() {
   const [programs, setPrograms] = useState([]);
@@ -70,6 +82,12 @@ export default function SupervisorDashboard() {
   const [missionValidationThreshold, setMissionValidationThreshold] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Recherche/filtres/pagination de la table "Progression par volontaire".
+  const [progressSearch, setProgressSearch] = useState("");
+  const [progressGroupFilter, setProgressGroupFilter] = useState("");
+  const [progressStatutFilter, setProgressStatutFilter] = useState("");
+  const [progressPage, setProgressPage] = useState(1);
 
   const loadPrograms = async () => {
     try {
@@ -110,8 +128,15 @@ export default function SupervisorDashboard() {
     if (!selectedProgramId) return;
     loadSubmissions(selectedProgramId, submissionFilter);
     loadProgress(selectedProgramId);
+    setProgressSearch("");
+    setProgressGroupFilter("");
+    setProgressStatutFilter("");
+    setProgressPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProgramId, submissionFilter]);
+  // Revient à la page 1 dès qu'un filtre change, sinon on peut se retrouver
+  // sur une page qui n'existe plus une fois le résultat rétréci.
+  useEffect(() => { setProgressPage(1); }, [progressSearch, progressGroupFilter, progressStatutFilter]);
 
   const approve = async (id) => {
     try {
@@ -143,19 +168,36 @@ export default function SupervisorDashboard() {
   if (programs.length === 0) return <p>Aucun programme ne vous est affecté pour l'instant.</p>;
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);
-  // Classement du meilleur au moins avancé — copie, ne mute jamais l'ordre
-  // d'origine de `progress` (utile si un jour on affiche aussi un ordre
-  // alphabétique ailleurs).
-  const rankedProgress = [...progress].sort((a, b) => b.progress.percent - a.progress.percent);
+  // Classement du meilleur au moins avancé, sur la liste COMPLÈTE — le rang
+  // (p.rank) ne change jamais selon les filtres actifs ensuite, seule la
+  // liste affichée/paginée se rétrécit.
+  const rankedProgress = [...progress]
+    .sort((a, b) => b.progress.percent - a.progress.percent)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
 
+  const availableGroups = [...new Set(rankedProgress.flatMap((p) => p.groupNames || []))].sort((a, b) => a.localeCompare(b));
+
+  const filteredProgress = rankedProgress.filter((p) => {
+    const q = progressSearch.trim().toLowerCase();
+    const matchesSearch = !q || `${p.prenom} ${p.nom} ${p.email} ${p.telephone || ""}`.toLowerCase().includes(q);
+    const matchesGroup = !progressGroupFilter || (p.groupNames || []).includes(progressGroupFilter);
+    const matchesStatut = !progressStatutFilter || p.statut === progressStatutFilter;
+    return matchesSearch && matchesGroup && matchesStatut;
+  });
+  const progressTotalPages = Math.max(1, Math.ceil(filteredProgress.length / PROGRESS_PAGE_SIZE));
+  const pagedProgress = filteredProgress.slice((progressPage - 1) * PROGRESS_PAGE_SIZE, progressPage * PROGRESS_PAGE_SIZE);
+
+  // Exporte ce qui correspond à la recherche/aux filtres actifs (comme
+  // VolunteersManager.jsx#exportPDF exporte filteredVolunteers), pas
+  // seulement la page actuellement affichée.
   const exportProgressPdf = () => {
     const doc = new jsPDF({ orientation: "landscape", format: "a4" });
     const title = selectedProgram?.title || "Programme";
     doc.text(`Progression par volontaire — ${title}`, 14, 14);
     autoTable(doc, {
       head: [["Rang", "Nom", "Téléphone", "Email", "Groupe", "Progression", "Statut mission"]],
-      body: rankedProgress.map((p, i) => [
-        i + 1,
+      body: filteredProgress.map((p) => [
+        p.rank,
         `${p.prenom} ${p.nom}`,
         p.telephone || "-",
         p.email,
@@ -203,7 +245,31 @@ export default function SupervisorDashboard() {
       {progress.length === 0 ? (
         <p style={{ color: "#666" }}>Aucun volontaire suivi pour l'instant.</p>
       ) : (
-        <div style={{ overflowX: "auto", marginTop: 8, marginBottom: 28 }}>
+        <>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 8 }}>
+            <input
+              type="text"
+              placeholder="🔍 Rechercher (nom, email, téléphone)..."
+              value={progressSearch}
+              onChange={(e) => setProgressSearch(e.target.value)}
+              style={{ flex: "1 1 220px", border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}
+            />
+            <select value={progressGroupFilter} onChange={(e) => setProgressGroupFilter(e.target.value)}
+              style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}>
+              <option value="">Tous les groupes</option>
+              {availableGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+            <select value={progressStatutFilter} onChange={(e) => setProgressStatutFilter(e.target.value)}
+              style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}>
+              <option value="">Tous les statuts</option>
+              {MISSION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {filteredProgress.length === 0 ? (
+            <p style={{ color: "#666" }}>Aucun volontaire ne correspond à ces critères.</p>
+          ) : (
+        <div style={{ overflowX: "auto", marginBottom: 12 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e5e7eb" }}>
             <thead style={{ background: "#f3f4f6" }}>
               <tr>
@@ -218,9 +284,9 @@ export default function SupervisorDashboard() {
               </tr>
             </thead>
             <tbody>
-              {rankedProgress.map((p, i) => (
+              {pagedProgress.map((p) => (
                 <tr key={p.volunteerId}>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb", fontWeight: 700, color: "#6b7280" }}>{i + 1}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb", fontWeight: 700, color: "#6b7280" }}>{p.rank}</td>
                   <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.prenom} {p.nom}</td>
                   <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.telephone || "—"}</td>
                   <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.email}</td>
@@ -241,6 +307,22 @@ export default function SupervisorDashboard() {
             </tbody>
           </table>
         </div>
+          )}
+
+          {filteredProgress.length > PROGRESS_PAGE_SIZE && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
+              <button onClick={() => setProgressPage((p) => Math.max(1, p - 1))} disabled={progressPage <= 1}
+                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: progressPage <= 1 ? "not-allowed" : "pointer", opacity: progressPage <= 1 ? 0.5 : 1 }}>
+                ← Précédent
+              </button>
+              <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Page {progressPage} / {progressTotalPages} — {filteredProgress.length} volontaire(s)</span>
+              <button onClick={() => setProgressPage((p) => Math.min(progressTotalPages, p + 1))} disabled={progressPage >= progressTotalPages}
+                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: progressPage >= progressTotalPages ? "not-allowed" : "pointer", opacity: progressPage >= progressTotalPages ? 0.5 : 1 }}>
+                Suivant →
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>

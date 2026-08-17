@@ -166,6 +166,13 @@ export default function PartnerDashboard() {
       return next;
     });
   };
+  // Recherche + pagination sur "Volontaires à mission validée" — pas de
+  // filtre groupe/statut ici (décision utilisateur : le partenaire ne voit
+  // de toute façon jamais qu'un seul statut possible, "Mission validée",
+  // et n'a pas accès aux groupes, outil interne au staff).
+  const [validatedSearch, setValidatedSearch] = useState("");
+  const [validatedPage, setValidatedPage] = useState(1);
+  const VALIDATED_PAGE_SIZE = 10;
 
   // Candidatures du programme — lecture seule (jamais les rejetées, voir
   // controllers/volunteerProgramPartnerController.js#listPartnerApplications
@@ -293,6 +300,8 @@ export default function PartnerDashboard() {
     setApplicationFilters({ status: "", dateFrom: "", dateTo: "" });
     setFieldFilterValues({});
     setOpenVolunteers(new Set());
+    setValidatedSearch("");
+    setValidatedPage(1);
   }, [selectedProgramId]);
 
   // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche.
@@ -302,6 +311,8 @@ export default function PartnerDashboard() {
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProgramId, applicationSearch, applicationFilters, fieldFilterValues]);
+
+  useEffect(() => { setValidatedPage(1); }, [validatedSearch]);
 
   const uploadLogo = async (e) => {
     const file = e.target.files?.[0];
@@ -442,16 +453,27 @@ export default function PartnerDashboard() {
 
   const { program, stats, validatedVolunteers, progressOverTime } = data;
   // Classement "Volontaires à mission validée" du meilleur au moins
-  // avancé — copie, ne mute jamais l'ordre d'origine de validatedVolunteers.
-  const rankedValidatedVolunteers = [...validatedVolunteers].sort((a, b) => b.progress.percent - a.progress.percent);
+  // avancé, sur la liste COMPLÈTE — le rang ne change jamais selon la
+  // recherche active.
+  const rankedValidatedVolunteers = [...validatedVolunteers]
+    .sort((a, b) => b.progress.percent - a.progress.percent)
+    .map((v, i) => ({ ...v, rank: i + 1 }));
+  const filteredValidatedVolunteers = rankedValidatedVolunteers.filter((v) => {
+    const q = validatedSearch.trim().toLowerCase();
+    return !q || `${v.prenom} ${v.nom}`.toLowerCase().includes(q);
+  });
+  const validatedTotalPages = Math.max(1, Math.ceil(filteredValidatedVolunteers.length / VALIDATED_PAGE_SIZE));
+  const pagedValidatedVolunteers = filteredValidatedVolunteers.slice((validatedPage - 1) * VALIDATED_PAGE_SIZE, validatedPage * VALIDATED_PAGE_SIZE);
 
+  // Exporte ce qui correspond à la recherche active, pas seulement la page
+  // affichée (même convention que VolunteersManager.jsx#exportPDF).
   const exportValidatedVolunteersPdf = () => {
     const doc = new jsPDF({ orientation: "landscape", format: "a4" });
     doc.text(`Volontaires à mission validée — ${program.title}`, 14, 14);
     autoTable(doc, {
       head: [["Rang", "Nom", "Progression", "Tâches approuvées"]],
-      body: rankedValidatedVolunteers.map((v, i) => [
-        i + 1,
+      body: filteredValidatedVolunteers.map((v) => [
+        v.rank,
         `${v.prenom} ${v.nom}`,
         `${v.progress.approved}/${v.progress.totalDue} (${v.progress.percent}%)`,
         v.approvedTasks.length,
@@ -736,14 +758,26 @@ export default function PartnerDashboard() {
         {validatedVolunteers.length === 0 ? (
           <p className="pd-muted">Aucun volontaire n'a encore validé sa mission sur ce programme.</p>
         ) : (
+          <>
+            <input
+              type="text"
+              placeholder="🔍 Rechercher un volontaire (nom, prénom)..."
+              value={validatedSearch}
+              onChange={(e) => setValidatedSearch(e.target.value)}
+              className="pd-input"
+              style={{ marginBottom: 14 }}
+            />
+            {filteredValidatedVolunteers.length === 0 ? (
+              <p className="pd-muted">Aucun volontaire ne correspond à cette recherche.</p>
+            ) : (
           <div className="pd-acc-list">
-            {rankedValidatedVolunteers.map((v, i) => {
+            {pagedValidatedVolunteers.map((v) => {
               const isOpen = openVolunteers.has(v.volunteerId);
               return (
                 <div key={v.volunteerId} className={`pd-acc ${isOpen ? "pd-acc--open" : ""}`}>
                   <button type="button" onClick={() => toggleVolunteer(v.volunteerId)} className="pd-acc__header">
                     <span className="pd-acc__name">
-                      <span className="pd-acc__rank">#{i + 1}</span> {v.prenom} {v.nom}{" "}
+                      <span className="pd-acc__rank">#{v.rank}</span> {v.prenom} {v.nom}{" "}
                       <span className="pd-muted">— {v.progress.percent}% ({v.approvedTasks.length} tâche(s) approuvée(s))</span>
                     </span>
                     <span className="pd-acc__right">
@@ -791,6 +825,19 @@ export default function PartnerDashboard() {
               );
             })}
           </div>
+            )}
+            {filteredValidatedVolunteers.length > VALIDATED_PAGE_SIZE && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+                <button type="button" onClick={() => setValidatedPage((p) => Math.max(1, p - 1))} disabled={validatedPage <= 1} className="pd-btn pd-btn--ghost pd-btn--sm">
+                  ← Précédent
+                </button>
+                <span className="pd-muted" style={{ fontSize: "0.8rem" }}>Page {validatedPage} / {validatedTotalPages} — {filteredValidatedVolunteers.length} volontaire(s)</span>
+                <button type="button" onClick={() => setValidatedPage((p) => Math.min(validatedTotalPages, p + 1))} disabled={validatedPage >= validatedTotalPages} className="pd-btn pd-btn--ghost pd-btn--sm">
+                  Suivant →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 

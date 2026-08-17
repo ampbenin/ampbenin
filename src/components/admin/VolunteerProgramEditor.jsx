@@ -172,6 +172,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [editingProofFieldIndex, setEditingProofFieldIndex] = useState(null);
   const [programProgress, setProgramProgress] = useState([]);
   const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  // Recherche/filtres/pagination de "Progression par volontaire" (onglet
+  // Suivi des tâches) — tout calculé côté client, comme sur SupervisorDashboard.jsx.
+  const [progressSearch, setProgressSearch] = useState("");
+  const [progressGroupFilter, setProgressGroupFilter] = useState("");
+  const [progressStatutFilter, setProgressStatutFilter] = useState("");
+  const [progressPage, setProgressPage] = useState(1);
 
   const [staffUsers, setStaffUsers] = useState([]);
   const [selectedSupervisorId, setSelectedSupervisorId] = useState("");
@@ -857,6 +863,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Revient à la page 1 dès qu'un filtre de "Progression par volontaire" change.
+  useEffect(() => { setProgressPage(1); }, [progressSearch, progressGroupFilter, progressStatutFilter]);
+
   const assignSupervisor = async () => {
     if (!selectedSupervisorId) return;
     try {
@@ -1006,18 +1015,35 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
 
   const isTextType = ["TEXT", "TEXTAREA", "EMAIL", "PHONE"].includes(fieldForm.type);
-  // Classement "Progression par volontaire" du meilleur au moins avancé —
-  // copie, ne mute jamais l'ordre d'origine de programProgress.
-  const rankedProgramProgress = [...programProgress].sort((a, b) => b.progress.percent - a.progress.percent);
+  // Classement "Progression par volontaire" du meilleur au moins avancé, sur
+  // la liste COMPLÈTE — le rang ne change jamais selon les filtres actifs.
+  const rankedProgramProgress = [...programProgress]
+    .sort((a, b) => b.progress.percent - a.progress.percent)
+    .map((p, i) => ({ ...p, rank: i + 1 }));
+  const availableProgressGroups = [...new Set(rankedProgramProgress.flatMap((p) => p.groupNames || []))].sort((a, b) => a.localeCompare(b));
+  const filteredProgramProgress = rankedProgramProgress.filter((p) => {
+    const q = progressSearch.trim().toLowerCase();
+    const matchesSearch = !q || `${p.prenom} ${p.nom} ${p.email} ${p.telephone || ""}`.toLowerCase().includes(q);
+    const matchesGroup = !progressGroupFilter || (p.groupNames || []).includes(progressGroupFilter);
+    const matchesStatut = !progressStatutFilter || p.statut === progressStatutFilter;
+    return matchesSearch && matchesGroup && matchesStatut;
+  });
+  const PROGRESS_PAGE_SIZE = 10;
+  const progressTotalPages = Math.max(1, Math.ceil(filteredProgramProgress.length / PROGRESS_PAGE_SIZE));
+  const pagedProgramProgress = filteredProgramProgress.slice((progressPage - 1) * PROGRESS_PAGE_SIZE, progressPage * PROGRESS_PAGE_SIZE);
+
+  // Exporte ce qui correspond à la recherche/aux filtres actifs, pas
+  // seulement la page affichée (même convention que VolunteersManager.jsx#exportPDF).
   const exportProgramProgressPdf = () => {
     const doc = new jsPDF({ orientation: "landscape", format: "a4" });
     doc.text(`Progression par volontaire — ${program?.title || "Programme"}`, 14, 14);
     autoTable(doc, {
-      head: [["Rang", "Nom", "Email", "Progression", "Statut mission"]],
-      body: rankedProgramProgress.map((p, i) => [
-        i + 1,
+      head: [["Rang", "Nom", "Email", "Groupe", "Progression", "Statut mission"]],
+      body: filteredProgramProgress.map((p) => [
+        p.rank,
         `${p.prenom} ${p.nom}`,
         p.email,
+        p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "-",
         `${p.progress.approved}/${p.progress.totalDue} (${p.progress.percent}%)`,
         p.statut,
       ]),
@@ -1924,42 +1950,82 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               {programProgress.length === 0 ? (
                 <p className="text-gray-500">Aucun volontaire accepté sur ce programme pour l'instant.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-gray-200 rounded-lg">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-3 py-2 border text-left">Rang</th>
-                        <th className="px-3 py-2 border text-left">Volontaire</th>
-                        <th className="px-3 py-2 border text-left">Progression</th>
-                        <th className="px-3 py-2 border text-left">Statut mission</th>
-                        <th className="px-3 py-2 border text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rankedProgramProgress.map((p, i) => (
-                        <tr key={p.volunteerId}>
-                          <td className="px-3 py-2 border font-bold text-gray-500">{i + 1}</td>
-                          <td className="px-3 py-2 border">
-                            {p.prenom} {p.nom}
-                            <div className="text-xs text-gray-500">{p.email}</div>
-                          </td>
-                          <td className="px-3 py-2 border">{p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)</td>
-                          <td className="px-3 py-2 border">
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                              p.statut === "Mission validée" ? "bg-green-100 text-green-700" :
-                              p.statut === "Refusé" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
-                            }`}>
-                              {p.statut}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 border">
-                            <ReportVolunteerButton programId={programId} volunteerId={p.volunteerId} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    <input type="text" placeholder="🔍 Rechercher (nom, email, téléphone)..." value={progressSearch}
+                      onChange={(e) => setProgressSearch(e.target.value)}
+                      className="flex-1 min-w-[220px] border border-gray-300 rounded-lg px-3 py-1.5 text-sm" />
+                    <select value={progressGroupFilter} onChange={(e) => setProgressGroupFilter(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+                      <option value="">Tous les groupes</option>
+                      {availableProgressGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                    <select value={progressStatutFilter} onChange={(e) => setProgressStatutFilter(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+                      <option value="">Tous les statuts</option>
+                      <option value="Non disponible">Non disponible</option>
+                      <option value="Mission validée">Mission validée</option>
+                      <option value="Refusé">Refusé</option>
+                    </select>
+                  </div>
+
+                  {filteredProgramProgress.length === 0 ? (
+                    <p className="text-gray-500">Aucun volontaire ne correspond à ces critères.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border border-gray-200 rounded-lg">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-3 py-2 border text-left">Rang</th>
+                            <th className="px-3 py-2 border text-left">Volontaire</th>
+                            <th className="px-3 py-2 border text-left">Groupe</th>
+                            <th className="px-3 py-2 border text-left">Progression</th>
+                            <th className="px-3 py-2 border text-left">Statut mission</th>
+                            <th className="px-3 py-2 border text-left">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pagedProgramProgress.map((p) => (
+                            <tr key={p.volunteerId}>
+                              <td className="px-3 py-2 border font-bold text-gray-500">{p.rank}</td>
+                              <td className="px-3 py-2 border">
+                                {p.prenom} {p.nom}
+                                <div className="text-xs text-gray-500">{p.email}</div>
+                              </td>
+                              <td className="px-3 py-2 border">{p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "—"}</td>
+                              <td className="px-3 py-2 border">{p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)</td>
+                              <td className="px-3 py-2 border">
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                  p.statut === "Mission validée" ? "bg-green-100 text-green-700" :
+                                  p.statut === "Refusé" ? "bg-red-100 text-red-700" : "bg-gray-200 text-gray-700"
+                                }`}>
+                                  {p.statut}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 border">
+                                <ReportVolunteerButton programId={programId} volunteerId={p.volunteerId} />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {filteredProgramProgress.length > PROGRESS_PAGE_SIZE && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <button onClick={() => setProgressPage((p) => Math.max(1, p - 1))} disabled={progressPage <= 1}
+                        className="border border-gray-300 rounded-lg px-3 py-1 text-sm disabled:opacity-40">
+                        ← Précédent
+                      </button>
+                      <span className="text-sm text-gray-500">Page {progressPage} / {progressTotalPages} — {filteredProgramProgress.length} volontaire(s)</span>
+                      <button onClick={() => setProgressPage((p) => Math.min(progressTotalPages, p + 1))} disabled={progressPage >= progressTotalPages}
+                        className="border border-gray-300 rounded-lg px-3 py-1 text-sm disabled:opacity-40">
+                        Suivant →
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
