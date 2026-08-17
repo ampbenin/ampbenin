@@ -3,6 +3,16 @@ import { apiFetch } from "@/services/gestionamp/api";
 
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
+const ROLE_LABELS = {
+  ADMIN: "Administrateur",
+  EDITOR: "Éditeur de contenu",
+  EC: "Émissaire Communautaire",
+  IS: "Institution Spécialisée",
+  SUPERVISEUR: "Superviseur",
+  PARTENAIRE: "Partenaire",
+};
+const EDITABLE_ROLES = ["EDITOR", "EC", "IS", "SUPERVISEUR", "PARTENAIRE"];
+
 /**
  * Tableau de gestion des utilisateurs EC & IS
  * Accès ADMIN uniquement
@@ -15,6 +25,15 @@ export default function UsersTable() {
   // PartnerDashboard.jsx#uploadLogo). apiFetch force Content-Type: JSON,
   // donc un fetch brut est nécessaire pour ce endpoint multipart.
   const [uploadingLogoFor, setUploadingLogoFor] = useState(null);
+
+  // Édition d'un compte — bouton "Modifier" ajouté suite au signalement
+  // "pas de possibilité de modifier les informations du compte" (aucune UI
+  // n'existait jusqu'ici, voir aussi le correctif du bouton Supprimer).
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [coordinations, setCoordinations] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
 
   /**
    * Chargement des utilisateurs
@@ -32,6 +51,8 @@ export default function UsersTable() {
 
   useEffect(() => {
     fetchUsers();
+    apiFetch("/coordinations").then(setCoordinations).catch((err) => console.error("Erreur chargement coordinations", err));
+    apiFetch("/institutions").then(setInstitutions).catch((err) => console.error("Erreur chargement institutions", err));
   }, []);
 
   /**
@@ -77,17 +98,71 @@ export default function UsersTable() {
   };
 
   /**
+   * Ouvrir/fermer le formulaire d'édition inline d'un compte
+   */
+  const startEdit = (user) => {
+    setEditingUserId(user._id);
+    setEditForm({
+      name: user.name || "",
+      email: user.email || "",
+      role: user.role,
+      coordinationCommunaleId: user.coordinationCommunaleId?._id || "",
+      institutionSpecialiseeId: user.institutionSpecialiseeId?._id || "",
+      password: "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingUserId(null);
+    setEditForm(null);
+  };
+
+  const saveEdit = async (userId) => {
+    if (editForm.role === "EC" && !editForm.coordinationCommunaleId) {
+      alert("Veuillez sélectionner une Coordination Communale");
+      return;
+    }
+    if (editForm.role === "IS" && !editForm.institutionSpecialiseeId) {
+      alert("Veuillez sélectionner une Institution Spécialisée");
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      await apiFetch(`/users/${userId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: editForm.name,
+          email: editForm.email,
+          role: editForm.role,
+          coordinationCommunaleId: editForm.role === "EC" ? editForm.coordinationCommunaleId : undefined,
+          institutionSpecialiseeId: editForm.role === "IS" ? editForm.institutionSpecialiseeId : undefined,
+          password: editForm.password || undefined,
+        }),
+      });
+      setEditingUserId(null);
+      setEditForm(null);
+      fetchUsers();
+    } catch (error) {
+      alert(error.message || "Erreur lors de la mise à jour du compte");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  /**
    * Supprimer un utilisateur
    */
   const deleteUser = async (userId) => {
     if (!confirm("⚠️ Suppression définitive. Continuer ?")) return;
 
     try {
-      await apiFetch(`/api/admin/users/${userId}`, {
+      await apiFetch(`/users/${userId}`, {
         method: "DELETE",
       });
       fetchUsers();
     } catch (error) {
+      alert(error.message || "Erreur lors de la suppression du compte");
       console.error("Erreur suppression utilisateur", error);
     }
   };
@@ -117,64 +192,124 @@ export default function UsersTable() {
             </tr>
           )}
 
-          {users.map((user) => (
-            <tr key={user._id}>
-              <td>{user.name || user.email}</td>
-              <td>{user.role}</td>
+          {users.map((user) => {
+            const isEditing = editingUserId === user._id;
 
-              <td>
-                {user.role === "EC" && user.coordinationCommunaleId?.name}
-                {user.role === "IS" && user.institutionSpecialiseeId?.name}
-              </td>
-
-              <td>
-                {user.role === "PARTENAIRE" ? (
-                  <div className="partner-logo-cell">
-                    {user.partnerLogoUrl ? (
-                      <img src={user.partnerLogoUrl} alt="Logo" className="partner-logo-cell__thumb" />
+            if (isEditing) {
+              return (
+                <tr key={user._id}>
+                  <td>
+                    <input type="text" value={editForm.name} placeholder="Nom"
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                    <br />
+                    <input type="email" value={editForm.email} placeholder="Email"
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                    <br />
+                    <input type="password" value={editForm.password} placeholder="Nouveau mot de passe (optionnel)"
+                      onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} />
+                  </td>
+                  <td>
+                    {user.role === "ADMIN" ? (
+                      <span title="Le rôle d'un compte ADMIN ne peut pas être changé depuis ce formulaire">{ROLE_LABELS.ADMIN}</span>
                     ) : (
-                      <span className="partner-logo-cell__empty">Aucun</span>
+                      <select value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}>
+                        {EDITABLE_ROLES.map((r) => (
+                          <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                        ))}
+                      </select>
                     )}
-                    <label className="partner-logo-cell__upload">
-                      {uploadingLogoFor === user._id ? "Envoi..." : "Changer"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => uploadPartnerLogo(user._id, e.target.files?.[0])}
-                        disabled={uploadingLogoFor === user._id}
-                        style={{ display: "none" }}
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  "—"
-                )}
-              </td>
+                  </td>
+                  <td>
+                    {editForm.role === "EC" && (
+                      <select value={editForm.coordinationCommunaleId}
+                        onChange={(e) => setEditForm({ ...editForm, coordinationCommunaleId: e.target.value })}>
+                        <option value="">-- Sélectionner --</option>
+                        {coordinations.map((cc) => <option key={cc._id} value={cc._id}>{cc.name}</option>)}
+                      </select>
+                    )}
+                    {editForm.role === "IS" && (
+                      <select value={editForm.institutionSpecialiseeId}
+                        onChange={(e) => setEditForm({ ...editForm, institutionSpecialiseeId: e.target.value })}>
+                        <option value="">-- Sélectionner --</option>
+                        {institutions.map((inst) => <option key={inst._id} value={inst._id}>{inst.name}</option>)}
+                      </select>
+                    )}
+                  </td>
+                  <td>—</td>
+                  <td>{user.isActive ? "Actif" : "Inactif"}</td>
+                  <td className="actions">
+                    <button onClick={() => saveEdit(user._id)} disabled={savingEdit}>
+                      {savingEdit ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                    <button onClick={cancelEdit} disabled={savingEdit}>Annuler</button>
+                  </td>
+                </tr>
+              );
+            }
 
-              <td>
-                {user.isActive ? (
-                  <span className="status active">Actif</span>
-                ) : (
-                  <span className="status inactive">Inactif</span>
-                )}
-              </td>
+            return (
+              <tr key={user._id}>
+                <td>{user.name || user.email}</td>
+                <td>{ROLE_LABELS[user.role] || user.role}</td>
 
-              <td className="actions">
-                <button
-                  onClick={() => toggleStatus(user._id, user.isActive)}
-                >
-                  {user.isActive ? "Désactiver" : "Activer"}
-                </button>
+                <td>
+                  {user.role === "EC" && user.coordinationCommunaleId?.name}
+                  {user.role === "IS" && user.institutionSpecialiseeId?.name}
+                </td>
 
-                <button
-                  className="danger"
-                  onClick={() => deleteUser(user._id)}
-                >
-                  Supprimer
-                </button>
-              </td>
-            </tr>
-          ))}
+                <td>
+                  {user.role === "PARTENAIRE" ? (
+                    <div className="partner-logo-cell">
+                      {user.partnerLogoUrl ? (
+                        <img src={user.partnerLogoUrl} alt="Logo" className="partner-logo-cell__thumb" />
+                      ) : (
+                        <span className="partner-logo-cell__empty">Aucun</span>
+                      )}
+                      <label className="partner-logo-cell__upload">
+                        {uploadingLogoFor === user._id ? "Envoi..." : "Changer"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => uploadPartnerLogo(user._id, e.target.files?.[0])}
+                          disabled={uploadingLogoFor === user._id}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+
+                <td>
+                  {user.isActive ? (
+                    <span className="status active">Actif</span>
+                  ) : (
+                    <span className="status inactive">Inactif</span>
+                  )}
+                </td>
+
+                <td className="actions">
+                  <button onClick={() => startEdit(user)}>
+                    Modifier
+                  </button>
+
+                  <button
+                    onClick={() => toggleStatus(user._id, user.isActive)}
+                  >
+                    {user.isActive ? "Désactiver" : "Activer"}
+                  </button>
+
+                  <button
+                    className="danger"
+                    onClick={() => deleteUser(user._id)}
+                  >
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
