@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
+import { formatSmartTime } from "@/utils/formatSmartTime.js";
 // jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
 // VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export "Progression
 // par volontaire" en A4 paysage (décision utilisateur, 2026-08-17, appliquée
@@ -59,7 +60,7 @@ const CONDITIONAL_TRIGGER_TYPES = ["SELECT", "CHECKBOX"];
 const APPLICANT_FIELD_IDS = ["applicantFirstName", "applicantLastName", "applicantEmail", "applicantPhone"];
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
-const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", status: "PUBLISHED", scheduledPublishAt: "", proofFields: [] };
+const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", status: "PUBLISHED", scheduledPublishAt: "", dueAt: "", proofFields: [] };
 const TASK_STATUS_LABELS = { DRAFT: "Brouillon", SCHEDULED: "Programmée", PUBLISHED: "Publiée" };
 
 // <input type="datetime-local"> attend "AAAA-MM-JJTHH:mm" en heure LOCALE
@@ -733,6 +734,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       recurrence: taskForm.recurrence,
       status: taskForm.status,
       scheduledPublishAt: taskForm.status === "SCHEDULED" ? new Date(taskForm.scheduledPublishAt).toISOString() : null,
+      dueAt: taskForm.dueAt ? new Date(taskForm.dueAt).toISOString() : null,
       proofForm: { fields: taskForm.proofFields },
     };
     const nextTasks = editingTaskId
@@ -752,6 +754,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       title: task.title, description: task.description || "", recurrence: task.recurrence,
       status: task.status || "PUBLISHED",
       scheduledPublishAt: task.scheduledPublishAt ? toDatetimeLocalValue(task.scheduledPublishAt) : "",
+      dueAt: task.dueAt ? toDatetimeLocalValue(task.dueAt) : "",
       proofFields: task.proofForm?.fields || [],
     });
     setProofFieldForm(emptyProofFieldForm);
@@ -1480,6 +1483,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                         ? `${task.proofForm.fields.length} champ(s) de preuve`
                         : "Formulaire de preuve par défaut (Description)"}
                     </span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Publiée : {task.publishedAt ? formatSmartTime(task.publishedAt) : "—"}
+                      {" · "}
+                      Date limite : {task.dueAt ? formatSmartTime(task.dueAt) : "Aucune"}
+                    </div>
                     {task.description && <p className="text-sm text-gray-600 mt-1">{task.description}</p>}
                   </div>
                   <div className="flex gap-2">
@@ -1517,6 +1525,16 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   </label>
                 )}
               </div>
+              <label className="block text-sm">
+                <span className="block text-gray-600 mb-1">Date limite de soumission (optionnel)</span>
+                <input type="datetime-local" value={taskForm.dueAt}
+                  onChange={(e) => setTaskForm({ ...taskForm, dueAt: e.target.value })}
+                  className="w-full border border-gray-300 rounded-xl p-2" />
+                <span className="block text-xs text-gray-500 mt-1">
+                  Passé ce délai, plus aucun volontaire ne peut soumettre pour cette tâche. Laisser vide = pas de
+                  limite propre à la tâche (seule la date de fin du programme compte).
+                </span>
+              </label>
               <select value={taskForm.recurrence} onChange={(e) => setTaskForm({ ...taskForm, recurrence: e.target.value })}
                 className="w-full border border-gray-300 rounded-xl p-2">
                 <option value="ONCE">Une fois</option>
@@ -1958,9 +1976,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             {" · "}
                             Superviseur : {s.supervisorNames && s.supervisorNames.length > 0 ? s.supervisorNames.join(", ") : "—"}
                           </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
+                            {" · "}
+                            Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
+                            {" · "}
+                            Soumise : {formatSmartTime(s.submittedAt)}
+                          </div>
                           {s.status !== "PENDING" && s.reviewedAt && (
                             <div className="text-xs text-gray-500 mt-1">
-                              Traitée le {new Date(s.reviewedAt).toLocaleDateString("fr-FR")}
+                              {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
+                              {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
                               {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
                             </div>
                           )}

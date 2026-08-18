@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { volunteerFetch } from "@/services/volunteer/api";
 import { useVolunteerGuard } from "@/hooks/useVolunteerGuard";
+import { formatSmartTime } from "@/utils/formatSmartTime.js";
 
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
 const STATUS_LABELS = { TODO: "À faire", PENDING: "En attente de validation", APPROVED: "Validée", REJECTED: "Rejetée — à refaire" };
@@ -161,6 +162,10 @@ export default function ProgramProgress({ programId }) {
                 <span className="pp-task__recurrence">{RECURRENCE_LABELS[task.recurrence]}</span>
               </div>
               {task.description && <p className="pp-task__desc">{task.description}</p>}
+              <p className="pp-task__times">
+                Publiée : {task.publishedAt ? formatSmartTime(task.publishedAt) : "—"}
+                {task.dueAt && <> · Fermeture : {formatSmartTime(task.dueAt)}</>}
+              </p>
 
               <div className="pp-occurrences">
                 {[...task.occurrences].reverse().map((occ) => {
@@ -184,6 +189,15 @@ export default function ProgramProgress({ programId }) {
                           </button>
                         )}
                       </div>
+
+                      {occ.submittedAt && (occ.status === "PENDING" || occ.status === "APPROVED" || occ.status === "REJECTED") && (
+                        <p className="pp-occurrence__submitted">
+                          Soumise : {formatSmartTime(occ.submittedAt)}
+                          {occ.status !== "PENDING" && occ.reviewedAt && (
+                            <> · {occ.status === "APPROVED" ? "Validée" : "Rejetée"} : {formatSmartTime(occ.reviewedAt)}</>
+                          )}
+                        </p>
+                      )}
 
                       {occ.status === "REJECTED" && occ.reviewNote && (
                         <p className="pp-occurrence__note">Motif du rejet : {occ.reviewNote}</p>
@@ -342,6 +356,7 @@ export default function ProgramProgress({ programId }) {
           padding: 2px var(--sp-3); border-radius: var(--r-full);
         }
         .pp-task__desc { font-size: var(--text-sm); color: var(--col-text-sec); margin-bottom: var(--sp-3); }
+        .pp-task__times { font-size: var(--text-xs); color: var(--col-text-muted); margin-bottom: var(--sp-3); }
 
         .pp-occurrences { display: flex; flex-direction: column; gap: var(--sp-3); }
         .pp-occurrence { border-top: 1px solid var(--col-border-light); padding-top: var(--sp-3); }
@@ -349,6 +364,7 @@ export default function ProgramProgress({ programId }) {
         .pp-occurrence__row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
         .pp-occurrence__date { font-size: var(--text-sm); font-weight: 600; color: var(--col-text); min-width: 4rem; }
         .pp-occurrence__note { font-size: var(--text-xs); color: #dc2626; margin-top: var(--sp-1); }
+        .pp-occurrence__submitted { font-size: var(--text-xs); color: var(--col-text-muted); margin-top: var(--sp-1); }
 
         .pp-badge { font-size: var(--text-xs); font-weight: 700; padding: var(--sp-1) var(--sp-3); border-radius: var(--r-full); white-space: nowrap; }
         .pp-badge--todo { background: var(--col-surface2); color: var(--col-text-sec); }

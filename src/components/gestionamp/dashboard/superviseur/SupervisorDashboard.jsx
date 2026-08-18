@@ -46,6 +46,7 @@
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
+import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -358,9 +359,17 @@ export default function SupervisorDashboard() {
                   <span style={{ marginLeft: 8 }}>
                     <span style={badgeStyle(SUBMISSION_STATUS_STYLE[s.status])}>{SUBMISSION_STATUS_LABELS[s.status]}</span>
                   </span>
+                  <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
+                    Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
+                    {" · "}
+                    Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
+                    {" · "}
+                    Soumise : {formatSmartTime(s.submittedAt)}
+                  </div>
                   {s.status !== "PENDING" && s.reviewedAt && (
                     <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
-                      Traitée le {new Date(s.reviewedAt).toLocaleDateString("fr-FR")}
+                      {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
+                      {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
                       {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
                     </div>
                   )}
