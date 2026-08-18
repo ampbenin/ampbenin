@@ -19,6 +19,21 @@ import autoTable from "jspdf-autotable";
 
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
+// Filtre de statut des soumissions (onglet Suivi) — même mécanisme que
+// SupervisorDashboard.jsx.
+const SUBMISSION_FILTERS = [
+  { value: "PENDING", label: "En attente" },
+  { value: "APPROVED", label: "Approuvées" },
+  { value: "REJECTED", label: "Rejetées" },
+  { value: "", label: "Toutes" },
+];
+const SUBMISSION_STATUS_LABELS = { PENDING: "En attente", APPROVED: "Approuvée", REJECTED: "Rejetée" };
+const SUBMISSION_STATUS_CLASSES = {
+  PENDING: "bg-yellow-100 text-yellow-800",
+  APPROVED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
+};
+
 const FIELD_TYPES = [
   { value: "TEXT", label: "Texte court" },
   { value: "TEXTAREA", label: "Texte long" },
@@ -171,7 +186,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [proofFieldForm, setProofFieldForm] = useState(emptyProofFieldForm);
   const [editingProofFieldIndex, setEditingProofFieldIndex] = useState(null);
   const [programProgress, setProgramProgress] = useState([]);
-  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  // Filtre de statut des soumissions (onglet Suivi) — PENDING par défaut
+  // (comportement historique), mais on peut aussi voir Approuvées/Rejetées/
+  // Toutes : jusqu'ici une soumission traitée disparaissait purement et
+  // simplement de la vue, aucun moyen de retrouver les preuves déjà
+  // examinées. Même mécanisme que SupervisorDashboard.jsx#submissionFilter.
+  const [submissionFilter, setSubmissionFilter] = useState("PENDING");
   // Recherche/filtres/pagination de "Progression par volontaire" (onglet
   // Suivi des tâches) — tout calculé côté client, comme sur SupervisorDashboard.jsx.
   const [progressSearch, setProgressSearch] = useState("");
@@ -815,9 +836,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   const loadTracking = async () => {
     try {
-      const [progress, submissions, staff] = await Promise.all([
+      // submissionFilter vide ("Toutes") => pas de &status du tout, comme
+      // SupervisorDashboard.jsx#loadSubmissions — sinon une soumission déjà
+      // traitée (Approuvée/Rejetée) restait invisible pour toujours, alors
+      // qu'on a besoin d'y revenir pour retrouver les preuves fournies.
+      const statusQs = submissionFilter ? `&status=${submissionFilter}` : "";
+      const [progress, submissionsData, staff] = await Promise.all([
         adminFetch(`/api/volunteer-tasks/programs/${programId}/progress`),
-        adminFetch(`/api/volunteer-tasks/submissions?programId=${programId}&status=PENDING`),
+        adminFetch(`/api/volunteer-tasks/submissions?programId=${programId}${statusQs}`),
         // Annuaire allégé (ADMIN+EDITOR) — pas /gestionamp/api/users, qui
         // est réservé ADMIN (gestion des comptes) et ferait échouer tout
         // ce Promise.all (donc toute la progression/les soumissions aussi)
@@ -825,7 +851,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
         adminFetch("/gestionamp/api/users/staff-directory"),
       ]);
       setProgramProgress(progress?.items || []);
-      setPendingSubmissions(submissions?.items || []);
+      setSubmissions(submissionsData?.items || []);
       setStaffUsers(Array.isArray(staff) ? staff : []);
       loadApplicationGroups(); // pour le sélecteur "Affecter depuis un groupe"
     } catch (err) {
@@ -875,6 +901,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // Recharge les soumissions quand on change de filtre de statut (onglet
+  // Suivi déjà actif — le useEffect ci-dessus ne se redéclenche pas juste
+  // pour ça puisque activeTab ne change pas).
+  useEffect(() => {
+    if (activeTab === "tracking") loadTracking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionFilter]);
 
   // Revient à la page 1 dès qu'un filtre de "Progression par volontaire" change.
   useEffect(() => { setProgressPage(1); }, [progressSearch, progressGroupFilter, progressStatutFilter]);
@@ -1886,12 +1920,26 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
         {activeTab === "tracking" && (
           <div className="space-y-8">
             <div>
-              <h3 className="font-semibold mb-3">Soumissions en attente ({pendingSubmissions.length})</h3>
-              {pendingSubmissions.length === 0 ? (
-                <p className="text-gray-500">Aucune soumission en attente.</p>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <h3 className="font-semibold">Soumissions ({submissions.length})</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {SUBMISSION_FILTERS.map((f) => (
+                    <button key={f.value || "ALL"} onClick={() => setSubmissionFilter(f.value)}
+                      className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+                        submissionFilter === f.value
+                          ? "bg-gray-800 text-white border-gray-800"
+                          : "bg-white text-gray-700 border-gray-300"
+                      }`}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {submissions.length === 0 ? (
+                <p className="text-gray-500">Aucune soumission pour ce filtre.</p>
               ) : (
                 <div className="space-y-2">
-                  {pendingSubmissions.map((s) => (
+                  {submissions.map((s) => (
                     <div key={s._id} className="border border-gray-200 rounded-xl p-3">
                       <div className="flex justify-between items-start gap-3 flex-wrap">
                         <div>
@@ -1900,6 +1948,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             <span className="text-xs text-gray-500 ml-2">
                               ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
                             </span>
+                          )}
+                          <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${SUBMISSION_STATUS_CLASSES[s.status]}`}>
+                            {SUBMISSION_STATUS_LABELS[s.status]}
+                          </span>
+                          {s.status !== "PENDING" && s.reviewedAt && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Traitée le {new Date(s.reviewedAt).toLocaleDateString("fr-FR")}
+                              {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
+                            </div>
                           )}
                           <dl className="text-sm mt-1 space-y-1">
                             {(s.proofFields || []).map((f) => {
@@ -1929,16 +1986,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             })}
                           </dl>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button onClick={() => reviewSubmissionTask(s._id, "accept")}
-                            className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
-                            Approuver
-                          </button>
-                          <button onClick={() => rejectSubmissionWithNote(s._id)}
-                            className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
-                            Rejeter
-                          </button>
-                        </div>
+                        {s.status === "PENDING" && (
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button onClick={() => reviewSubmissionTask(s._id, "accept")}
+                              className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+                              Approuver
+                            </button>
+                            <button onClick={() => rejectSubmissionWithNote(s._id)}
+                              className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+                              Rejeter
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
