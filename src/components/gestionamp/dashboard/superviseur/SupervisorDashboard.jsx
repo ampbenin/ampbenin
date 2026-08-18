@@ -171,8 +171,9 @@ export default function SupervisorDashboard() {
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [submissions, setSubmissions] = useState([]);
   const [submissionFilter, setSubmissionFilter] = useState("PENDING");
-  // Regroupement par volontaire + pagination de la liste "Soumissions"
-  // (décision utilisateur, 2026-08-18).
+  // Regroupement par volontaire + pagination + recherche de la liste
+  // "Soumissions" (décision utilisateur, 2026-08-18).
+  const [submissionsSearch, setSubmissionsSearch] = useState("");
   const [submissionsPage, setSubmissionsPage] = useState(1);
   const [expandedVolunteerIds, setExpandedVolunteerIds] = useState(new Set());
   const [progress, setProgress] = useState([]);
@@ -229,6 +230,7 @@ export default function SupervisorDashboard() {
     setProgressGroupFilter("");
     setProgressStatutFilter("");
     setProgressPage(1);
+    setSubmissionsSearch("");
     setSubmissionsPage(1);
     setExpandedVolunteerIds(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,6 +238,7 @@ export default function SupervisorDashboard() {
   // Revient à la page 1 dès qu'un filtre change, sinon on peut se retrouver
   // sur une page qui n'existe plus une fois le résultat rétréci.
   useEffect(() => { setProgressPage(1); }, [progressSearch, progressGroupFilter, progressStatutFilter]);
+  useEffect(() => { setSubmissionsPage(1); }, [submissionsSearch]);
 
   const approve = async (id) => {
     try {
@@ -322,8 +325,20 @@ export default function SupervisorDashboard() {
   // Regroupe les soumissions (déjà filtrées par statut) par volontaire —
   // 2+ soumissions du même volontaire => repliées sous son nom ; 1 seule
   // => affichée directement, comme avant (décision utilisateur, 2026-08-18).
+  // Recherche par volontaire ou tâche (décision utilisateur, 2026-08-18) —
+  // appliquée AVANT le regroupement : un volontaire dont une seule
+  // soumission correspond à la recherche peut ainsi passer de "groupé" à
+  // "carte isolée", cohérent avec la règle "2+ => groupé".
+  const submissionsSearchQuery = submissionsSearch.trim().toLowerCase();
+  const searchedSubmissions = submissionsSearchQuery
+    ? submissions.filter((s) =>
+        (s.volunteerName || "").toLowerCase().includes(submissionsSearchQuery) ||
+        (s.taskTitle || "").toLowerCase().includes(submissionsSearchQuery)
+      )
+    : submissions;
+
   const submissionsByVolunteer = new Map();
-  submissions.forEach((s) => {
+  searchedSubmissions.forEach((s) => {
     const key = String(s.volunteerId);
     if (!submissionsByVolunteer.has(key)) submissionsByVolunteer.set(key, []);
     submissionsByVolunteer.get(key).push(s);
@@ -521,8 +536,17 @@ export default function SupervisorDashboard() {
           ))}
         </div>
       </div>
+      <input
+        type="text"
+        placeholder="🔍 Rechercher un volontaire ou une tâche..."
+        value={submissionsSearch}
+        onChange={(e) => setSubmissionsSearch(e.target.value)}
+        style={{ width: "100%", border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}
+      />
       {submissions.length === 0 ? (
         <p style={{ color: "#666" }}>Aucune soumission pour ce filtre.</p>
+      ) : searchedSubmissions.length === 0 ? (
+        <p style={{ color: "#666" }}>Aucune soumission ne correspond à cette recherche.</p>
       ) : (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
