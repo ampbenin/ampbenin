@@ -11,6 +11,7 @@ import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
+import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
 // jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
 // VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export "Progression
 // par volontaire" en A4 paysage (décision utilisateur, 2026-08-17, appliquée
@@ -1488,7 +1489,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       {" · "}
                       Date limite : {task.dueAt ? formatSmartTime(task.dueAt) : "Aucune"}
                     </div>
-                    {task.description && <p className="text-sm text-gray-600 mt-1">{task.description}</p>}
+                    {task.description && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        <TruncatedDescription
+                          text={task.description}
+                          title={task.title}
+                          times={[
+                            { label: "Publiée", value: task.publishedAt ? formatSmartTime(task.publishedAt) : "—" },
+                            { label: "Date limite", value: task.dueAt ? formatSmartTime(task.dueAt) : "Aucune" },
+                          ]}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => editTask(task)} className="text-blue-600 hover:underline text-sm">Éditer</button>

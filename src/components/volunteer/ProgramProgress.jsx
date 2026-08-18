@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { volunteerFetch } from "@/services/volunteer/api";
 import { useVolunteerGuard } from "@/hooks/useVolunteerGuard";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
+import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
 
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
 const STATUS_LABELS = { TODO: "À faire", PENDING: "En attente de validation", APPROVED: "Validée", REJECTED: "Rejetée — à refaire" };
@@ -161,7 +162,18 @@ export default function ProgramProgress({ programId }) {
                 <strong>{task.title}</strong>
                 <span className="pp-task__recurrence">{RECURRENCE_LABELS[task.recurrence]}</span>
               </div>
-              {task.description && <p className="pp-task__desc">{task.description}</p>}
+              {task.description && (
+                <div className="pp-task__desc">
+                  <TruncatedDescription
+                    text={task.description}
+                    title={task.title}
+                    times={[
+                      { label: "Publiée", value: task.publishedAt ? formatSmartTime(task.publishedAt) : "—" },
+                      ...(task.dueAt ? [{ label: "Fermeture", value: formatSmartTime(task.dueAt) }] : []),
+                    ]}
+                  />
+                </div>
+              )}
               <p className="pp-task__times">
                 Publiée : {task.publishedAt ? formatSmartTime(task.publishedAt) : "—"}
                 {task.dueAt && <> · Fermeture : {formatSmartTime(task.dueAt)}</>}
