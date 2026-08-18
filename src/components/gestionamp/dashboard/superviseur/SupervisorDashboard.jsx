@@ -81,6 +81,86 @@ const DASHBOARD_TABS = [
   { value: "progress", label: "Progression par volontaire" },
   { value: "submissions", label: "Soumissions" },
 ];
+const SUBMISSIONS_PAGE_SIZE = 10;
+
+// Carte d'une soumission — extraite pour être réutilisée telle quelle en
+// affichage direct (volontaire avec 1 seule soumission sur le filtre actif)
+// et à l'intérieur d'un groupe déplié (volontaire avec 2+ soumissions,
+// décision utilisateur 2026-08-18 : "si au moins 2 tâches sont au nom d'un
+// même volontaire, on affiche le nom du volontaire" plutôt que de tout
+// mélanger). hideVolunteerName évite de répéter le nom déjà affiché comme
+// en-tête du groupe.
+function SubmissionCard({ s, onApprove, onReject, programId, hideVolunteerName = false }) {
+  return (
+    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          {!hideVolunteerName && <strong>{s.volunteerName}</strong>}
+          <span style={{ color: hideVolunteerName ? "inherit" : "#666" }}>{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
+          {s.occurrenceDate && (
+            <span style={{ fontSize: "0.75rem", color: "#888", marginLeft: 8 }}>
+              ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
+            </span>
+          )}
+          <span style={{ marginLeft: 8 }}>
+            <span style={badgeStyle(SUBMISSION_STATUS_STYLE[s.status])}>{SUBMISSION_STATUS_LABELS[s.status]}</span>
+          </span>
+          <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
+            Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
+            {" · "}
+            Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
+            {" · "}
+            Soumise : {formatSmartTime(s.submittedAt)}
+          </div>
+          {s.status !== "PENDING" && s.reviewedAt && (
+            <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
+              {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
+              {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
+              {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
+            </div>
+          )}
+          <dl style={{ fontSize: "0.9rem", marginTop: 4 }}>
+            {(s.proofFields || []).map((f) => {
+              const value = s.responses?.[f.id];
+              if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) return null;
+              return (
+                <div key={f.id}>
+                  <dt style={{ display: "inline", fontWeight: 600 }}>{f.label} : </dt>
+                  <dd style={{ display: "inline" }}>
+                    {f.type === "URL" ? (
+                      <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                    ) : f.type === "IMAGE" ? (
+                      <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+                        {value.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noreferrer">
+                            <img src={url} alt="" style={{ height: 56, width: 56, objectFit: "cover", borderRadius: 6 }} />
+                          </a>
+                        ))}
+                      </span>
+                    ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : String(value)}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
+          {s.status === "PENDING" && (
+            <>
+              <button onClick={() => onApprove(s._id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
+                Approuver
+              </button>
+              <button onClick={() => onReject(s._id)} style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
+                Rejeter
+              </button>
+            </>
+          )}
+          <ReportVolunteerButton programId={programId} volunteerId={s.volunteerId} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SupervisorDashboard() {
   // Vrai tableau de bord à onglets (décision utilisateur, 2026-08-18) — la
@@ -91,6 +171,10 @@ export default function SupervisorDashboard() {
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [submissions, setSubmissions] = useState([]);
   const [submissionFilter, setSubmissionFilter] = useState("PENDING");
+  // Regroupement par volontaire + pagination de la liste "Soumissions"
+  // (décision utilisateur, 2026-08-18).
+  const [submissionsPage, setSubmissionsPage] = useState(1);
+  const [expandedVolunteerIds, setExpandedVolunteerIds] = useState(new Set());
   const [progress, setProgress] = useState([]);
   const [missionValidationThreshold, setMissionValidationThreshold] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -145,6 +229,8 @@ export default function SupervisorDashboard() {
     setProgressGroupFilter("");
     setProgressStatutFilter("");
     setProgressPage(1);
+    setSubmissionsPage(1);
+    setExpandedVolunteerIds(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProgramId, submissionFilter]);
   // Revient à la page 1 dès qu'un filtre change, sinon on peut se retrouver
@@ -232,6 +318,35 @@ export default function SupervisorDashboard() {
   const avgProgressPercent = totalVolunteers > 0
     ? Math.round(progress.reduce((sum, p) => sum + p.progress.percent, 0) / totalVolunteers)
     : 0;
+
+  // Regroupe les soumissions (déjà filtrées par statut) par volontaire —
+  // 2+ soumissions du même volontaire => repliées sous son nom ; 1 seule
+  // => affichée directement, comme avant (décision utilisateur, 2026-08-18).
+  const submissionsByVolunteer = new Map();
+  submissions.forEach((s) => {
+    const key = String(s.volunteerId);
+    if (!submissionsByVolunteer.has(key)) submissionsByVolunteer.set(key, []);
+    submissionsByVolunteer.get(key).push(s);
+  });
+  const submissionEntries = [...submissionsByVolunteer.entries()]
+    .map(([volunteerId, subs]) => {
+      const latest = Math.max(...subs.map((s) => new Date(s.submittedAt).getTime()));
+      return subs.length >= 2
+        ? { type: "group", volunteerId, volunteerName: subs[0].volunteerName, subs, latest }
+        : { type: "single", submission: subs[0], latest };
+    })
+    .sort((a, b) => b.latest - a.latest);
+  const submissionsTotalPages = Math.max(1, Math.ceil(submissionEntries.length / SUBMISSIONS_PAGE_SIZE));
+  const pagedSubmissionEntries = submissionEntries.slice(
+    (submissionsPage - 1) * SUBMISSIONS_PAGE_SIZE, submissionsPage * SUBMISSIONS_PAGE_SIZE
+  );
+  const toggleVolunteerExpanded = (volunteerId) => {
+    setExpandedVolunteerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(volunteerId)) next.delete(volunteerId); else next.add(volunteerId);
+      return next;
+    });
+  };
 
   return (
     <div className="supervisor-dashboard">
@@ -409,76 +524,47 @@ export default function SupervisorDashboard() {
       {submissions.length === 0 ? (
         <p style={{ color: "#666" }}>Aucune soumission pour ce filtre.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {submissions.map((s) => (
-            <div key={s._id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                <div>
-                  <strong>{s.volunteerName}</strong> <span style={{ color: "#666" }}>— {s.taskTitle}</span>
-                  {s.occurrenceDate && (
-                    <span style={{ fontSize: "0.75rem", color: "#888", marginLeft: 8 }}>
-                      ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
-                    </span>
-                  )}
-                  <span style={{ marginLeft: 8 }}>
-                    <span style={badgeStyle(SUBMISSION_STATUS_STYLE[s.status])}>{SUBMISSION_STATUS_LABELS[s.status]}</span>
-                  </span>
-                  <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
-                    Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
-                    {" · "}
-                    Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
-                    {" · "}
-                    Soumise : {formatSmartTime(s.submittedAt)}
-                  </div>
-                  {s.status !== "PENDING" && s.reviewedAt && (
-                    <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
-                      {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
-                      {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
-                      {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pagedSubmissionEntries.map((entry) =>
+              entry.type === "single" ? (
+                <SubmissionCard key={entry.submission._id} s={entry.submission} onApprove={approve} onReject={reject} programId={selectedProgramId} />
+              ) : (
+                <div key={entry.volunteerId} style={{ border: "1px solid #ddd", borderRadius: 8 }}>
+                  <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
+                    style={{
+                      width: "100%", textAlign: "left", background: "#f9fafb", border: "none", borderRadius: 8,
+                      padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    }}>
+                    <span><strong>{entry.volunteerName}</strong> <span style={{ color: "#666", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span></span>
+                    <span style={{ color: "#6b7280" }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
+                  </button>
+                  {expandedVolunteerIds.has(entry.volunteerId) && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderTop: "1px solid #eee" }}>
+                      {entry.subs.map((s) => (
+                        <SubmissionCard key={s._id} s={s} onApprove={approve} onReject={reject} programId={selectedProgramId} hideVolunteerName />
+                      ))}
                     </div>
                   )}
-                  <dl style={{ fontSize: "0.9rem", marginTop: 4 }}>
-                    {(s.proofFields || []).map((f) => {
-                      const value = s.responses?.[f.id];
-                      if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) return null;
-                      return (
-                        <div key={f.id}>
-                          <dt style={{ display: "inline", fontWeight: 600 }}>{f.label} : </dt>
-                          <dd style={{ display: "inline" }}>
-                            {f.type === "URL" ? (
-                              <a href={value} target="_blank" rel="noreferrer">{value}</a>
-                            ) : f.type === "IMAGE" ? (
-                              <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
-                                {value.map((url, i) => (
-                                  <a key={i} href={url} target="_blank" rel="noreferrer">
-                                    <img src={url} alt="" style={{ height: 56, width: 56, objectFit: "cover", borderRadius: 6 }} />
-                                  </a>
-                                ))}
-                              </span>
-                            ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : String(value)}
-                          </dd>
-                        </div>
-                      );
-                    })}
-                  </dl>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "flex-start" }}>
-                  {s.status === "PENDING" && (
-                    <>
-                      <button onClick={() => approve(s._id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
-                        Approuver
-                      </button>
-                      <button onClick={() => reject(s._id)} style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
-                        Rejeter
-                      </button>
-                    </>
-                  )}
-                  <ReportVolunteerButton programId={selectedProgramId} volunteerId={s.volunteerId} />
-                </div>
-              </div>
+              )
+            )}
+          </div>
+
+          {submissionEntries.length > SUBMISSIONS_PAGE_SIZE && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
+              <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage <= 1}
+                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage <= 1 ? "not-allowed" : "pointer", opacity: submissionsPage <= 1 ? 0.5 : 1 }}>
+                ← Précédent
+              </button>
+              <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Page {submissionsPage} / {submissionsTotalPages} — {submissionEntries.length} entrée(s)</span>
+              <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsTotalPages, p + 1))} disabled={submissionsPage >= submissionsTotalPages}
+                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage >= submissionsTotalPages ? "not-allowed" : "pointer", opacity: submissionsPage >= submissionsTotalPages ? 0.5 : 1 }}>
+                Suivant →
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
       </div>
       )}

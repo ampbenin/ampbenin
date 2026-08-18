@@ -135,6 +135,94 @@ const TABS = [
   { value: "partners", label: "Partenaires", icon: "🤝" },
 ];
 
+const SUBMISSIONS_PAGE_SIZE = 10;
+
+// Carte d'une soumission — extraite pour être réutilisée telle quelle en
+// affichage direct (volontaire avec 1 seule soumission sur le filtre actif)
+// et à l'intérieur d'un groupe déplié (volontaire avec 2+ soumissions,
+// décision utilisateur 2026-08-18 : "si au moins 2 tâches sont au nom d'un
+// même volontaire, on affiche le nom du volontaire" plutôt que de tout
+// mélanger). hideVolunteerName évite de répéter le nom déjà affiché comme
+// en-tête du groupe.
+function SubmissionCard({ s, onApprove, onReject, hideVolunteerName = false }) {
+  return (
+    <div className="border border-gray-200 rounded-xl p-3">
+      <div className="flex justify-between items-start gap-3 flex-wrap">
+        <div>
+          {!hideVolunteerName && <strong>{s.volunteerName}</strong>}
+          <span className="text-sm text-gray-600">{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
+          {s.occurrenceDate && (
+            <span className="text-xs text-gray-500 ml-2">
+              ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
+            </span>
+          )}
+          <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${SUBMISSION_STATUS_CLASSES[s.status]}`}>
+            {SUBMISSION_STATUS_LABELS[s.status]}
+          </span>
+          <div className="text-xs text-gray-500 mt-0.5">
+            Groupe : {s.groupNames && s.groupNames.length > 0 ? s.groupNames.join(", ") : "—"}
+            {" · "}
+            Superviseur : {s.supervisorNames && s.supervisorNames.length > 0 ? s.supervisorNames.join(", ") : "—"}
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
+            {" · "}
+            Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
+            {" · "}
+            Soumise : {formatSmartTime(s.submittedAt)}
+          </div>
+          {s.status !== "PENDING" && s.reviewedAt && (
+            <div className="text-xs text-gray-500 mt-1">
+              {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
+              {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
+              {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
+            </div>
+          )}
+          <dl className="text-sm mt-1 space-y-1">
+            {(s.proofFields || []).map((f) => {
+              const value = s.responses?.[f.id];
+              if (value === undefined || value === null || value === "" ||
+                (Array.isArray(value) && value.length === 0)) return null;
+              return (
+                <div key={f.id}>
+                  <dt className="inline font-semibold text-gray-700">{f.label} : </dt>
+                  <dd className="inline text-gray-700">
+                    {f.type === "URL" ? (
+                      <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{value}</a>
+                    ) : f.type === "IMAGE" ? (
+                      <span className="inline-flex gap-2 flex-wrap align-middle">
+                        {value.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noreferrer">
+                            <img src={url} alt="" className="h-14 w-14 object-cover rounded-lg border border-gray-200" />
+                          </a>
+                        ))}
+                      </span>
+                    ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : (
+                      <span className="whitespace-pre-line">{String(value)}</span>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+        {s.status === "PENDING" && (
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={() => onApprove(s._id)}
+              className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+              Approuver
+            </button>
+            <button onClick={() => onReject(s._id)}
+              className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+              Rejeter
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function VolunteerProgramEditor({ programId, onBack }) {
   const [activeTab, setActiveTab] = useState("info");
   const [program, setProgram] = useState(null);
@@ -195,6 +283,10 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // simplement de la vue, aucun moyen de retrouver les preuves déjà
   // examinées. Même mécanisme que SupervisorDashboard.jsx#submissionFilter.
   const [submissionFilter, setSubmissionFilter] = useState("PENDING");
+  // Regroupement par volontaire + pagination de la liste "Soumissions"
+  // (décision utilisateur, 2026-08-18).
+  const [submissionsPage, setSubmissionsPage] = useState(1);
+  const [expandedVolunteerIds, setExpandedVolunteerIds] = useState(new Set());
   // Recherche/filtres/pagination de "Progression par volontaire" (onglet
   // Suivi des tâches) — tout calculé côté client, comme sur SupervisorDashboard.jsx.
   const [progressSearch, setProgressSearch] = useState("");
@@ -911,6 +1003,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // pour ça puisque activeTab ne change pas).
   useEffect(() => {
     if (activeTab === "tracking") loadTracking();
+    setSubmissionsPage(1);
+    setExpandedVolunteerIds(new Set());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionFilter]);
 
@@ -1120,6 +1214,35 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     const slug = (program?.title || "programme").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-");
     doc.save(`progression-${slug}.pdf`);
   };
+  // Regroupe les soumissions (déjà filtrées par statut) par volontaire —
+  // 2+ soumissions du même volontaire => repliées sous son nom ; 1 seule
+  // => affichée directement, comme avant (décision utilisateur, 2026-08-18).
+  const submissionsByVolunteer = new Map();
+  submissions.forEach((s) => {
+    const key = String(s.volunteerId);
+    if (!submissionsByVolunteer.has(key)) submissionsByVolunteer.set(key, []);
+    submissionsByVolunteer.get(key).push(s);
+  });
+  const submissionEntries = [...submissionsByVolunteer.entries()]
+    .map(([volunteerId, subs]) => {
+      const latest = Math.max(...subs.map((s) => new Date(s.submittedAt).getTime()));
+      return subs.length >= 2
+        ? { type: "group", volunteerId, volunteerName: subs[0].volunteerName, subs, latest }
+        : { type: "single", submission: subs[0], latest };
+    })
+    .sort((a, b) => b.latest - a.latest);
+  const submissionsTotalPages = Math.max(1, Math.ceil(submissionEntries.length / SUBMISSIONS_PAGE_SIZE));
+  const pagedSubmissionEntries = submissionEntries.slice(
+    (submissionsPage - 1) * SUBMISSIONS_PAGE_SIZE, submissionsPage * SUBMISSIONS_PAGE_SIZE
+  );
+  const toggleVolunteerExpanded = (volunteerId) => {
+    setExpandedVolunteerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(volunteerId)) next.delete(volunteerId); else next.add(volunteerId);
+      return next;
+    });
+  };
+
   const selectedApplication = applications.find((a) => a._id === selectedApplicationId) || null;
   const activeApplicationFilterCount =
     (applicationFilters.status ? 1 : 0) +
@@ -1969,83 +2092,46 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               {submissions.length === 0 ? (
                 <p className="text-gray-500">Aucune soumission pour ce filtre.</p>
               ) : (
-                <div className="space-y-2">
-                  {submissions.map((s) => (
-                    <div key={s._id} className="border border-gray-200 rounded-xl p-3">
-                      <div className="flex justify-between items-start gap-3 flex-wrap">
-                        <div>
-                          <strong>{s.volunteerName}</strong> <span className="text-sm text-gray-600">— {s.taskTitle}</span>
-                          {s.occurrenceDate && (
-                            <span className="text-xs text-gray-500 ml-2">
-                              ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
-                            </span>
-                          )}
-                          <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${SUBMISSION_STATUS_CLASSES[s.status]}`}>
-                            {SUBMISSION_STATUS_LABELS[s.status]}
-                          </span>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            Groupe : {s.groupNames && s.groupNames.length > 0 ? s.groupNames.join(", ") : "—"}
-                            {" · "}
-                            Superviseur : {s.supervisorNames && s.supervisorNames.length > 0 ? s.supervisorNames.join(", ") : "—"}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
-                            {" · "}
-                            Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
-                            {" · "}
-                            Soumise : {formatSmartTime(s.submittedAt)}
-                          </div>
-                          {s.status !== "PENDING" && s.reviewedAt && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
-                              {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
-                              {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
+                <>
+                  <div className="space-y-2">
+                    {pagedSubmissionEntries.map((entry) =>
+                      entry.type === "single" ? (
+                        <SubmissionCard key={entry.submission._id} s={entry.submission}
+                          onApprove={(id) => reviewSubmissionTask(id, "accept")} onReject={rejectSubmissionWithNote} />
+                      ) : (
+                        <div key={entry.volunteerId} className="border border-gray-200 rounded-xl">
+                          <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
+                            className="w-full text-left bg-gray-50 rounded-xl p-3 flex items-center justify-between">
+                            <span><strong>{entry.volunteerName}</strong> <span className="text-sm text-gray-600">— {entry.subs.length} soumissions</span></span>
+                            <span className="text-gray-500">{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
+                          </button>
+                          {expandedVolunteerIds.has(entry.volunteerId) && (
+                            <div className="space-y-2 p-3 border-t border-gray-200">
+                              {entry.subs.map((s) => (
+                                <SubmissionCard key={s._id} s={s}
+                                  onApprove={(id) => reviewSubmissionTask(id, "accept")} onReject={rejectSubmissionWithNote} hideVolunteerName />
+                              ))}
                             </div>
                           )}
-                          <dl className="text-sm mt-1 space-y-1">
-                            {(s.proofFields || []).map((f) => {
-                              const value = s.responses?.[f.id];
-                              if (value === undefined || value === null || value === "" ||
-                                (Array.isArray(value) && value.length === 0)) return null;
-                              return (
-                                <div key={f.id}>
-                                  <dt className="inline font-semibold text-gray-700">{f.label} : </dt>
-                                  <dd className="inline text-gray-700">
-                                    {f.type === "URL" ? (
-                                      <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{value}</a>
-                                    ) : f.type === "IMAGE" ? (
-                                      <span className="inline-flex gap-2 flex-wrap align-middle">
-                                        {value.map((url, i) => (
-                                          <a key={i} href={url} target="_blank" rel="noreferrer">
-                                            <img src={url} alt="" className="h-14 w-14 object-cover rounded-lg border border-gray-200" />
-                                          </a>
-                                        ))}
-                                      </span>
-                                    ) : f.type === "CHECKBOX" ? (value ? "Oui" : "Non") : (
-                                      <span className="whitespace-pre-line">{String(value)}</span>
-                                    )}
-                                  </dd>
-                                </div>
-                              );
-                            })}
-                          </dl>
                         </div>
-                        {s.status === "PENDING" && (
-                          <div className="flex gap-2 flex-shrink-0">
-                            <button onClick={() => reviewSubmissionTask(s._id, "accept")}
-                              className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
-                              Approuver
-                            </button>
-                            <button onClick={() => rejectSubmissionWithNote(s._id)}
-                              className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
-                              Rejeter
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      )
+                    )}
+                  </div>
+
+                  {submissionEntries.length > SUBMISSIONS_PAGE_SIZE && (
+                    <div className="flex items-center gap-3 mt-3">
+                      <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage <= 1}
+                        className="border border-gray-300 rounded-lg px-3 py-1 text-sm disabled:opacity-40">
+                        ← Précédent
+                      </button>
+                      <span className="text-sm text-gray-500">Page {submissionsPage} / {submissionsTotalPages} — {submissionEntries.length} entrée(s)</span>
+                      <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsTotalPages, p + 1))} disabled={submissionsPage >= submissionsTotalPages}
+                        className="border border-gray-300 rounded-lg px-3 py-1 text-sm disabled:opacity-40">
+                        Suivant →
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
 
