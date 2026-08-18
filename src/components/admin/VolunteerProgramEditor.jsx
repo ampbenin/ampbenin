@@ -1101,12 +1101,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     const doc = new jsPDF({ orientation: "landscape", format: "a4" });
     doc.text(`Progression par volontaire — ${program?.title || "Programme"}`, 14, 14);
     autoTable(doc, {
-      head: [["Rang", "Nom", "Email", "Groupe", "Progression", "Statut mission"]],
+      head: [["Rang", "Nom", "Email", "Groupe", "Superviseur", "Progression", "Statut mission"]],
       body: filteredProgramProgress.map((p) => [
         p.rank,
         `${p.prenom} ${p.nom}`,
         p.email,
         p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "-",
+        p.supervisorNames && p.supervisorNames.length > 0 ? p.supervisorNames.join(", ") : "-",
         `${p.progress.approved}/${p.progress.totalDue} (${p.progress.percent}%)`,
         p.statut,
       ]),
@@ -1952,6 +1953,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                           <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${SUBMISSION_STATUS_CLASSES[s.status]}`}>
                             {SUBMISSION_STATUS_LABELS[s.status]}
                           </span>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            Groupe : {s.groupNames && s.groupNames.length > 0 ? s.groupNames.join(", ") : "—"}
+                            {" · "}
+                            Superviseur : {s.supervisorNames && s.supervisorNames.length > 0 ? s.supervisorNames.join(", ") : "—"}
+                          </div>
                           {s.status !== "PENDING" && s.reviewedAt && (
                             <div className="text-xs text-gray-500 mt-1">
                               Traitée le {new Date(s.reviewedAt).toLocaleDateString("fr-FR")}
@@ -2067,6 +2073,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             <th className="px-3 py-2 border text-left">Rang</th>
                             <th className="px-3 py-2 border text-left">Volontaire</th>
                             <th className="px-3 py-2 border text-left">Groupe</th>
+                            <th className="px-3 py-2 border text-left">Superviseur</th>
                             <th className="px-3 py-2 border text-left">Progression</th>
                             <th className="px-3 py-2 border text-left">Statut mission</th>
                             <th className="px-3 py-2 border text-left">Actions</th>
@@ -2081,6 +2088,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                                 <div className="text-xs text-gray-500">{p.email}</div>
                               </td>
                               <td className="px-3 py-2 border">{p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "—"}</td>
+                              <td className="px-3 py-2 border">{p.supervisorNames && p.supervisorNames.length > 0 ? p.supervisorNames.join(", ") : "—"}</td>
                               <td className="px-3 py-2 border">{p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)</td>
                               <td className="px-3 py-2 border">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${
