@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { volunteerFetch } from "@/services/volunteer/api";
 import { useVolunteerGuard } from "@/hooks/useVolunteerGuard";
+import { useTheme } from "@/hooks/useTheme";
+import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
 
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const APPLICATION_STATUS_CLASS = { PENDING: "dash-badge--pending", ACCEPTED: "dash-badge--accepted", REJECTED: "dash-badge--rejected" };
@@ -12,6 +14,7 @@ const MISSION_STATUS_CLASS = {
 
 export default function Dashboard() {
   const ready = useVolunteerGuard();
+  const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState(null);
   const [applications, setApplications] = useState([]);
   const [warnings, setWarnings] = useState([]);
@@ -56,7 +59,7 @@ export default function Dashboard() {
   if (error) return <p className="dash-loading dash-loading--error">{error}</p>;
 
   return (
-    <div className="dash">
+    <div className="dash" data-theme={theme}>
       {warnings.length > 0 && (
         <div className="dash-warnings">
           {warnings.map((w) => (
@@ -79,6 +82,7 @@ export default function Dashboard() {
           <h1 className="dash-title">Bonjour {profile.prenom} !</h1>
         </div>
         <div className="dash-header__actions">
+          <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
           <a href="/volontaires" className="dash-btn dash-btn--primary">Postuler à un nouveau programme</a>
           <button onClick={logout} className="dash-btn dash-btn--ghost">Déconnexion</button>
         </div>
@@ -151,9 +155,43 @@ export default function Dashboard() {
       </section>
 
       <style>{`
-        .dash { max-width: 48rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
+        .dash {
+          max-width: 48rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4);
+          background: var(--col-bg); color: var(--col-text); min-height: 100vh;
+          transition: background var(--tr-base), color var(--tr-base);
+        }
         .dash-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
         .dash-loading--error { color: #dc2626; }
+        .dash[data-theme="dark"] .dash-loading--error { color: #fca5a5; }
+
+        /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
+           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js).
+           Redéfinit localement les tokens déjà utilisés partout ci-dessous
+           via var(--col-*), sans toucher :root (styles/tokens.css). */
+        .dash[data-theme="dark"] {
+          --col-bg: #0F1A14;
+          --col-surface: #16241C;
+          --col-surface2: #1E3226;
+          --col-border: #2A4234;
+          --col-border-light: #22362A;
+          --col-text: #F0EDE6;
+          --col-text-sec: #C7C2B8;
+          --col-text-muted: #8F9A8F;
+          --col-white: #16241C;
+          --col-primary: #52B788;
+          --col-primary-light: #74C69D;
+          --col-accent: #E8C47A;
+          --col-accent-bg: rgba(201, 144, 58, 0.18);
+          --col-accent-light: rgba(232, 196, 122, 0.28);
+          --col-accent-xdark: #E8C47A;
+          --col-success: #74C69D;
+          --col-success-bg: rgba(64, 145, 108, 0.22);
+          --col-error: #FCA5A5;
+          --col-error-bg: rgba(193, 18, 31, 0.24);
+        }
+        .dash[data-theme="dark"] .dash-warning { background: rgba(185, 28, 28, 0.15); border-color: rgba(252, 165, 165, 0.4); }
+        .dash[data-theme="dark"] .dash-warning__body strong { color: #fca5a5; }
+        .dash[data-theme="dark"] .dash-warning__body p { color: #fecaca; }
 
         .dash-warnings { display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-6); }
         .dash-warning {
@@ -208,6 +246,19 @@ export default function Dashboard() {
         .dash-badge--pending { background: var(--col-surface2); color: var(--col-text-sec); }
         .dash-badge--accepted { background: var(--col-success-bg); color: var(--col-success); }
         .dash-badge--rejected { background: var(--col-error-bg); color: var(--col-error); }
+
+        /* 100% responsive mobile (décision utilisateur, 2026-08-18) */
+        @media (max-width: 640px) {
+          .dash { padding: var(--sp-5) var(--sp-3); }
+          .dash-title { font-size: var(--text-xl); }
+          .dash-header { flex-direction: column; align-items: stretch; }
+          .dash-header__actions { width: 100%; }
+          .dash-header__actions .dash-btn { flex: 1 1 auto; text-align: center; }
+          .dash-row { flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
+          .dash-row__right { width: 100%; justify-content: space-between; }
+          .dash-warning { flex-direction: column; align-items: stretch; }
+          .dash-warning__btn { width: 100%; text-align: center; }
+        }
       `}</style>
     </div>
   );

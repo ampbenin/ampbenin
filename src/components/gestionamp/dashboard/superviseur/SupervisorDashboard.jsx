@@ -47,6 +47,9 @@ import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
+import { useTheme } from "@/hooks/useTheme";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -57,15 +60,19 @@ const SUBMISSION_FILTERS = [
   { value: "", label: "Toutes" },
 ];
 const SUBMISSION_STATUS_LABELS = { PENDING: "En attente", APPROVED: "Approuvée", REJECTED: "Rejetée" };
+// Couleurs en var(--sd-*) — définies plus bas dans le <style> du composant,
+// avec une valeur différente en mode sombre (voir data-theme). Ces objets
+// ne changent jamais eux-mêmes selon le thème : c'est le navigateur qui
+// résout la variable CSS au bon moment.
 const SUBMISSION_STATUS_STYLE = {
-  PENDING: { background: "#fef3c7", color: "#92400e" },
-  APPROVED: { background: "#dcfce7", color: "#15803d" },
-  REJECTED: { background: "#fee2e2", color: "#b91c1c" },
+  PENDING: { background: "var(--sd-status-pending-bg)", color: "var(--sd-status-pending-text)" },
+  APPROVED: { background: "var(--sd-status-approved-bg)", color: "var(--sd-status-approved-text)" },
+  REJECTED: { background: "var(--sd-status-rejected-bg)", color: "var(--sd-status-rejected-text)" },
 };
 const MISSION_STATUS_STYLE = {
-  "Mission validée": { background: "#dcfce7", color: "#15803d" },
-  "Refusé": { background: "#fee2e2", color: "#b91c1c" },
-  "Non disponible": { background: "#e5e7eb", color: "#374151" },
+  "Mission validée": { background: "var(--sd-status-approved-bg)", color: "var(--sd-status-approved-text)" },
+  "Refusé": { background: "var(--sd-status-rejected-bg)", color: "var(--sd-status-rejected-text)" },
+  "Non disponible": { background: "var(--sd-status-neutral-bg)", color: "var(--sd-status-neutral-text)" },
 };
 const badgeStyle = (style) => ({
   display: "inline-block", fontSize: "0.75rem", fontWeight: 700, padding: "2px 10px",
@@ -92,20 +99,20 @@ const SUBMISSIONS_PAGE_SIZE = 10;
 // en-tête du groupe.
 function SubmissionCard({ s, onApprove, onReject, programId, hideVolunteerName = false }) {
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+    <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div>
           {!hideVolunteerName && <strong>{s.volunteerName}</strong>}
-          <span style={{ color: hideVolunteerName ? "inherit" : "#666" }}>{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
+          <span style={{ color: hideVolunteerName ? "inherit" : "var(--sd-text-secondary)" }}>{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
           {s.occurrenceDate && (
-            <span style={{ fontSize: "0.75rem", color: "#888", marginLeft: 8 }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--sd-text-faint)", marginLeft: 8 }}>
               ({new Date(s.occurrenceDate).toLocaleDateString("fr-FR")})
             </span>
           )}
           <span style={{ marginLeft: 8 }}>
             <span style={badgeStyle(SUBMISSION_STATUS_STYLE[s.status])}>{SUBMISSION_STATUS_LABELS[s.status]}</span>
           </span>
-          <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--sd-text-faint)", marginTop: 4 }}>
             Publiée : {s.taskPublishedAt ? formatSmartTime(s.taskPublishedAt) : "—"}
             {" · "}
             Fermeture : {s.taskDueAt ? formatSmartTime(s.taskDueAt) : "Aucune"}
@@ -113,7 +120,7 @@ function SubmissionCard({ s, onApprove, onReject, programId, hideVolunteerName =
             Soumise : {formatSmartTime(s.submittedAt)}
           </div>
           {s.status !== "PENDING" && s.reviewedAt && (
-            <div style={{ fontSize: "0.75rem", color: "#888", marginTop: 4 }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--sd-text-faint)", marginTop: 4 }}>
               {s.status === "APPROVED" ? "Approuvée" : "Rejetée"} {formatSmartTime(s.reviewedAt)}
               {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}
               {s.status === "REJECTED" && s.reviewNote && <> — Motif : {s.reviewNote}</>}
@@ -167,6 +174,8 @@ export default function SupervisorDashboard() {
   // page empilait jusqu'ici tout (infos programme, progression, soumissions)
   // sans séparation. "overview" par défaut, convention dashboard classique.
   const [activeTab, setActiveTab] = useState("overview");
+  const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [submissions, setSubmissions] = useState([]);
@@ -364,26 +373,28 @@ export default function SupervisorDashboard() {
   };
 
   return (
-    <div className="supervisor-dashboard">
-      <div style={{ marginBottom: 16 }}>
+    <div className="supervisor-dashboard" data-theme={theme}>
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <label>
           Programme :{" "}
-          <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}>
+          <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}
+            style={{ background: "var(--sd-surface)", color: "var(--sd-text)", border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 8px" }}>
             {programs.map((p) => (
               <option key={p.programId} value={p.programId}>{p.title} ({p.volunteerCount} volontaire(s))</option>
             ))}
           </select>
         </label>
+        <ThemeToggleButton theme={theme} onToggle={toggleTheme} style={{ color: "var(--sd-text)" }} />
       </div>
 
-      <div style={{ display: "flex", gap: 6, borderBottom: "2px solid #e5e7eb", marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 6, borderBottom: "2px solid var(--sd-border)", marginBottom: 20, flexWrap: "wrap" }}>
         {DASHBOARD_TABS.map((t) => (
           <button key={t.value} onClick={() => setActiveTab(t.value)}
             style={{
               border: "none", background: "none", cursor: "pointer", padding: "10px 16px", fontSize: "0.95rem",
               fontWeight: activeTab === t.value ? 700 : 500,
-              color: activeTab === t.value ? "#1B4332" : "#6b7280",
-              borderBottom: activeTab === t.value ? "3px solid #1B4332" : "3px solid transparent",
+              color: activeTab === t.value ? "var(--sd-primary)" : "var(--sd-text-muted)",
+              borderBottom: activeTab === t.value ? "3px solid var(--sd-primary)" : "3px solid transparent",
               marginBottom: -2,
             }}>
             {t.label}
@@ -394,9 +405,9 @@ export default function SupervisorDashboard() {
       {activeTab === "overview" && (
         <div>
           {selectedProgram && (selectedProgram.description || selectedProgram.location || selectedProgram.startDate || selectedProgram.endDate) && (
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, marginBottom: 20, background: "#fafafa" }}>
-              {selectedProgram.description && <p style={{ margin: "0 0 6px", color: "#374151" }}>{selectedProgram.description}</p>}
-              <p style={{ margin: 0, fontSize: "0.85rem", color: "#6b7280" }}>
+            <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12, marginBottom: 20, background: "var(--sd-surface-alt)" }}>
+              {selectedProgram.description && <p style={{ margin: "0 0 6px", color: "var(--sd-text-strong)" }}>{selectedProgram.description}</p>}
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--sd-text-muted)" }}>
                 {selectedProgram.location && <>📍 {selectedProgram.location}   </>}
                 {selectedProgram.startDate && <>Début : {new Date(selectedProgram.startDate).toLocaleDateString("fr-FR")}   </>}
                 {selectedProgram.endDate && <>Fin : {new Date(selectedProgram.endDate).toLocaleDateString("fr-FR")}</>}
@@ -404,19 +415,19 @@ export default function SupervisorDashboard() {
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
-              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{totalVolunteers}</div>
-              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>Volontaire(s) suivi(s)</div>
+          <div className="sd-stats" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: "14px 20px", minWidth: 140, flex: "1 1 140px" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--sd-primary)" }}>{totalVolunteers}</div>
+              <div style={{ fontSize: "0.8rem", color: "var(--sd-text-muted)" }}>Volontaire(s) suivi(s)</div>
             </div>
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
-              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{avgProgressPercent}%</div>
-              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>Progression moyenne</div>
+            <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: "14px 20px", minWidth: 140, flex: "1 1 140px" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--sd-primary)" }}>{avgProgressPercent}%</div>
+              <div style={{ fontSize: "0.8rem", color: "var(--sd-text-muted)" }}>Progression moyenne</div>
             </div>
             {MISSION_STATUSES.map((s) => (
-              <div key={s} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
-                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{missionStatusCounts[s]}</div>
-                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{s}</div>
+              <div key={s} style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: "14px 20px", minWidth: 140, flex: "1 1 140px" }}>
+                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--sd-primary)" }}>{missionStatusCounts[s]}</div>
+                <div style={{ fontSize: "0.8rem", color: "var(--sd-text-muted)" }}>{s}</div>
               </div>
             ))}
           </div>
@@ -428,13 +439,13 @@ export default function SupervisorDashboard() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <h3 style={{ margin: 0 }}>Progression par volontaire {missionValidationThreshold !== null && `(seuil de validation : ${missionValidationThreshold}%)`}</h3>
         {progress.length > 0 && (
-          <button onClick={exportProgressPdf} style={{ background: "#1B4332", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={exportProgressPdf} style={{ background: "var(--sd-primary-btn)", color: "#fff", border: "none", borderRadius: 6, padding: "6px 14px", fontWeight: 700, cursor: "pointer" }}>
             📄 Télécharger en PDF (A4 paysage)
           </button>
         )}
       </div>
       {progress.length === 0 ? (
-        <p style={{ color: "#666" }}>Aucun volontaire suivi pour l'instant.</p>
+        <p style={{ color: "var(--sd-text-secondary)" }}>Aucun volontaire suivi pour l'instant.</p>
       ) : (
         <>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, marginBottom: 8 }}>
@@ -443,54 +454,83 @@ export default function SupervisorDashboard() {
               placeholder="🔍 Rechercher (nom, email, téléphone)..."
               value={progressSearch}
               onChange={(e) => setProgressSearch(e.target.value)}
-              style={{ flex: "1 1 220px", border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}
+              style={{ flex: "1 1 220px", border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "6px 10px", background: "var(--sd-surface)", color: "var(--sd-text)" }}
             />
             <select value={progressGroupFilter} onChange={(e) => setProgressGroupFilter(e.target.value)}
-              style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}>
+              style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "6px 10px", background: "var(--sd-surface)", color: "var(--sd-text)" }}>
               <option value="">Tous les groupes</option>
               {availableGroups.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
             <select value={progressStatutFilter} onChange={(e) => setProgressStatutFilter(e.target.value)}
-              style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px" }}>
+              style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "6px 10px", background: "var(--sd-surface)", color: "var(--sd-text)" }}>
               <option value="">Tous les statuts</option>
               {MISSION_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
 
           {filteredProgress.length === 0 ? (
-            <p style={{ color: "#666" }}>Aucun volontaire ne correspond à ces critères.</p>
+            <p style={{ color: "var(--sd-text-secondary)" }}>Aucun volontaire ne correspond à ces critères.</p>
+          ) : isMobile ? (
+            // Cartes empilées sur mobile (décision utilisateur, 2026-08-18) —
+            // un tableau à 8 colonnes est illisible sur petit écran, même
+            // avec défilement horizontal.
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              {pagedProgress.map((p) => (
+                <div key={p.volunteerId} style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: "var(--sd-text-muted)", marginRight: 6 }}>#{p.rank}</span>
+                      <strong>{p.prenom} {p.nom}</strong>
+                    </div>
+                    <span style={badgeStyle(MISSION_STATUS_STYLE[p.statut])}>{p.statut}</span>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--sd-text-secondary)", marginTop: 6 }}>
+                    {p.telephone || "—"} · {p.email}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", color: "var(--sd-text-secondary)", marginTop: 2 }}>
+                    Groupe : {p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "—"}
+                  </div>
+                  <div style={{ fontSize: "0.85rem", marginTop: 2 }}>
+                    Progression : {p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <ReportVolunteerButton programId={selectedProgramId} volunteerId={p.volunteerId} />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
         <div style={{ overflowX: "auto", marginBottom: 12 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid #e5e7eb" }}>
-            <thead style={{ background: "#f3f4f6" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", border: "1px solid var(--sd-border)" }}>
+            <thead style={{ background: "var(--sd-surface-alt)" }}>
               <tr>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Rang</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Nom</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Téléphone</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Email</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Groupe</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Progression</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Statut mission</th>
-                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid #e5e7eb" }}>Actions</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Rang</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Nom</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Téléphone</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Email</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Groupe</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Progression</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Statut mission</th>
+                <th style={{ padding: "8px 12px", textAlign: "left", border: "1px solid var(--sd-border)" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {pagedProgress.map((p) => (
                 <tr key={p.volunteerId}>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb", fontWeight: 700, color: "#6b7280" }}>{p.rank}</td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.prenom} {p.nom}</td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.telephone || "—"}</td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>{p.email}</td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)", fontWeight: 700, color: "var(--sd-text-muted)" }}>{p.rank}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>{p.prenom} {p.nom}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>{p.telephone || "—"}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>{p.email}</td>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>
                     {p.groupNames && p.groupNames.length > 0 ? p.groupNames.join(", ") : "—"}
                   </td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>
                     {p.progress.approved}/{p.progress.totalDue} ({p.progress.percent}%)
                   </td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>
                     <span style={badgeStyle(MISSION_STATUS_STYLE[p.statut])}>{p.statut}</span>
                   </td>
-                  <td style={{ padding: "8px 12px", border: "1px solid #e5e7eb" }}>
+                  <td style={{ padding: "8px 12px", border: "1px solid var(--sd-border)" }}>
                     <ReportVolunteerButton programId={selectedProgramId} volunteerId={p.volunteerId} />
                   </td>
                 </tr>
@@ -503,12 +543,12 @@ export default function SupervisorDashboard() {
           {filteredProgress.length > PROGRESS_PAGE_SIZE && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
               <button onClick={() => setProgressPage((p) => Math.max(1, p - 1))} disabled={progressPage <= 1}
-                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: progressPage <= 1 ? "not-allowed" : "pointer", opacity: progressPage <= 1 ? 0.5 : 1 }}>
+                style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 10px", cursor: progressPage <= 1 ? "not-allowed" : "pointer", opacity: progressPage <= 1 ? 0.5 : 1, background: "var(--sd-surface)", color: "var(--sd-text)" }}>
                 ← Précédent
               </button>
-              <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Page {progressPage} / {progressTotalPages} — {filteredProgress.length} volontaire(s)</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--sd-text-muted)" }}>Page {progressPage} / {progressTotalPages} — {filteredProgress.length} volontaire(s)</span>
               <button onClick={() => setProgressPage((p) => Math.min(progressTotalPages, p + 1))} disabled={progressPage >= progressTotalPages}
-                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: progressPage >= progressTotalPages ? "not-allowed" : "pointer", opacity: progressPage >= progressTotalPages ? 0.5 : 1 }}>
+                style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 10px", cursor: progressPage >= progressTotalPages ? "not-allowed" : "pointer", opacity: progressPage >= progressTotalPages ? 0.5 : 1, background: "var(--sd-surface)", color: "var(--sd-text)" }}>
                 Suivant →
               </button>
             </div>
@@ -522,13 +562,13 @@ export default function SupervisorDashboard() {
       <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         <h3 style={{ margin: 0 }}>Soumissions ({submissions.length})</h3>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {SUBMISSION_FILTERS.map((f) => (
             <button key={f.value || "ALL"} onClick={() => setSubmissionFilter(f.value)}
               style={{
-                border: "1px solid #d1d5db", borderRadius: 999, padding: "4px 12px", fontSize: "0.8rem", cursor: "pointer",
-                background: submissionFilter === f.value ? "#1B4332" : "#fff",
-                color: submissionFilter === f.value ? "#fff" : "#374151",
+                border: "1px solid var(--sd-border-strong)", borderRadius: 999, padding: "4px 12px", fontSize: "0.8rem", cursor: "pointer",
+                background: submissionFilter === f.value ? "var(--sd-primary-btn)" : "var(--sd-surface)",
+                color: submissionFilter === f.value ? "#fff" : "var(--sd-text-strong)",
                 fontWeight: submissionFilter === f.value ? 700 : 400,
               }}>
               {f.label}
@@ -541,12 +581,12 @@ export default function SupervisorDashboard() {
         placeholder="🔍 Rechercher un volontaire ou une tâche..."
         value={submissionsSearch}
         onChange={(e) => setSubmissionsSearch(e.target.value)}
-        style={{ width: "100%", border: "1px solid #d1d5db", borderRadius: 6, padding: "6px 10px", marginBottom: 12 }}
+        style={{ width: "100%", border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "6px 10px", marginBottom: 12, background: "var(--sd-surface)", color: "var(--sd-text)" }}
       />
       {submissions.length === 0 ? (
-        <p style={{ color: "#666" }}>Aucune soumission pour ce filtre.</p>
+        <p style={{ color: "var(--sd-text-secondary)" }}>Aucune soumission pour ce filtre.</p>
       ) : searchedSubmissions.length === 0 ? (
-        <p style={{ color: "#666" }}>Aucune soumission ne correspond à cette recherche.</p>
+        <p style={{ color: "var(--sd-text-secondary)" }}>Aucune soumission ne correspond à cette recherche.</p>
       ) : (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -554,17 +594,17 @@ export default function SupervisorDashboard() {
               entry.type === "single" ? (
                 <SubmissionCard key={entry.submission._id} s={entry.submission} onApprove={approve} onReject={reject} programId={selectedProgramId} />
               ) : (
-                <div key={entry.volunteerId} style={{ border: "1px solid #ddd", borderRadius: 8 }}>
+                <div key={entry.volunteerId} style={{ border: "1px solid var(--sd-border)", borderRadius: 8 }}>
                   <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
                     style={{
-                      width: "100%", textAlign: "left", background: "#f9fafb", border: "none", borderRadius: 8,
-                      padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center",
+                      width: "100%", textAlign: "left", background: "var(--sd-surface-alt)", border: "none", borderRadius: 8,
+                      padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", color: "var(--sd-text)",
                     }}>
-                    <span><strong>{entry.volunteerName}</strong> <span style={{ color: "#666", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span></span>
-                    <span style={{ color: "#6b7280" }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
+                    <span><strong>{entry.volunteerName}</strong> <span style={{ color: "var(--sd-text-secondary)", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span></span>
+                    <span style={{ color: "var(--sd-text-muted)" }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
                   </button>
                   {expandedVolunteerIds.has(entry.volunteerId) && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderTop: "1px solid #eee" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderTop: "1px solid var(--sd-border-light)" }}>
                       {entry.subs.map((s) => (
                         <SubmissionCard key={s._id} s={s} onApprove={approve} onReject={reject} programId={selectedProgramId} hideVolunteerName />
                       ))}
@@ -578,12 +618,12 @@ export default function SupervisorDashboard() {
           {submissionEntries.length > SUBMISSIONS_PAGE_SIZE && (
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
               <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage <= 1}
-                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage <= 1 ? "not-allowed" : "pointer", opacity: submissionsPage <= 1 ? 0.5 : 1 }}>
+                style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage <= 1 ? "not-allowed" : "pointer", opacity: submissionsPage <= 1 ? 0.5 : 1, background: "var(--sd-surface)", color: "var(--sd-text)" }}>
                 ← Précédent
               </button>
-              <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>Page {submissionsPage} / {submissionsTotalPages} — {submissionEntries.length} entrée(s)</span>
+              <span style={{ fontSize: "0.85rem", color: "var(--sd-text-muted)" }}>Page {submissionsPage} / {submissionsTotalPages} — {submissionEntries.length} entrée(s)</span>
               <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsTotalPages, p + 1))} disabled={submissionsPage >= submissionsTotalPages}
-                style={{ border: "1px solid #d1d5db", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage >= submissionsTotalPages ? "not-allowed" : "pointer", opacity: submissionsPage >= submissionsTotalPages ? 0.5 : 1 }}>
+                style={{ border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 10px", cursor: submissionsPage >= submissionsTotalPages ? "not-allowed" : "pointer", opacity: submissionsPage >= submissionsTotalPages ? 0.5 : 1, background: "var(--sd-surface)", color: "var(--sd-text)" }}>
                 Suivant →
               </button>
             </div>
@@ -592,6 +632,66 @@ export default function SupervisorDashboard() {
       )}
       </div>
       )}
+
+      <style>{`
+        .supervisor-dashboard {
+          --sd-bg: transparent;
+          --sd-surface: #ffffff;
+          --sd-surface-alt: #f5f5f5;
+          --sd-border: #e5e7eb;
+          --sd-border-strong: #d1d5db;
+          --sd-border-light: #eeeeee;
+          --sd-text: #111827;
+          --sd-text-strong: #374151;
+          --sd-text-secondary: #666666;
+          --sd-text-muted: #6b7280;
+          --sd-text-faint: #888888;
+          --sd-primary: #1B4332;
+          --sd-primary-btn: #1B4332;
+          --sd-status-pending-bg: #fef3c7;
+          --sd-status-pending-text: #92400e;
+          --sd-status-approved-bg: #dcfce7;
+          --sd-status-approved-text: #15803d;
+          --sd-status-rejected-bg: #fee2e2;
+          --sd-status-rejected-text: #b91c1c;
+          --sd-status-neutral-bg: #e5e7eb;
+          --sd-status-neutral-text: #374151;
+          background: var(--sd-bg);
+          color: var(--sd-text);
+          min-height: 100vh;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+        /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
+           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
+        .supervisor-dashboard[data-theme="dark"] {
+          --sd-bg: #0F1A14;
+          --sd-surface: #16241C;
+          --sd-surface-alt: #1E3226;
+          --sd-border: #2A4234;
+          --sd-border-strong: #3A5240;
+          --sd-border-light: #22362A;
+          --sd-text: #F0EDE6;
+          --sd-text-strong: #F0EDE6;
+          --sd-text-secondary: #C7C2B8;
+          --sd-text-muted: #9CA89C;
+          --sd-text-faint: #8F9A8F;
+          --sd-primary: #74C69D;
+          --sd-primary-btn: #2D6A4F;
+          --sd-status-pending-bg: rgba(245, 158, 11, 0.18);
+          --sd-status-pending-text: #fbbf24;
+          --sd-status-approved-bg: rgba(34, 197, 94, 0.18);
+          --sd-status-approved-text: #4ade80;
+          --sd-status-rejected-bg: rgba(239, 68, 68, 0.18);
+          --sd-status-rejected-text: #f87171;
+          --sd-status-neutral-bg: rgba(255, 255, 255, 0.08);
+          --sd-status-neutral-text: #C7C2B8;
+        }
+
+        /* 100% responsive mobile (décision utilisateur, 2026-08-18) */
+        @media (max-width: 640px) {
+          .supervisor-dashboard .sd-stats > div { flex: 1 1 45% !important; min-width: 0 !important; }
+        }
+      `}</style>
     </div>
   );
 }

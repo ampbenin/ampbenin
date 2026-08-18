@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { volunteerFetch } from "@/services/volunteer/api";
 import { useVolunteerGuard } from "@/hooks/useVolunteerGuard";
+import { useTheme } from "@/hooks/useTheme";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
+import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
 
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
 const STATUS_LABELS = { TODO: "À faire", PENDING: "En attente de validation", APPROVED: "Validée", REJECTED: "Rejetée — à refaire" };
@@ -57,6 +59,7 @@ const isFieldVisible = (field, answers, fieldsById, guard = new Set()) => {
 
 export default function ProgramProgress({ programId }) {
   const ready = useVolunteerGuard();
+  const { theme, toggleTheme } = useTheme();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -169,8 +172,11 @@ export default function ProgramProgress({ programId }) {
     .filter((task) => task.occurrences.length > 0);
 
   return (
-    <div className="pp">
-      <a href="/mon-espace" className="pp-back">← Retour à mon espace</a>
+    <div className="pp" data-theme={theme}>
+      <div className="pp-topbar">
+        <a href="/mon-espace" className="pp-back">← Retour à mon espace</a>
+        <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
+      </div>
 
       <div className="pp-header">
         <span className="pp-tagline">Programme de volontariat</span>
@@ -414,11 +420,41 @@ export default function ProgramProgress({ programId }) {
       )}
 
       <style>{`
-        .pp { max-width: 42rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
+        .pp {
+          max-width: 42rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4);
+          background: var(--col-bg); color: var(--col-text); min-height: 100vh;
+          transition: background var(--tr-base), color var(--tr-base);
+        }
         .pp-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
         .pp-loading--error { color: #dc2626; }
-        .pp-back { display: inline-block; font-size: var(--text-sm); color: var(--col-primary); font-weight: 600; margin-bottom: var(--sp-6); text-decoration: none; }
+        .pp[data-theme="dark"] .pp-loading--error { color: #fca5a5; }
+        .pp-topbar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-6); }
+        .pp-back { display: inline-block; font-size: var(--text-sm); color: var(--col-primary); font-weight: 600; text-decoration: none; }
         .pp-back:hover { text-decoration: underline; }
+
+        /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
+           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
+        .pp[data-theme="dark"] {
+          --col-bg: #0F1A14;
+          --col-surface: #16241C;
+          --col-surface2: #1E3226;
+          --col-border: #2A4234;
+          --col-border-light: #22362A;
+          --col-text: #F0EDE6;
+          --col-text-sec: #C7C2B8;
+          --col-text-muted: #8F9A8F;
+          --col-white: #16241C;
+          --col-primary: #52B788;
+          --col-primary-light: #74C69D;
+          --col-accent: #E8C47A;
+          --col-accent-bg: rgba(201, 144, 58, 0.18);
+          --col-accent-xdark: #E8C47A;
+          --col-success: #74C69D;
+          --col-success-bg: rgba(64, 145, 108, 0.22);
+          --col-error: #FCA5A5;
+          --col-error-bg: rgba(193, 18, 31, 0.24);
+          --col-warning: #FBBF24;
+        }
 
         .pp-header { margin-bottom: var(--sp-6); }
         .pp-tagline {
@@ -521,6 +557,18 @@ export default function ProgramProgress({ programId }) {
         .pp-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
         .pp-btn--ghost { background: var(--col-surface2); color: var(--col-text-sec); }
         .pp-btn--ghost:hover:not(:disabled) { background: var(--col-border); }
+
+        /* 100% responsive mobile (décision utilisateur, 2026-08-18) */
+        @media (max-width: 640px) {
+          .pp { padding: var(--sp-5) var(--sp-3); }
+          .pp-title { font-size: var(--text-xl); }
+          .pp-tabs { overflow-x: auto; flex-wrap: nowrap; }
+          .pp-occurrence__row { align-items: flex-start; }
+          .pp-submit-form__actions { flex-direction: column-reverse; }
+          .pp-submit-form__actions .pp-btn { width: 100%; }
+          .pp-stats { justify-content: space-between; }
+          .pp-stat { flex: 1 1 40%; min-width: 0; }
+        }
       `}</style>
     </div>
   );
