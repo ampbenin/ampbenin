@@ -13,6 +13,25 @@ const MISSION_STATUS_CLASS = {
   "Mission validée": "pp-badge--approved",
 };
 
+// Vrai tableau de bord à onglets (décision utilisateur, 2026-08-18) — cette
+// page empilait jusqu'ici tout d'un coup (toutes les tâches, toutes leurs
+// échéances) sans séparation, illisible dès qu'une tâche quotidienne
+// s'accumule sur plusieurs semaines.
+const DASHBOARD_TABS = [
+  { value: "overview", label: "Vue d'ensemble" },
+  { value: "tasks", label: "Mes tâches" },
+];
+// Filtre par statut des échéances (onglet "Mes tâches") — "À faire" par
+// défaut, ce qui intéresse le volontaire au quotidien ; le reste sert à
+// retrouver l'historique.
+const OCCURRENCE_FILTERS = [
+  { value: "TODO", label: "À faire" },
+  { value: "PENDING", label: "En attente" },
+  { value: "APPROVED", label: "Validées" },
+  { value: "REJECTED", label: "Rejetées" },
+  { value: "", label: "Toutes" },
+];
+
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
 
 const isUrlLike = (str) => /^https?:\/\/.+/i.test(String(str || ""));
@@ -41,6 +60,8 @@ export default function ProgramProgress({ programId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [occurrenceFilter, setOccurrenceFilter] = useState("TODO");
   const [openKey, setOpenKey] = useState(null);
   const [responses, setResponses] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +149,25 @@ export default function ProgramProgress({ programId }) {
 
   const { progress } = data;
 
+  // Compte des échéances par statut, toutes tâches confondues — donne du
+  // contenu concret à "Vue d'ensemble" en plus de la barre de progression.
+  const occurrenceCounts = { TODO: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 };
+  data.tasks.forEach((task) => {
+    task.occurrences.forEach((occ) => {
+      occurrenceCounts[occ.status] = (occurrenceCounts[occ.status] || 0) + 1;
+    });
+  });
+
+  // "Mes tâches" filtré par statut d'échéance (décision utilisateur,
+  // 2026-08-18) — une tâche sans aucune échéance correspondant au filtre
+  // actif disparaît entièrement (jamais une carte vide affichée pour rien).
+  const filteredTasks = data.tasks
+    .map((task) => ({
+      ...task,
+      occurrences: occurrenceFilter ? task.occurrences.filter((occ) => occ.status === occurrenceFilter) : task.occurrences,
+    }))
+    .filter((task) => task.occurrences.length > 0);
+
   return (
     <div className="pp">
       <a href="/mon-espace" className="pp-back">← Retour à mon espace</a>
@@ -140,21 +180,56 @@ export default function ProgramProgress({ programId }) {
         </span>
       </div>
 
-      <div className="pp-progress">
-        <div className="pp-progress__bar-track">
-          <div className="pp-progress__bar-fill" style={{ width: `${Math.min(100, progress.percent)}%` }} />
+      <div className="pp-tabs">
+        {DASHBOARD_TABS.map((t) => (
+          <button key={t.value} type="button" onClick={() => setActiveTab(t.value)}
+            className={`pp-tab ${activeTab === t.value ? "pp-tab--active" : ""}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "overview" && (
+        <div>
+          <div className="pp-progress">
+            <div className="pp-progress__bar-track">
+              <div className="pp-progress__bar-fill" style={{ width: `${Math.min(100, progress.percent)}%` }} />
+            </div>
+            <p className="pp-progress__label">
+              {progress.approved}/{progress.totalDue} tâches validées ({progress.percent}%) — seuil de validation de la
+              mission : {data.missionValidationThreshold}%
+            </p>
+          </div>
+
+          <div className="pp-stats">
+            {OCCURRENCE_FILTERS.filter((f) => f.value).map((f) => (
+              <div key={f.value} className="pp-stat">
+                <div className="pp-stat__value">{occurrenceCounts[f.value] || 0}</div>
+                <div className="pp-stat__label">{f.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="pp-progress__label">
-          {progress.approved}/{progress.totalDue} tâches validées ({progress.percent}%) — seuil de validation de la
-          mission : {data.missionValidationThreshold}%
-        </p>
+      )}
+
+      {activeTab === "tasks" && (
+      <div>
+      <div className="pp-tabs pp-tabs--sub">
+        {OCCURRENCE_FILTERS.map((f) => (
+          <button key={f.value || "ALL"} type="button" onClick={() => setOccurrenceFilter(f.value)}
+            className={`pp-tab pp-tab--sub ${occurrenceFilter === f.value ? "pp-tab--active" : ""}`}>
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {data.tasks.length === 0 ? (
         <p className="pp-empty">Aucune tâche définie pour ce programme pour l'instant.</p>
+      ) : filteredTasks.length === 0 ? (
+        <p className="pp-empty">Aucune tâche ne correspond à ce filtre.</p>
       ) : (
         <div className="pp-tasks">
-          {data.tasks.map((task) => {
+          {filteredTasks.map((task) => {
             const proofFieldsById = new Map((task.proofFields || []).map((f) => [f.id, f]));
             return (
             <div key={task.id} className="pp-task">
@@ -335,6 +410,8 @@ export default function ProgramProgress({ programId }) {
           })}
         </div>
       )}
+      </div>
+      )}
 
       <style>{`
         .pp { max-width: 42rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
@@ -350,10 +427,32 @@ export default function ProgramProgress({ programId }) {
         }
         .pp-title { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-2xl); color: var(--col-primary); margin-bottom: var(--sp-2); }
 
-        .pp-progress { margin-bottom: var(--sp-8); }
+        .pp-tabs { display: flex; gap: var(--sp-1); border-bottom: 2px solid var(--col-border-light); margin-bottom: var(--sp-6); flex-wrap: wrap; }
+        .pp-tab {
+          background: none; border: none; cursor: pointer; padding: var(--sp-3) var(--sp-4); font-size: var(--text-sm);
+          font-weight: 600; color: var(--col-text-muted); border-bottom: 3px solid transparent; margin-bottom: -2px;
+          font-family: var(--font-body);
+        }
+        .pp-tab--active { color: var(--col-primary); border-bottom-color: var(--col-primary); }
+        .pp-tabs--sub { border-bottom: none; margin-bottom: var(--sp-4); gap: var(--sp-2); }
+        .pp-tab--sub {
+          border: 1px solid var(--col-border); border-radius: var(--r-full); padding: var(--sp-1) var(--sp-4);
+          font-size: var(--text-xs); margin-bottom: 0;
+        }
+        .pp-tab--sub.pp-tab--active { background: var(--col-primary); color: var(--col-white); border-color: var(--col-primary); }
+
+        .pp-progress { margin-bottom: var(--sp-6); }
         .pp-progress__bar-track { height: 10px; background: var(--col-surface2); border-radius: var(--r-full); overflow: hidden; margin-bottom: var(--sp-2); }
         .pp-progress__bar-fill { height: 100%; background: var(--col-primary); transition: width var(--tr-slow); }
         .pp-progress__label { font-size: var(--text-sm); color: var(--col-text-sec); }
+
+        .pp-stats { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+        .pp-stat {
+          background: var(--col-white); border: 1px solid var(--col-border-light); border-radius: var(--r-lg);
+          padding: var(--sp-4) var(--sp-5); min-width: 7rem;
+        }
+        .pp-stat__value { font-family: var(--font-heading); font-weight: 800; font-size: var(--text-2xl); color: var(--col-primary); }
+        .pp-stat__label { font-size: var(--text-xs); color: var(--col-text-muted); }
 
         .pp-empty { color: var(--col-text-muted); }
 

@@ -74,7 +74,19 @@ const badgeStyle = (style) => ({
 const MISSION_STATUSES = ["Non disponible", "Mission validée", "Refusé"];
 const PROGRESS_PAGE_SIZE = 10;
 
+// Rubriques du tableau de bord (décision utilisateur, 2026-08-18) — onglets
+// horizontaux, même esprit que les filtres de soumissions déjà en place.
+const DASHBOARD_TABS = [
+  { value: "overview", label: "Vue d'ensemble" },
+  { value: "progress", label: "Progression par volontaire" },
+  { value: "submissions", label: "Soumissions" },
+];
+
 export default function SupervisorDashboard() {
+  // Vrai tableau de bord à onglets (décision utilisateur, 2026-08-18) — la
+  // page empilait jusqu'ici tout (infos programme, progression, soumissions)
+  // sans séparation. "overview" par défaut, convention dashboard classique.
+  const [activeTab, setActiveTab] = useState("overview");
   const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState("");
   const [submissions, setSubmissions] = useState([]);
@@ -211,6 +223,16 @@ export default function SupervisorDashboard() {
     doc.save(`progression-${title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-")}.pdf`);
   };
 
+  // Petites statistiques d'ensemble — donnent du contenu à l'onglet "Vue
+  // d'ensemble" même quand le programme n'a pas de description, à partir
+  // des données déjà chargées (aucun appel réseau supplémentaire).
+  const totalVolunteers = progress.length;
+  const missionStatusCounts = MISSION_STATUSES.reduce((acc, s) => ({ ...acc, [s]: 0 }), {});
+  progress.forEach((p) => { missionStatusCounts[p.statut] = (missionStatusCounts[p.statut] || 0) + 1; });
+  const avgProgressPercent = totalVolunteers > 0
+    ? Math.round(progress.reduce((sum, p) => sum + p.progress.percent, 0) / totalVolunteers)
+    : 0;
+
   return (
     <div className="supervisor-dashboard">
       <div style={{ marginBottom: 16 }}>
@@ -224,17 +246,55 @@ export default function SupervisorDashboard() {
         </label>
       </div>
 
-      {selectedProgram && (selectedProgram.description || selectedProgram.location || selectedProgram.startDate || selectedProgram.endDate) && (
-        <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, marginBottom: 20, background: "#fafafa" }}>
-          {selectedProgram.description && <p style={{ margin: "0 0 6px", color: "#374151" }}>{selectedProgram.description}</p>}
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#6b7280" }}>
-            {selectedProgram.location && <>📍 {selectedProgram.location}   </>}
-            {selectedProgram.startDate && <>Début : {new Date(selectedProgram.startDate).toLocaleDateString("fr-FR")}   </>}
-            {selectedProgram.endDate && <>Fin : {new Date(selectedProgram.endDate).toLocaleDateString("fr-FR")}</>}
-          </p>
+      <div style={{ display: "flex", gap: 6, borderBottom: "2px solid #e5e7eb", marginBottom: 20, flexWrap: "wrap" }}>
+        {DASHBOARD_TABS.map((t) => (
+          <button key={t.value} onClick={() => setActiveTab(t.value)}
+            style={{
+              border: "none", background: "none", cursor: "pointer", padding: "10px 16px", fontSize: "0.95rem",
+              fontWeight: activeTab === t.value ? 700 : 500,
+              color: activeTab === t.value ? "#1B4332" : "#6b7280",
+              borderBottom: activeTab === t.value ? "3px solid #1B4332" : "3px solid transparent",
+              marginBottom: -2,
+            }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "overview" && (
+        <div>
+          {selectedProgram && (selectedProgram.description || selectedProgram.location || selectedProgram.startDate || selectedProgram.endDate) && (
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, marginBottom: 20, background: "#fafafa" }}>
+              {selectedProgram.description && <p style={{ margin: "0 0 6px", color: "#374151" }}>{selectedProgram.description}</p>}
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "#6b7280" }}>
+                {selectedProgram.location && <>📍 {selectedProgram.location}   </>}
+                {selectedProgram.startDate && <>Début : {new Date(selectedProgram.startDate).toLocaleDateString("fr-FR")}   </>}
+                {selectedProgram.endDate && <>Fin : {new Date(selectedProgram.endDate).toLocaleDateString("fr-FR")}</>}
+              </p>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{totalVolunteers}</div>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>Volontaire(s) suivi(s)</div>
+            </div>
+            <div style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{avgProgressPercent}%</div>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>Progression moyenne</div>
+            </div>
+            {MISSION_STATUSES.map((s) => (
+              <div key={s} style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: "14px 20px", minWidth: 140 }}>
+                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1B4332" }}>{missionStatusCounts[s]}</div>
+                <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{s}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
+      {activeTab === "progress" && (
+      <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <h3 style={{ margin: 0 }}>Progression par volontaire {missionValidationThreshold !== null && `(seuil de validation : ${missionValidationThreshold}%)`}</h3>
         {progress.length > 0 && (
@@ -325,7 +385,11 @@ export default function SupervisorDashboard() {
           )}
         </>
       )}
+      </div>
+      )}
 
+      {activeTab === "submissions" && (
+      <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
         <h3 style={{ margin: 0 }}>Soumissions ({submissions.length})</h3>
         <div style={{ display: "flex", gap: 6 }}>
@@ -415,6 +479,8 @@ export default function SupervisorDashboard() {
             </div>
           ))}
         </div>
+      )}
+      </div>
       )}
     </div>
   );
