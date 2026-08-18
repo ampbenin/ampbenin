@@ -173,6 +173,7 @@ export default function ProgramProgress({ programId }) {
 
   return (
     <div className="pp" data-theme={theme}>
+    <div className="pp-inner">
       <div className="pp-topbar">
         <a href="/mon-espace" className="pp-back">← Retour à mon espace</a>
         <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
@@ -418,13 +419,19 @@ export default function ProgramProgress({ programId }) {
       )}
       </div>
       )}
+    </div>
 
       <style>{`
+        /* .pp occupe TOUTE la largeur de l'écran (le fond thème va donc
+           jusqu'aux bords, plus de "cadre" clair visible autour en mode
+           sombre — signalé le 2026-08-18) ; .pp-inner recentre juste le
+           contenu à une largeur confortable à lire, sans jamais limiter le
+           fond. */
         .pp {
-          max-width: 42rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4);
-          background: var(--col-bg); color: var(--col-text); min-height: 100vh;
+          width: 100%; background: var(--col-bg); color: var(--col-text); min-height: 100vh;
           transition: background var(--tr-base), color var(--tr-base);
         }
+        .pp-inner { max-width: 56rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
         .pp-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
         .pp-loading--error { color: #dc2626; }
         .pp[data-theme="dark"] .pp-loading--error { color: #fca5a5; }
@@ -560,7 +567,7 @@ export default function ProgramProgress({ programId }) {
 
         /* 100% responsive mobile (décision utilisateur, 2026-08-18) */
         @media (max-width: 640px) {
-          .pp { padding: var(--sp-5) var(--sp-3); }
+          .pp-inner { padding: var(--sp-5) var(--sp-3); }
           .pp-title { font-size: var(--text-xl); }
           .pp-tabs { overflow-x: auto; flex-wrap: nowrap; }
           .pp-occurrence__row { align-items: flex-start; }

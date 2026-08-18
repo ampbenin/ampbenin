@@ -60,6 +60,7 @@ export default function Dashboard() {
 
   return (
     <div className="dash" data-theme={theme}>
+    <div className="dash-inner">
       {warnings.length > 0 && (
         <div className="dash-warnings">
           {warnings.map((w) => (
@@ -153,13 +154,19 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+    </div>
 
       <style>{`
+        /* .dash occupe TOUTE la largeur de l'écran (le fond thème va donc
+           jusqu'aux bords, plus de "cadre" clair visible autour en mode
+           sombre — signalé le 2026-08-18) ; .dash-inner recentre juste le
+           contenu à une largeur confortable à lire, sans jamais limiter le
+           fond. */
         .dash {
-          max-width: 48rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4);
-          background: var(--col-bg); color: var(--col-text); min-height: 100vh;
+          width: 100%; background: var(--col-bg); color: var(--col-text); min-height: 100vh;
           transition: background var(--tr-base), color var(--tr-base);
         }
+        .dash-inner { max-width: 64rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
         .dash-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
         .dash-loading--error { color: #dc2626; }
         .dash[data-theme="dark"] .dash-loading--error { color: #fca5a5; }
@@ -249,7 +256,7 @@ export default function Dashboard() {
 
         /* 100% responsive mobile (décision utilisateur, 2026-08-18) */
         @media (max-width: 640px) {
-          .dash { padding: var(--sp-5) var(--sp-3); }
+          .dash-inner { padding: var(--sp-5) var(--sp-3); }
           .dash-title { font-size: var(--text-xl); }
           .dash-header { flex-direction: column; align-items: stretch; }
           .dash-header__actions { width: 100%; }

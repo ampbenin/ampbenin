@@ -634,6 +634,17 @@ export default function SupervisorDashboard() {
       )}
 
       <style>{`
+        /* .dashboard-section (carte blanche avec padding/ombre, définie dans
+           GestionAMPLayout.astro — partagée par TOUS les rôles) entoure ce
+           composant sur CETTE page précise. On la neutralise ici plutôt que
+           de toucher le layout partagé : cette règle ne vit que dans le
+           <style> de SupervisorDashboard.jsx, donc n'existe dans le DOM que
+           sur la page qui monte ce composant — zéro risque pour les autres
+           tableaux de bord (ADMIN, EC, IS, PARTENAIRE) qui réutilisent la
+           même classe sur leurs propres pages. Sans ça, la carte blanche
+           restait visible comme un cadre clair autour du fond sombre
+           (signalé le 2026-08-18).  */
+        .dashboard-section { background: transparent; border: none; box-shadow: none; padding: 0; }
         .supervisor-dashboard {
           --sd-bg: transparent;
           --sd-surface: #ffffff;
@@ -660,6 +671,17 @@ export default function SupervisorDashboard() {
           color: var(--sd-text);
           min-height: 100vh;
           transition: background 0.2s ease, color 0.2s ease;
+          /* Échappe le padding de .amp-content (GestionAMPLayout.astro,
+             partagé par tous les rôles — jamais modifié directement) pour
+             que le fond de CETTE page aille jusqu'aux bords de la colonne
+             1280px plutôt que de laisser un cadre clair visible en mode
+             sombre (signalé le 2026-08-18). Marge négative = exactement le
+             padding qu'on compense, avec le même padding repris à
+             l'intérieur pour que le contenu garde la même position visuelle
+             qu'avant. */
+          margin: calc(-1 * var(--sp-8));
+          width: calc(100% + 2 * var(--sp-8));
+          padding: var(--sp-8);
         }
         /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
            2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
