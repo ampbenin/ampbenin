@@ -818,7 +818,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       const [progress, submissions, staff] = await Promise.all([
         adminFetch(`/api/volunteer-tasks/programs/${programId}/progress`),
         adminFetch(`/api/volunteer-tasks/submissions?programId=${programId}&status=PENDING`),
-        adminFetch("/gestionamp/api/users"),
+        // Annuaire allégé (ADMIN+EDITOR) — pas /gestionamp/api/users, qui
+        // est réservé ADMIN (gestion des comptes) et ferait échouer tout
+        // ce Promise.all (donc toute la progression/les soumissions aussi)
+        // pour un EDITOR pourtant correctement affecté à ce programme.
+        adminFetch("/gestionamp/api/users/staff-directory"),
       ]);
       setProgramProgress(progress?.items || []);
       setPendingSubmissions(submissions?.items || []);
@@ -832,7 +836,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const loadPartnerTab = async () => {
     try {
       const [staff, comments, activity] = await Promise.all([
-        adminFetch("/gestionamp/api/users"),
+        // Annuaire allégé (ADMIN+EDITOR) — pas /gestionamp/api/users, qui
+        // est réservé ADMIN (gestion des comptes) et ferait échouer tout
+        // ce Promise.all (donc toute la progression/les soumissions aussi)
+        // pour un EDITOR pourtant correctement affecté à ce programme.
+        adminFetch("/gestionamp/api/users/staff-directory"),
         adminFetch(`/api/volunteer-partner/programs/${programId}/comments`),
         adminFetch(`/api/volunteer-partner/admin/activity-summary?programId=${programId}`),
       ]);
