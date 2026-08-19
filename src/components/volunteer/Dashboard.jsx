@@ -3,6 +3,7 @@ import { volunteerFetch } from "@/services/volunteer/api";
 import { useVolunteerGuard } from "@/hooks/useVolunteerGuard";
 import { useTheme } from "@/hooks/useTheme";
 import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const APPLICATION_STATUS_CLASS = { PENDING: "dash-badge--pending", ACCEPTED: "dash-badge--accepted", REJECTED: "dash-badge--rejected" };
@@ -55,8 +56,8 @@ export default function Dashboard() {
     }
   };
 
-  if (!ready || loading) return <p className="dash-loading">Chargement...</p>;
-  if (error) return <p className="dash-loading dash-loading--error">{error}</p>;
+  if (!ready || loading) return <LoadingSpinner />;
+  if (error) return <LoadingSpinner message={error} error />;
 
   return (
     <div className="dash" data-theme={theme}>

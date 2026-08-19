@@ -12,6 +12,7 @@ import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 // jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
 // VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export "Progression
 // par volontaire" en A4 paysage (décision utilisateur, 2026-08-17, appliquée
@@ -1175,8 +1176,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-500 p-6">Chargement...</p>;
-  if (error || !program) return <p className="text-center text-red-600 p-6">{error || "Programme introuvable"}</p>;
+  if (loading) return <LoadingSpinner />;
+  if (error || !program) return <LoadingSpinner message={error || "Programme introuvable"} error />;
 
   const isTextType = ["TEXT", "TEXTAREA", "EMAIL", "PHONE"].includes(fieldForm.type);
   // Classement "Progression par volontaire" du meilleur au moins avancé, sur

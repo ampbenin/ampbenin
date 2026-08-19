@@ -46,6 +46,7 @@
 import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import jsPDF from "jspdf";
@@ -276,8 +277,8 @@ export default function SupervisorDashboard() {
     }
   };
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p style={{ color: "#dc2626" }}>{error}</p>;
+  if (loading) return <LoadingSpinner />;
+  if (error) return <LoadingSpinner message={error} error />;
   if (programs.length === 0) return <p>Aucun programme ne vous est affecté pour l'instant.</p>;
 
   const selectedProgram = programs.find((p) => p.programId === selectedProgramId);

@@ -5,6 +5,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
 import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
 const STATUS_LABELS = { TODO: "À faire", PENDING: "En attente de validation", APPROVED: "Validée", REJECTED: "Rejetée — à refaire" };
@@ -147,8 +148,8 @@ export default function ProgramProgress({ programId }) {
     }
   };
 
-  if (!ready || loading) return <p className="pp-loading">Chargement...</p>;
-  if (error || !data) return <p className="pp-loading pp-loading--error">{error || "Programme introuvable"}</p>;
+  if (!ready || loading) return <LoadingSpinner />;
+  if (error || !data) return <LoadingSpinner message={error || "Programme introuvable"} error />;
 
   const { progress } = data;
 

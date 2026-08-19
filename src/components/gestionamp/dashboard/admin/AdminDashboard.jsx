@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAuthAMP } from "@/services/gestionamp/useAuthAMP";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 // Sous-composants
 import AdminStats from "./AdminStats";
@@ -15,7 +16,7 @@ export default function AdminDashboard() {
   const { user, loading } = useAuthAMP(["ADMIN"]);
 
   if (loading) {
-    return <p>Chargement...</p>;
+    return <LoadingSpinner />;
   }
 
   return (
