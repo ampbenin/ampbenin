@@ -739,6 +739,23 @@ export default function SupervisorDashboard() {
         @media (max-width: 640px) {
           .supervisor-dashboard .sd-stats > div { flex: 1 1 45% !important; min-width: 0 !important; }
         }
+        /* Signalé le 2026-08-19 ("le problème... déborde toujours la page") :
+           l'échappement du padding de .amp-content ci-dessus est calibré sur
+           --sp-8, mais .amp-content lui-même réduit son padding à --sp-4 en
+           dessous de 720px (GestionAMPLayout.astro, même seuil repris ici à
+           l'identique). Sans ce correctif, la marge négative de
+           .supervisor-dashboard "surcompensait" un padding qui n'était plus
+           là, et débordait la page d'exactement --sp-8 - --sp-4 de chaque
+           côté — un débordement fixe, présent sur TOUTE soumission sur
+           mobile (pas seulement les noms longs, qui ne faisaient que le
+           rendre visible/gênant). */
+        @media (max-width: 720px) {
+          .supervisor-dashboard {
+            margin: calc(-1 * var(--sp-4));
+            width: calc(100% + 2 * var(--sp-4));
+            padding: var(--sp-4);
+          }
+        }
       `}</style>
     </div>
   );
