@@ -94,11 +94,13 @@ const { title = "AMP BENIN" } = Astro.props;
         } else if (role === 'IS') {
           links.push({ href: '/gestionamp/dashboard/is', label: 'Mon espace IS' });
         } else if (role === 'SUPERVISEUR') {
-          // Libellé court (comme "Gestion AMP"/"Mon espace EC") : laisse
-          // plus de place au bouton Déconnexion sur une seule ligne, voir
-          // .amp-header__scroll — le rôle est de toute façon déjà visible
-          // dans le titre de la page ("Dashboard — Superviseur").
-          links.push({ href: '/gestionamp/dashboard/superviseur', label: 'Espace Superviseur' });
+          // Pas de lien ici (retiré, décision utilisateur 2026-08-19) —
+          // le Superviseur n'a qu'une seule page ("Dashboard —
+          // Superviseur", déjà affichée), un lien vers elle-même n'avait
+          // aucune utilité. La branche reste néanmoins nécessaire : sans
+          // elle, un SUPERVISEUR tomberait dans le "else" plus bas et
+          // reverrait "Connexion" alors qu'il est déjà connecté (bug
+          // corrigé le 2026-08-19, voir commentaire au-dessus).
         } else if (role === 'PARTENAIRE') {
           links.push({ href: '/gestionamp/dashboard/partenaire', label: 'Espace Partenaire' });
         } else {
