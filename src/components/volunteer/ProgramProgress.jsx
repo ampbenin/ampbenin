@@ -540,6 +540,12 @@ export default function ProgramProgress({ programId }) {
         .pp-input {
           width: 100%; padding: var(--sp-2) var(--sp-3); border: 1.5px solid var(--col-border); border-radius: var(--r-md);
           font-family: var(--font-body); font-size: var(--text-sm); color: var(--col-text); outline: none;
+          /* Signalé le 2026-08-19 : "les champs du formulaire de tâche ne
+             sont pas lisibles" en mode sombre — color s'adaptait déjà via
+             var(--col-text) mais background restait le blanc par défaut
+             du navigateur (jamais fixé explicitement) => texte clair sur
+             fond resté blanc. */
+          background: var(--col-surface);
         }
         .pp-input:focus { border-color: var(--col-primary); }
         .pp-checkbox { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--text-sm); }
@@ -573,7 +579,15 @@ export default function ProgramProgress({ programId }) {
         @media (max-width: 640px) {
           .pp-inner { padding: var(--sp-5) var(--sp-3); }
           .pp-title { font-size: var(--text-xl); }
-          .pp-tabs { overflow-x: auto; flex-wrap: nowrap; }
+          /* Signalé le 2026-08-19 : "une barre de scroll de gauche vers
+             droite alors qu'il y a plus rien à défiler" — overflow-x:auto
+             + flex-wrap:nowrap forçait une seule ligne, et le moindre
+             sous-pixel de dépassement (gap/bordures) faisait apparaître
+             une barre de défilement quasi inutilisable (1-2px de
+             course réelle). Les filtres ("À faire"/"Validées"/...) sont
+             courts et se lisent très bien sur 2 lignes — on laisse
+             .pp-tabs revenir à son flex-wrap:wrap de base plutôt que de
+             forcer un défilement horizontal fantôme. */
           .pp-occurrence__row { align-items: flex-start; }
           .pp-submit-form__actions { flex-direction: column-reverse; }
           .pp-submit-form__actions .pp-btn { width: 100%; }
