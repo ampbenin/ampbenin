@@ -1170,4 +1170,36 @@ const PD_STYLES = `
     .pd-toolbar { flex-direction: column; align-items: stretch; }
     .pd-filters__panel { position: static; width: 100%; margin-top: 10px; }
   }
+
+  /* ── Mode sombre ── */
+  /* Bouton partagé dans l'en-tête (GestionAMPLayout.astro, décision
+     utilisateur 2026-08-19). La plupart des couleurs ci-dessus sont déjà
+     pilotées par var(--col-*) — déjà redéfinies globalement dans ce
+     layout, donc adaptées automatiquement. Seules les vraies exceptions
+     sont corrigées ici, ciblées : des fonds blancs codés en dur (#fff) et
+     du texte de titre utilisant --col-primary-dark (jamais redéfini
+     globalement, aussi utilisé comme fond toujours-vert du bandeau/en-tête
+     ailleurs dans ce fichier). .pd-hero et .pd-select--hero restent
+     inchangés : bandeau/dégradé toujours coloré, contraste interne
+     indépendant du thème de la page. */
+  body[data-theme="dark"] .pd-card,
+  body[data-theme="dark"] .pd-filters__panel,
+  body[data-theme="dark"] .pd-input,
+  body[data-theme="dark"] .pd-select,
+  body[data-theme="dark"] .pd-textarea,
+  body[data-theme="dark"] .pd-btn--ghost,
+  body[data-theme="dark"] .pd-btn--filter,
+  body[data-theme="dark"] .pd-acc__header {
+    background: var(--col-surface, #16241C);
+  }
+  body[data-theme="dark"] .pd-card__title,
+  body[data-theme="dark"] .pd-card__heading,
+  body[data-theme="dark"] .pd-btn--ghost:hover:not(:disabled),
+  body[data-theme="dark"] .pd-bubble__reply strong,
+  body[data-theme="dark"] .pd-impact {
+    color: var(--col-primary-light, #74C69D);
+  }
+  body[data-theme="dark"] .pd-row--flagged:hover {
+    background: rgba(239, 68, 68, 0.14);
+  }
 `;

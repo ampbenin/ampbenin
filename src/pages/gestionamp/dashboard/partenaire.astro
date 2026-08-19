@@ -48,4 +48,14 @@ import PartnerDashboard from "@/components/gestionamp/dashboard/partenaire/Partn
   .partenaire-header {
     border-bottom-color: var(--col-accent);
   }
+  /* Mode sombre (décision utilisateur, 2026-08-19) — --col-primary-dark
+     n'est jamais redéfini globalement (GestionAMPLayout.astro), donc ce
+     dégradé resterait avec une extrémité presque invisible sur un fond
+     désormais sombre. Corrigé ici, propre à cette page. */
+  :global(body[data-theme="dark"]) .partenaire-header h1 {
+    background: linear-gradient(90deg, var(--col-primary-light), var(--col-accent-light, #E8C47A));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 </style>

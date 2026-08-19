@@ -101,8 +101,17 @@ export default function ReportVolunteerButton({ programId, volunteerId, applicat
         }
         .rvb-modal {
           background: #fff; border-radius: 16px; padding: 24px; max-width: 440px; width: 100%;
-          box-shadow: 0 20px 60px rgba(15, 42, 30, 0.28);
+          box-shadow: 0 20px 60px rgba(15, 42, 30, 0.28); color: var(--col-text, #1A1A1A);
           animation: rvb-pop 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        /* Mode sombre — voir GestionAMPLayout.astro (bouton partagé dans
+           l'en-tête, décision utilisateur 2026-08-19). Ce composant est
+           aussi utilisé hors de cet espace (VolunteerProgramEditor.jsx,
+           VolunteersManager.jsx) : ces règles y restent sans effet tant que
+           body[data-theme="dark"] n'y est jamais posé. */
+        body[data-theme="dark"] .rvb-modal,
+        body[data-theme="dark"] .rvb-btn--ghost {
+          background: var(--col-surface, #16241C);
         }
         .rvb-title { margin: 0 0 8px; color: var(--col-error, #C1121F); font-family: var(--font-heading, inherit); font-size: 1.15rem; }
         .rvb-hint { font-size: 0.85rem; color: var(--col-text-muted, #666); margin: 0 0 14px; line-height: 1.5; }
