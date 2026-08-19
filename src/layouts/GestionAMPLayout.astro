@@ -38,6 +38,14 @@ const { title = "AMP BENIN" } = Astro.props;
       </nav>
 
       <div class="actions">
+        <!-- Mode sombre/clair — décision utilisateur, 2026-08-19 : "au
+             niveau du header", pour tout l'espace Gestion (pas seulement
+             Superviseur). Un seul bouton partagé ici plutôt que dupliqué
+             dans chaque tableau de bord — vanilla JS (ce layout n'est pas
+             un composant React), même clé localStorage que les pages
+             Volontaire (src/hooks/useTheme.js) pour rester cohérent si le
+             même navigateur visite les deux. -->
+        <button id="amp-theme-toggle" class="amp-theme-toggle" type="button" aria-label="Basculer le mode sombre/clair" title="Mode sombre/clair">🌙</button>
         <!-- Bouton logout React (slot par défaut si la page n'en fournit pas) -->
         <slot name="logout">
           <LogoutButton client:load />
@@ -81,6 +89,35 @@ const { title = "AMP BENIN" } = Astro.props;
           .join('');
       })();
     </script>
+
+    <script is:inline>
+      // Mode sombre/clair partagé par tout l'espace Gestion (décision
+      // utilisateur, 2026-08-19) — pose data-theme sur <body>, lu par le
+      // <style is:global> ci-dessous ET par Tailwind (darkMode: ["selector",
+      // '[data-theme="dark"]'], voir tailwind.config.js), donc valable aussi
+      // pour les composants React qui utilisent des classes dark:.
+      (function () {
+        const STORAGE_KEY = 'amp_dashboard_theme';
+        const btn = document.getElementById('amp-theme-toggle');
+
+        const apply = (theme) => {
+          document.body.setAttribute('data-theme', theme);
+          if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        };
+
+        let stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== 'light' && stored !== 'dark') {
+          stored = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        apply(stored);
+
+        btn?.addEventListener('click', () => {
+          const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+          localStorage.setItem(STORAGE_KEY, next);
+          apply(next);
+        });
+      })();
+    </script>
   </body>
 </html>
 
@@ -97,6 +134,54 @@ const { title = "AMP BENIN" } = Astro.props;
     font-family: var(--font-body);
     background: var(--col-bg);
     color: var(--col-text);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  /* Mode sombre — décision utilisateur, 2026-08-19 : tout l'espace Gestion
+     (ADMIN/EC/IS/SUPERVISEUR/PARTENAIRE), pas seulement des div/sections
+     isolées. Redéfinit les tokens var(--col-*) déjà utilisés dans TOUT ce
+     fichier — la quasi-totalité du CSS partagé (en-tête, tableaux, cartes,
+     formulaires, badges de statut...) s'adapte donc automatiquement, sans
+     retouche par ailleurs. --col-white et --col-primary-dark sont
+     volontairement JAMAIS redéfinis ici : ils servent aussi de "texte
+     blanc sur bouton coloré" (.dashboard-section button) et de fond
+     toujours-vert-foncé du bandeau (.amp-header, .amp-nav__accent), qui ne
+     doivent jamais dépendre du thème — leurs 3 seuls usages comme texte de
+     PAGE (dashboard-header h1 / dashboard-section h3 / filter-bar h2) sont
+     corrigés séparément juste en dessous, ciblés.
+     Les composants React écrits en Tailwind (classes bg-white,
+     text-gray-700...) ne sont PAS concernés par ces variables — voir
+     tailwind.config.js (darkMode par attribut) : ils demandent des classes
+     dark: ajoutées fichier par fichier, à venir progressivement. */
+  body[data-theme="dark"] {
+    --col-bg: #0F1A14;
+    --col-surface: #16241C;
+    --col-surface2: #1E3226;
+    --col-border: #2A4234;
+    --col-border-light: #22362A;
+    --col-text: #F0EDE6;
+    --col-text-sec: #C7C2B8;
+    --col-text-muted: #9CA89C;
+    --col-primary: #74C69D;
+    --col-primary-light: #74C69D;
+    --col-primary-bg: #16281F;
+    --col-accent-bg: rgba(201, 144, 58, 0.18);
+    --col-accent-dark: #E8C47A;
+    --col-success: #4ade80;
+    --col-success-bg: rgba(34, 197, 94, 0.18);
+    --col-error: #f87171;
+    --col-error-bg: rgba(239, 68, 68, 0.18);
+  }
+  body[data-theme="dark"] .dashboard-section,
+  body[data-theme="dark"] .dashboard-section input,
+  body[data-theme="dark"] .dashboard-section select,
+  body[data-theme="dark"] .dashboard-section textarea {
+    background: var(--col-surface);
+  }
+  body[data-theme="dark"] .dashboard-header h1,
+  body[data-theme="dark"] .dashboard-section h3,
+  body[data-theme="dark"] .filter-bar h2 {
+    color: var(--col-primary-light);
   }
 
   /* ── En-tête ── */
@@ -170,6 +255,17 @@ const { title = "AMP BENIN" } = Astro.props;
   .amp-header .actions button:hover {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .amp-theme-toggle {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border-radius: 999px !important;
   }
 
   /* ── Contenu ── */

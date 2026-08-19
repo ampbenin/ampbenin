@@ -47,9 +47,7 @@ import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
-import { useTheme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import ThemeToggleButton from "@/components/shared/ThemeToggleButton.jsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -174,7 +172,11 @@ export default function SupervisorDashboard() {
   // page empilait jusqu'ici tout (infos programme, progression, soumissions)
   // sans séparation. "overview" par défaut, convention dashboard classique.
   const [activeTab, setActiveTab] = useState("overview");
-  const { theme, toggleTheme } = useTheme();
+  // Mode sombre/clair : un seul bouton partagé désormais dans l'en-tête
+  // (GestionAMPLayout.astro, décision utilisateur 2026-08-19 — "au niveau
+  // du header", tout l'espace Gestion) — ce composant lit juste
+  // body[data-theme="dark"] via CSS (voir <style> plus bas), plus besoin
+  // de son propre bouton/état local.
   const isMobile = useIsMobile();
   const [programs, setPrograms] = useState([]);
   const [selectedProgramId, setSelectedProgramId] = useState("");
@@ -373,8 +375,8 @@ export default function SupervisorDashboard() {
   };
 
   return (
-    <div className="supervisor-dashboard" data-theme={theme}>
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+    <div className="supervisor-dashboard">
+      <div style={{ marginBottom: 16 }}>
         <label>
           Programme :{" "}
           <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}
@@ -392,7 +394,6 @@ export default function SupervisorDashboard() {
             ))}
           </select>
         </label>
-        <ThemeToggleButton theme={theme} onToggle={toggleTheme} style={{ color: "var(--sd-text)" }} />
       </div>
 
       <div style={{ display: "flex", gap: 6, borderBottom: "2px solid var(--sd-border)", marginBottom: 20, flexWrap: "wrap" }}>
@@ -703,9 +704,11 @@ export default function SupervisorDashboard() {
           padding: var(--sp-8);
           overflow-x: hidden; /* filet de sécurité — rien ne doit jamais faire défiler la page horizontalement */
         }
-        /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
-           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
-        .supervisor-dashboard[data-theme="dark"] {
+        /* Mode sombre — piloté par le bouton partagé de l'en-tête
+           (GestionAMPLayout.astro, décision utilisateur 2026-08-19),
+           jamais un état local à ce composant : body[data-theme="dark"]
+           est posé par ce bouton, ce sélecteur ancêtre suffit. */
+        body[data-theme="dark"] .supervisor-dashboard {
           --sd-bg: #0F1A14;
           --sd-surface: #16241C;
           --sd-surface-alt: #1E3226;
