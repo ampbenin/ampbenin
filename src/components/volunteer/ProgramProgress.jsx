@@ -441,8 +441,11 @@ export default function ProgramProgress({ programId }) {
         .pp-back:hover { text-decoration: underline; }
 
         /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
-           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
-        .pp[data-theme="dark"] {
+           2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js).
+           body[data-theme="dark"] en plus de .pp[data-theme="dark"]
+           (signalé le 2026-08-19) : permet à Header.astro (hors de l'arbre
+           React) d'hériter les mêmes tokens var(--col-*). */
+        body[data-theme="dark"], .pp[data-theme="dark"] {
           --col-bg: #0F1A14;
           --col-surface: #16241C;
           --col-surface2: #1E3226;

@@ -175,8 +175,15 @@ export default function Dashboard() {
         /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
            2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js).
            Redéfinit localement les tokens déjà utilisés partout ci-dessous
-           via var(--col-*), sans toucher :root (styles/tokens.css). */
-        .dash[data-theme="dark"] {
+           via var(--col-*), sans toucher :root (styles/tokens.css).
+           body[data-theme="dark"] en plus de .dash[data-theme="dark"]
+           (signalé le 2026-08-19) : Header/Footer vivent hors de l'arbre
+           React, dans BaseLayout.astro — poser aussi la variante sur body
+           leur permet d'hériter les mêmes tokens, sans code supplémentaire
+           de leur côté (ils utilisent déjà var(--col-*)). Header.astro
+           s'adapte ainsi ; Footer.astro est déjà un bandeau sombre fixe
+           (--col-footer-bg), inchangé dans les deux thèmes. */
+        body[data-theme="dark"], .dash[data-theme="dark"] {
           --col-bg: #0F1A14;
           --col-surface: #16241C;
           --col-surface2: #1E3226;

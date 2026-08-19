@@ -645,6 +645,17 @@ export default function SupervisorDashboard() {
            restait visible comme un cadre clair autour du fond sombre
            (signalé le 2026-08-18).  */
         .dashboard-section { background: transparent; border: none; box-shadow: none; padding: 0; }
+        /* Signalé le 2026-08-19 : le contenu passait bien en sombre mais pas
+           le pied de page du site (amp-footer, GestionAMPLayout.astro) —
+           il vit hors de l'arbre React, dans le layout partagé. Ciblé
+           directement ici (jamais en redéfinissant les tokens var(--col-*)
+           au niveau de body : .dashboard-header au-dessus de ce composant
+           utilise ces mêmes tokens sur un fond qui, lui, reste clair — les
+           redéfinir globalement l'aurait rendu illisible). amp-header,
+           déjà un bandeau vert foncé fixe dans les deux thèmes, n'a besoin
+           d'aucun changement. Cette règle ne vit que dans le <style> de
+           SupervisorDashboard.jsx, donc sans effet sur les autres rôles. */
+        body[data-theme="dark"] .amp-footer { background: #1E3226; color: #9CA89C; }
         .supervisor-dashboard {
           --sd-bg: transparent;
           --sd-surface: #ffffff;
