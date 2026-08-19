@@ -2125,9 +2125,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       ) : (
                         <div key={entry.volunteerId} className="border border-gray-200 rounded-xl">
                           <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
-                            className="w-full max-w-full text-left bg-gray-50 rounded-xl p-3 flex items-center justify-between gap-2 flex-wrap">
-                            <span className="min-w-0 flex-1 break-words">
-                              <strong>{entry.volunteerName}</strong> <span className="text-sm text-gray-600">— {entry.subs.length} soumissions</span>
+                            className="w-full max-w-full text-left bg-gray-50 rounded-xl p-3 flex items-center justify-between gap-2">
+                            {/* Signalé le 2026-08-19 : un nom long poussait le
+                                badge "— N soumissions" hors de vue. Le nom
+                                tronque maintenant avec "…", le badge reste
+                                toujours entièrement visible à côté. */}
+                            <span className="min-w-0 flex-1 flex items-baseline gap-1.5 overflow-hidden">
+                              <strong className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{entry.volunteerName}</strong>
+                              <span className="text-sm text-gray-600 flex-shrink-0 whitespace-nowrap">— {entry.subs.length} soumissions</span>
                             </span>
                             <span className="text-gray-500 flex-shrink-0">{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
                           </button>

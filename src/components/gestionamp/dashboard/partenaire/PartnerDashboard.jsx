@@ -777,8 +777,14 @@ export default function PartnerDashboard() {
                 <div key={v.volunteerId} className={`pd-acc ${isOpen ? "pd-acc--open" : ""}`}>
                   <button type="button" onClick={() => toggleVolunteer(v.volunteerId)} className="pd-acc__header">
                     <span className="pd-acc__name">
-                      <span className="pd-acc__rank">#{v.rank}</span> {v.prenom} {v.nom}{" "}
-                      <span className="pd-muted">— {v.progress.percent}% ({v.approvedTasks.length} tâche(s) approuvée(s))</span>
+                      {/* Signalé le 2026-08-19 : un nom long poussait le
+                          "— X% (Y tâches)" hors de vue. Le nom tronque
+                          maintenant avec "…", ce résumé reste toujours
+                          entièrement visible à côté. */}
+                      <span className="pd-acc__name-text">
+                        <span className="pd-acc__rank">#{v.rank}</span> {v.prenom} {v.nom}
+                      </span>
+                      <span className="pd-muted pd-acc__name-meta">— {v.progress.percent}% ({v.approvedTasks.length} tâche(s) approuvée(s))</span>
                     </span>
                     <span className="pd-acc__right">
                       <ReportVolunteerButton programId={selectedProgramId} volunteerId={v.volunteerId} />
@@ -1123,13 +1129,16 @@ const PD_STYLES = `
   .pd-acc__header {
     width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
     background: #fff; border: none; padding: 14px 18px; cursor: pointer; text-align: left; font-family: inherit;
-    transition: background 150ms ease; flex-wrap: wrap;
+    transition: background 150ms ease;
   }
   .pd-acc__header:hover { background: var(--col-surface, #F5F0E8); }
   /* Un volontaire avec un nom long ne doit jamais faire déborder la page
-     (signalé le 2026-08-19) — cet enfant flex doit pouvoir rétrécir/
-     envelopper au lieu de forcer sa largeur de contenu. */
-  .pd-acc__name { font-weight: 700; color: var(--col-text, #1A1A1A); font-size: 0.92rem; min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; }
+     ni pousser le résumé "— X% (Y tâches)" hors de vue (signalé le
+     2026-08-19) — le nom tronque avec "…" (voir .pd-acc__name-text),
+     le résumé ne rétrécit jamais (voir .pd-acc__name-meta). */
+  .pd-acc__name { font-weight: 700; color: var(--col-text, #1A1A1A); font-size: 0.92rem; min-width: 0; flex: 1 1 auto; display: flex; align-items: baseline; gap: 6px; overflow: hidden; }
+  .pd-acc__name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pd-acc__name-meta { flex-shrink: 0; white-space: nowrap; font-weight: 400; }
   .pd-acc__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .pd-acc__chevron { color: var(--col-primary, #1B4332); font-size: 0.85rem; }
   .pd-acc__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms cubic-bezier(0.25,0.46,0.45,0.94); }

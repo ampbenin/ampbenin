@@ -608,10 +608,19 @@ export default function SupervisorDashboard() {
                     style={{
                       width: "100%", maxWidth: "100%", textAlign: "left", background: "var(--sd-surface-alt)", border: "none", borderRadius: 8,
                       padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
-                      color: "var(--sd-text)", flexWrap: "wrap",
+                      color: "var(--sd-text)",
                     }}>
-                    <span style={{ minWidth: 0, flex: "1 1 200px", overflowWrap: "anywhere" }}>
-                      <strong>{entry.volunteerName}</strong> <span style={{ color: "var(--sd-text-secondary)", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span>
+                    {/* Signalé le 2026-08-19 : un nom long poussait le badge
+                        "— N soumissions" hors de vue (overflow-wrap le
+                        cassait sur plusieurs lignes plutôt que de le
+                        raccourcir). Le nom tronque maintenant avec "…" et
+                        le badge reste toujours entièrement visible à côté
+                        — décision utilisateur : "on affiche les premières
+                        lettre ou mots et on mette ... afin que la
+                        notification puisse trouver de place". */}
+                    <span style={{ minWidth: 0, flex: "1 1 auto", display: "flex", alignItems: "baseline", gap: 6, overflow: "hidden" }}>
+                      <strong style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.volunteerName}</strong>
+                      <span style={{ color: "var(--sd-text-secondary)", fontSize: "0.85rem", flexShrink: 0, whiteSpace: "nowrap" }}>— {entry.subs.length} soumissions</span>
                     </span>
                     <span style={{ color: "var(--sd-text-muted)", flexShrink: 0 }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
                   </button>

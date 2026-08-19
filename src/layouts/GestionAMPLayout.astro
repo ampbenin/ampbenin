@@ -33,23 +33,26 @@ const { title = "AMP BENIN" } = Astro.props;
         <span class="amp-header__tag">Gestion des espaces</span>
       </div>
 
-      <nav class="amp-nav" id="amp-nav">
-        <!-- Rempli côté client selon le rôle connecté (voir script ci-dessous) -->
-      </nav>
+      <div class="amp-header__scroll">
+        <nav class="amp-nav" id="amp-nav">
+          <!-- Rempli côté client selon le rôle connecté (voir script ci-dessous) -->
+        </nav>
 
-      <div class="actions">
-        <!-- Mode sombre/clair — décision utilisateur, 2026-08-19 : "au
-             niveau du header", pour tout l'espace Gestion (pas seulement
-             Superviseur). Un seul bouton partagé ici plutôt que dupliqué
-             dans chaque tableau de bord — vanilla JS (ce layout n'est pas
-             un composant React), même clé localStorage que les pages
-             Volontaire (src/hooks/useTheme.js) pour rester cohérent si le
-             même navigateur visite les deux. -->
-        <button id="amp-theme-toggle" class="amp-theme-toggle" type="button" aria-label="Basculer le mode sombre/clair" title="Mode sombre/clair">🌙</button>
-        <!-- Bouton logout React (slot par défaut si la page n'en fournit pas) -->
-        <slot name="logout">
-          <LogoutButton client:load />
-        </slot>
+        <div class="actions">
+          <!-- Mode sombre/clair — décision utilisateur, 2026-08-19 : "au
+               niveau du header", pour tout l'espace Gestion (pas seulement
+               Superviseur). Un seul bouton partagé ici plutôt que dupliqué
+               dans chaque tableau de bord — vanilla JS (ce layout n'est pas
+               un composant React), même clé localStorage que les pages
+               Volontaire (src/hooks/useTheme.js) pour rester cohérent si le
+               même navigateur visite les deux. -->
+          <button id="amp-theme-toggle" class="amp-theme-toggle" type="button" aria-label="Basculer le mode sombre/clair" title="Mode sombre/clair">🌙</button>
+          <!-- Bouton logout React (slot par défaut si la page n'en fournit pas) —
+               ne s'affiche que si connecté (voir LogoutButton.jsx). -->
+          <slot name="logout">
+            <LogoutButton client:load />
+          </slot>
+        </div>
       </div>
     </header>
 
@@ -67,6 +70,16 @@ const { title = "AMP BENIN" } = Astro.props;
       // Navigation adaptée au rôle connecté : chacun ne voit que ce qui le
       // concerne, et un ADMIN retrouve un lien direct vers l'espace CMS
       // (contenu du site), qui reste une interface séparée par choix.
+      //
+      // Corrigé le 2026-08-19 : SUPERVISEUR et PARTENAIRE tombaient dans le
+      // "else" et voyaient un lien "Connexion" alors qu'ils étaient déjà
+      // connectés — en même temps que le bouton "Déconnexion" (toujours
+      // affiché par défaut, voir LogoutButton.jsx), ce qui donnait deux
+      // boutons faisant la même chose ("connexion" ne menant nulle part
+      // d'utile pour quelqu'un déjà connecté). "Connexion" n'apparaît
+      // maintenant que si aucun rôle connu n'est trouvé (vraiment pas
+      // connecté) ; chaque rôle connecté a son propre lien, LogoutButton.jsx
+      // se masque lui-même dans ce cas (voir ce fichier).
       (function () {
         const role = localStorage.getItem('amp_role');
         const nav = document.getElementById('amp-nav');
@@ -80,6 +93,14 @@ const { title = "AMP BENIN" } = Astro.props;
           links.push({ href: '/gestionamp/dashboard/ec', label: 'Mon espace EC' });
         } else if (role === 'IS') {
           links.push({ href: '/gestionamp/dashboard/is', label: 'Mon espace IS' });
+        } else if (role === 'SUPERVISEUR') {
+          // Libellé court (comme "Gestion AMP"/"Mon espace EC") : laisse
+          // plus de place au bouton Déconnexion sur une seule ligne, voir
+          // .amp-header__scroll — le rôle est de toute façon déjà visible
+          // dans le titre de la page ("Dashboard — Superviseur").
+          links.push({ href: '/gestionamp/dashboard/superviseur', label: 'Espace Superviseur' });
+        } else if (role === 'PARTENAIRE') {
+          links.push({ href: '/gestionamp/dashboard/partenaire', label: 'Espace Partenaire' });
         } else {
           links.push({ href: '/gestionamp/login', label: 'Connexion' });
         }
@@ -185,15 +206,33 @@ const { title = "AMP BENIN" } = Astro.props;
   }
 
   /* ── En-tête ── */
+  /* Une seule ligne, jamais un retour à la ligne (décision utilisateur,
+     2026-08-19) — s'il n'y a vraiment pas la place (mobile très étroit),
+     on défile horizontalement plutôt que de casser sur 2 lignes : le
+     logo/tag ne rétrécissent jamais eux, seuls nav+actions peuvent
+     scroller (voir .amp-header__scroll ci-dessous). */
   .amp-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: var(--sp-3);
     padding: var(--sp-4) var(--sp-8);
     background: var(--col-primary-dark);
     color: var(--col-text-inverted);
+  }
+
+  .amp-header__scroll {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .amp-header .logo {
+    flex-shrink: 0;
   }
 
   .amp-header .logo strong {
@@ -213,7 +252,8 @@ const { title = "AMP BENIN" } = Astro.props;
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .amp-nav a {
@@ -222,6 +262,7 @@ const { title = "AMP BENIN" } = Astro.props;
     font-size: var(--text-sm);
     padding: 0.4rem 0.75rem;
     border-radius: var(--r-sm);
+    white-space: nowrap;
     transition: background var(--tr-fast);
   }
 
@@ -239,6 +280,13 @@ const { title = "AMP BENIN" } = Astro.props;
     background: var(--col-accent-light) !important;
   }
 
+  .amp-header .actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-shrink: 0;
+  }
+
   .amp-header .actions button {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.35);
@@ -247,6 +295,8 @@ const { title = "AMP BENIN" } = Astro.props;
     border-radius: var(--r-sm);
     font-size: var(--text-sm);
     font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
     cursor: pointer;
     transition: background var(--tr-fast), border-color var(--tr-fast);
     float: none !important;
@@ -641,6 +691,35 @@ const { title = "AMP BENIN" } = Astro.props;
   @media (max-width: 720px) {
     .amp-header {
       padding: var(--sp-3) var(--sp-4);
+    }
+
+    /* Reste sur une seule ligne (voir .amp-header ci-dessus) — resserré
+       pour laisser le plus de place possible avant que .amp-header__scroll
+       ne doive défiler horizontalement. */
+    .amp-header__tag {
+      display: none;
+    }
+
+    .amp-nav a {
+      padding: 0.35rem 0.5rem;
+      font-size: var(--text-xs);
+    }
+
+    .amp-header .logo strong {
+      font-size: var(--text-lg);
+    }
+
+    .amp-header__scroll {
+      gap: var(--sp-2);
+    }
+
+    .amp-header .actions {
+      gap: var(--sp-1);
+    }
+
+    .amp-header .actions button {
+      padding: 0.4rem 0.7rem;
+      font-size: var(--text-xs);
     }
 
     .amp-content {
