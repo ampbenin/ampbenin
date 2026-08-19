@@ -2125,9 +2125,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       ) : (
                         <div key={entry.volunteerId} className="border border-gray-200 rounded-xl">
                           <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
-                            className="w-full text-left bg-gray-50 rounded-xl p-3 flex items-center justify-between">
-                            <span><strong>{entry.volunteerName}</strong> <span className="text-sm text-gray-600">— {entry.subs.length} soumissions</span></span>
-                            <span className="text-gray-500">{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
+                            className="w-full max-w-full text-left bg-gray-50 rounded-xl p-3 flex items-center justify-between gap-2 flex-wrap">
+                            <span className="min-w-0 flex-1 break-words">
+                              <strong>{entry.volunteerName}</strong> <span className="text-sm text-gray-600">— {entry.subs.length} soumissions</span>
+                            </span>
+                            <span className="text-gray-500 flex-shrink-0">{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
                           </button>
                           {expandedVolunteerIds.has(entry.volunteerId) && (
                             <div className="space-y-2 p-3 border-t border-gray-200">

@@ -1121,12 +1121,15 @@ const PD_STYLES = `
   .pd-acc { border: 1px solid var(--col-border-light, #EEEAE3); border-radius: 14px; overflow: hidden; transition: border-color 200ms ease, box-shadow 200ms ease; }
   .pd-acc--open { border-color: var(--col-primary-light, #2D6A4F); box-shadow: var(--sh-xs, 0 1px 3px rgba(27,67,50,0.06)); }
   .pd-acc__header {
-    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; max-width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px;
     background: #fff; border: none; padding: 14px 18px; cursor: pointer; text-align: left; font-family: inherit;
-    transition: background 150ms ease;
+    transition: background 150ms ease; flex-wrap: wrap;
   }
   .pd-acc__header:hover { background: var(--col-surface, #F5F0E8); }
-  .pd-acc__name { font-weight: 700; color: var(--col-text, #1A1A1A); font-size: 0.92rem; }
+  /* Un volontaire avec un nom long ne doit jamais faire déborder la page
+     (signalé le 2026-08-19) — cet enfant flex doit pouvoir rétrécir/
+     envelopper au lieu de forcer sa largeur de contenu. */
+  .pd-acc__name { font-weight: 700; color: var(--col-text, #1A1A1A); font-size: 0.92rem; min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; }
   .pd-acc__right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .pd-acc__chevron { color: var(--col-primary, #1B4332); font-size: 0.85rem; }
   .pd-acc__panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms cubic-bezier(0.25,0.46,0.45,0.94); }

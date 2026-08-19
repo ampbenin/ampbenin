@@ -606,11 +606,14 @@ export default function SupervisorDashboard() {
                 <div key={entry.volunteerId} style={{ border: "1px solid var(--sd-border)", borderRadius: 8 }}>
                   <button onClick={() => toggleVolunteerExpanded(entry.volunteerId)}
                     style={{
-                      width: "100%", textAlign: "left", background: "var(--sd-surface-alt)", border: "none", borderRadius: 8,
-                      padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", color: "var(--sd-text)",
+                      width: "100%", maxWidth: "100%", textAlign: "left", background: "var(--sd-surface-alt)", border: "none", borderRadius: 8,
+                      padding: 12, cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
+                      color: "var(--sd-text)", flexWrap: "wrap",
                     }}>
-                    <span><strong>{entry.volunteerName}</strong> <span style={{ color: "var(--sd-text-secondary)", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span></span>
-                    <span style={{ color: "var(--sd-text-muted)" }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
+                    <span style={{ minWidth: 0, flex: "1 1 200px", overflowWrap: "anywhere" }}>
+                      <strong>{entry.volunteerName}</strong> <span style={{ color: "var(--sd-text-secondary)", fontSize: "0.85rem" }}>— {entry.subs.length} soumissions</span>
+                    </span>
+                    <span style={{ color: "var(--sd-text-muted)", flexShrink: 0 }}>{expandedVolunteerIds.has(entry.volunteerId) ? "▲" : "▼"}</span>
                   </button>
                   {expandedVolunteerIds.has(entry.volunteerId) && (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12, borderTop: "1px solid var(--sd-border-light)" }}>
