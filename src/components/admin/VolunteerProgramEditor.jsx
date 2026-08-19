@@ -146,9 +146,9 @@ const SUBMISSIONS_PAGE_SIZE = 10;
 // en-tête du groupe.
 function SubmissionCard({ s, onApprove, onReject, hideVolunteerName = false }) {
   return (
-    <div className="border border-gray-200 rounded-xl p-3">
+    <div className="border border-gray-200 rounded-xl p-3 max-w-full overflow-hidden">
       <div className="flex justify-between items-start gap-3 flex-wrap">
-        <div>
+        <div className="min-w-0 flex-1 break-words">
           {!hideVolunteerName && <strong>{s.volunteerName}</strong>}
           <span className="text-sm text-gray-600">{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
           {s.occurrenceDate && (
@@ -188,7 +188,7 @@ function SubmissionCard({ s, onApprove, onReject, hideVolunteerName = false }) {
                   <dt className="inline font-semibold text-gray-700">{f.label} : </dt>
                   <dd className="inline text-gray-700">
                     {f.type === "URL" ? (
-                      <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{value}</a>
+                      <a href={value} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline break-all">{value}</a>
                     ) : f.type === "IMAGE" ? (
                       <span className="inline-flex gap-2 flex-wrap align-middle">
                         {value.map((url, i) => (

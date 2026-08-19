@@ -165,6 +165,7 @@ export default function Dashboard() {
         .dash {
           width: 100%; background: var(--col-bg); color: var(--col-text); min-height: 100vh;
           transition: background var(--tr-base), color var(--tr-base);
+          overflow-x: hidden; /* filet de sécurité — rien ne doit jamais faire défiler la page horizontalement */
         }
         .dash-inner { max-width: 64rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
         .dash-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }
@@ -241,8 +242,12 @@ export default function Dashboard() {
         .dash-row {
           display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
           background: var(--col-white); border: 1px solid var(--col-border-light); border-radius: var(--r-lg);
-          padding: var(--sp-4); text-decoration: none; color: inherit;
+          padding: var(--sp-4); text-decoration: none; color: inherit; max-width: 100%;
         }
+        /* Un titre de programme long ne doit jamais pousser la carte hors de
+           l'écran (signalé le 2026-08-18) — le premier enfant flex doit
+           pouvoir rétrécir/wrapper au lieu de forcer une largeur minimale. */
+        .dash-row > *:first-child { min-width: 0; overflow-wrap: anywhere; }
         .dash-row--clickable { cursor: pointer; transition: border-color var(--tr-base), transform var(--tr-base); }
         .dash-row--clickable:hover { border-color: var(--col-primary); transform: translateX(2px); }
         .dash-row__right { display: flex; align-items: center; gap: var(--sp-3); }

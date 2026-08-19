@@ -430,6 +430,7 @@ export default function ProgramProgress({ programId }) {
         .pp {
           width: 100%; background: var(--col-bg); color: var(--col-text); min-height: 100vh;
           transition: background var(--tr-base), color var(--tr-base);
+          overflow-x: hidden; /* filet de sécurité — rien ne doit jamais faire défiler la page horizontalement */
         }
         .pp-inner { max-width: 56rem; margin: 0 auto; padding: var(--sp-8) var(--sp-4); }
         .pp-loading { text-align: center; padding: var(--sp-16); color: var(--col-text-muted); }

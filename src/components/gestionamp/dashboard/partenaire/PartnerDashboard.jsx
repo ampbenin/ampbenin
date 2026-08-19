@@ -802,7 +802,7 @@ export default function PartnerDashboard() {
                                   <dt>{f.label} : </dt>
                                   <dd>
                                     {f.type === "URL" ? (
-                                      <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                                      <a href={value} target="_blank" rel="noreferrer" style={{ wordBreak: "break-all" }}>{value}</a>
                                     ) : f.type === "IMAGE" ? (
                                       <span className="pd-task__thumbs">
                                         {value.map((url, idx) => (
@@ -1136,7 +1136,7 @@ const PD_STYLES = `
   .pd-task__date { font-size: 0.72rem; color: var(--col-text-muted, #7A7A7A); margin-left: 8px; }
   .pd-task__fields { margin: 6px 0 0; }
   .pd-task__field dt { display: inline; font-weight: 600; }
-  .pd-task__field dd { display: inline; margin: 0; }
+  .pd-task__field dd { display: inline; margin: 0; overflow-wrap: anywhere; }
   .pd-task__thumbs { display: inline-flex; gap: 6px; flex-wrap: wrap; }
   .pd-task__thumbs img { height: 52px; width: 52px; object-fit: cover; border-radius: 8px; transition: transform 200ms ease; }
   .pd-task__thumbs img:hover { transform: scale(1.08); }

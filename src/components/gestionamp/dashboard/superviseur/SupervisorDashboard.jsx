@@ -99,9 +99,9 @@ const SUBMISSIONS_PAGE_SIZE = 10;
 // en-tête du groupe.
 function SubmissionCard({ s, onApprove, onReject, programId, hideVolunteerName = false }) {
   return (
-    <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12 }}>
+    <div style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12, maxWidth: "100%", overflow: "hidden" }}>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <div>
+        <div style={{ minWidth: 0, flex: "1 1 260px", overflowWrap: "anywhere" }}>
           {!hideVolunteerName && <strong>{s.volunteerName}</strong>}
           <span style={{ color: hideVolunteerName ? "inherit" : "var(--sd-text-secondary)" }}>{hideVolunteerName ? s.taskTitle : ` — ${s.taskTitle}`}</span>
           {s.occurrenceDate && (
@@ -135,7 +135,7 @@ function SubmissionCard({ s, onApprove, onReject, programId, hideVolunteerName =
                   <dt style={{ display: "inline", fontWeight: 600 }}>{f.label} : </dt>
                   <dd style={{ display: "inline" }}>
                     {f.type === "URL" ? (
-                      <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                      <a href={value} target="_blank" rel="noreferrer" style={{ wordBreak: "break-all" }}>{value}</a>
                     ) : f.type === "IMAGE" ? (
                       <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
                         {value.map((url, i) => (
@@ -476,9 +476,9 @@ export default function SupervisorDashboard() {
             // avec défilement horizontal.
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
               {pagedProgress.map((p) => (
-                <div key={p.volunteerId} style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-                    <div>
+                <div key={p.volunteerId} style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 12, maxWidth: "100%", overflowWrap: "anywhere" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ minWidth: 0 }}>
                       <span style={{ fontWeight: 700, color: "var(--sd-text-muted)", marginRight: 6 }}>#{p.rank}</span>
                       <strong>{p.prenom} {p.nom}</strong>
                     </div>
@@ -682,6 +682,7 @@ export default function SupervisorDashboard() {
           margin: calc(-1 * var(--sp-8));
           width: calc(100% + 2 * var(--sp-8));
           padding: var(--sp-8);
+          overflow-x: hidden; /* filet de sécurité — rien ne doit jamais faire défiler la page horizontalement */
         }
         /* Mode sombre — scopé à CETTE page uniquement (décision utilisateur,
            2026-08-18 : jamais le reste du site, voir src/hooks/useTheme.js). */
