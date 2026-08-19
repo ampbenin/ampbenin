@@ -378,7 +378,15 @@ export default function SupervisorDashboard() {
         <label>
           Programme :{" "}
           <select value={selectedProgramId} onChange={(e) => setSelectedProgramId(e.target.value)}
-            style={{ background: "var(--sd-surface)", color: "var(--sd-text)", border: "1px solid var(--sd-border-strong)", borderRadius: 6, padding: "4px 8px" }}>
+            style={{
+              background: "var(--sd-surface)", color: "var(--sd-text)", border: "1px solid var(--sd-border-strong)",
+              borderRadius: 6, padding: "4px 8px",
+              // Un titre de programme long ne doit jamais faire déborder la
+              // page (signalé le 2026-08-19) — un <select> natif ne peut
+              // pas envelopper le texte de l'option sélectionnée, donc on
+              // le plafonne et on tronque avec "...".
+              maxWidth: "22rem", width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
             {programs.map((p) => (
               <option key={p.programId} value={p.programId}>{p.title} ({p.volunteerCount} volontaire(s))</option>
             ))}

@@ -472,7 +472,7 @@ export default function ProgramProgress({ programId }) {
           display: block; font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.06em;
           text-transform: uppercase; color: var(--col-accent); margin-bottom: var(--sp-1);
         }
-        .pp-title { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-2xl); color: var(--col-primary); margin-bottom: var(--sp-2); }
+        .pp-title { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-2xl); color: var(--col-primary); margin-bottom: var(--sp-2); overflow-wrap: anywhere; }
 
         .pp-tabs { display: flex; gap: var(--sp-1); border-bottom: 2px solid var(--col-border-light); margin-bottom: var(--sp-6); flex-wrap: wrap; }
         .pp-tab {

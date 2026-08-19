@@ -226,7 +226,7 @@ export default function Dashboard() {
           display: block; font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.06em;
           text-transform: uppercase; color: var(--col-accent); margin-bottom: var(--sp-1);
         }
-        .dash-title { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-2xl); color: var(--col-primary); }
+        .dash-title { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-2xl); color: var(--col-primary); overflow-wrap: anywhere; }
         .dash-header__actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
 
         .dash-btn {
