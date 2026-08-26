@@ -13,6 +13,8 @@ import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import TruncatedDescription from "@/components/shared/TruncatedDescription.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import ReportReadView from "@/components/shared/ReportReadView.jsx";
+import { exportReportPdf } from "@/utils/exportReportPdf.js";
 // jsPDF + jspdf-autotable déjà utilisés dans ce projet (voir
 // VolunteersManager.jsx#exportPDF) — réutilisés ici pour l'export "Progression
 // par volontaire" en A4 paysage (décision utilisateur, 2026-08-17, appliquée
@@ -62,7 +64,10 @@ const CONDITIONAL_TRIGGER_TYPES = ["SELECT", "CHECKBOX"];
 const APPLICANT_FIELD_IDS = ["applicantFirstName", "applicantLastName", "applicantEmail", "applicantPhone"];
 const APPLICATION_STATUS_LABELS = { PENDING: "En attente", ACCEPTED: "Acceptée", REJECTED: "Rejetée" };
 const RECURRENCE_LABELS = { ONCE: "Une fois", DAILY: "Quotidienne", WEEKLY: "Hebdomadaire" };
-const emptyTaskForm = { title: "", description: "", recurrence: "ONCE", status: "PUBLISHED", scheduledPublishAt: "", dueAt: "", proofFields: [] };
+const emptyTaskForm = {
+  title: "", description: "", recurrence: "ONCE", status: "PUBLISHED", scheduledPublishAt: "", dueAt: "",
+  displayStyle: "STANDARD", isFinalReport: false, proofFields: [],
+};
 const TASK_STATUS_LABELS = { DRAFT: "Brouillon", SCHEDULED: "Programmée", PUBLISHED: "Publiée" };
 
 // <input type="datetime-local"> attend "AAAA-MM-JJTHH:mm" en heure LOCALE
@@ -133,6 +138,7 @@ const TABS = [
   { value: "tasks", label: "Tâches", icon: "✅" },
   { value: "applications", label: "Candidatures", icon: "📥" },
   { value: "tracking", label: "Suivi des tâches", icon: "📊" },
+  { value: "reports", label: "Rapports", icon: "🏁" },
   { value: "partners", label: "Partenaires", icon: "🤝" },
 ];
 
@@ -250,6 +256,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [newGroupName, setNewGroupName] = useState("");
   const [selectedExistingGroupId, setSelectedExistingGroupId] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
+
+  // Panneau "Réactiver le rapport final" (onglet Rapports) — sélection
+  // d'un groupe ET/OU de volontaires individuels (fusionnés côté serveur).
+  const [reactivateGroupId, setReactivateGroupId] = useState("");
+  const [reactivateVolunteerIds, setReactivateVolunteerIds] = useState(new Set());
+  const [reactivateSearch, setReactivateSearch] = useState("");
 
   // Liste noire des volontaires bannis — chargée une fois, croisée côté
   // client (voir BlacklistWarning.jsx) sur les candidatures affichées.
@@ -830,6 +842,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       status: taskForm.status,
       scheduledPublishAt: taskForm.status === "SCHEDULED" ? new Date(taskForm.scheduledPublishAt).toISOString() : null,
       dueAt: taskForm.dueAt ? new Date(taskForm.dueAt).toISOString() : null,
+      displayStyle: taskForm.displayStyle,
+      isFinalReport: taskForm.isFinalReport,
       proofForm: { fields: taskForm.proofFields },
     };
     const nextTasks = editingTaskId
@@ -850,6 +864,8 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       status: task.status || "PUBLISHED",
       scheduledPublishAt: task.scheduledPublishAt ? toDatetimeLocalValue(task.scheduledPublishAt) : "",
       dueAt: task.dueAt ? toDatetimeLocalValue(task.dueAt) : "",
+      displayStyle: task.displayStyle || "STANDARD",
+      isFinalReport: !!task.isFinalReport,
       proofFields: task.proofForm?.fields || [],
     });
     setProofFieldForm(emptyProofFieldForm);
@@ -995,7 +1011,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   };
 
   useEffect(() => {
-    if (activeTab === "tracking") loadTracking();
+    if (activeTab === "tracking" || activeTab === "reports") loadTracking();
     if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -1155,6 +1171,39 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       loadTracking();
     } catch (err) {
       alert(err.message || "Erreur lors du rejet");
+    }
+  };
+
+  // Note interne sur un rapport (onglet Rapports, décision utilisateur
+  // 2026-08-19) — fonctionne quel que soit le statut de la soumission, ne
+  // recharge pas la progression (aucun impact sur le statut mission).
+  const saveReportInternalNote = async (submissionId, internalNote) => {
+    await adminFetch(`/api/volunteer-tasks/submissions/${submissionId}/internal-note`, {
+      method: "PATCH", body: JSON.stringify({ internalNote }),
+    });
+    loadTracking();
+  };
+
+  // Réactivation ciblée du rapport final (cas spécial, décision utilisateur
+  // 2026-08-19 : "même si la mission est marquée terminée, on peut
+  // réactiver la même tâche rapport final à certains volontaires, soit à
+  // tout un groupe ou à un seul volontaire") — jamais les autres tâches,
+  // jamais accessible aux superviseurs (action de gestion de programme).
+  const reactivateFinalReport = async ({ groupId, volunteerIds }) => {
+    const typed = window.prompt(
+      "Cette action rouvre LE rapport de fin de mission pour le(s) volontaire(s) sélectionné(s), même si leur " +
+      "mission est déjà terminée — les autres tâches restent verrouillées pour eux.\n\nTapez REACTIVER pour confirmer :"
+    );
+    if (typed === null) return;
+    if (typed.trim() !== "REACTIVER") { alert("Confirmation incorrecte — rien n'a été fait."); return; }
+    try {
+      const res = await adminFetch(`/api/volunteer-tasks/programs/${programId}/reactivate-final-report`, {
+        method: "POST", body: JSON.stringify({ groupId: groupId || undefined, volunteerIds }),
+      });
+      alert(`${res?.reactivated || 0} volontaire(s) réactivé(s).`);
+      loadTracking();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la réactivation");
     }
   };
 
@@ -1617,6 +1666,16 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       {TASK_STATUS_LABELS[task.status || "PUBLISHED"]}
                       {task.status === "SCHEDULED" && task.scheduledPublishAt && ` — ${new Date(task.scheduledPublishAt).toLocaleString("fr-FR")}`}
                     </span>
+                    {task.isFinalReport && (
+                      <span className="text-xs font-bold ml-2 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                        🏁 Rapport final
+                      </span>
+                    )}
+                    {task.displayStyle === "TYPEFORM" && (
+                      <span className="text-xs font-bold ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                        ✨ Typeform
+                      </span>
+                    )}
                     <span className="text-xs text-gray-500 ml-2">{RECURRENCE_LABELS[task.recurrence]}</span>
                     <span className="text-xs text-gray-400 ml-2">
                       {task.proofForm?.fields?.length > 0
@@ -1692,6 +1751,39 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 <option value="DAILY">Quotidienne</option>
                 <option value="WEEKLY">Hebdomadaire</option>
               </select>
+
+              <label className="flex items-start gap-2 text-sm bg-purple-50 border border-purple-200 rounded-xl p-3">
+                <input type="checkbox" checked={taskForm.displayStyle === "TYPEFORM"} className="mt-0.5"
+                  onChange={(e) => setTaskForm({ ...taskForm, displayStyle: e.target.checked ? "TYPEFORM" : "STANDARD" })} />
+                <span>
+                  <span className="font-semibold">✨ Style Typeform</span>
+                  <span className="block text-xs text-gray-600">
+                    Le volontaire remplit cette tâche sur une page plein écran, une question à la fois (comme le
+                    formulaire de candidature) au lieu du formulaire compact habituel.
+                  </span>
+                </span>
+              </label>
+
+              {(() => {
+                const otherFinalReport = tasks.find((t) => t.isFinalReport && t.id !== editingTaskId);
+                return (
+                  <label className={`flex items-start gap-2 text-sm border rounded-xl p-3 ${
+                    otherFinalReport ? "bg-gray-100 border-gray-200 opacity-60" : "bg-orange-50 border-orange-200"
+                  }`}>
+                    <input type="checkbox" checked={taskForm.isFinalReport} className="mt-0.5"
+                      disabled={!!otherFinalReport}
+                      onChange={(e) => setTaskForm({ ...taskForm, isFinalReport: e.target.checked })} />
+                    <span>
+                      <span className="font-semibold">🏁 Rapport de fin de mission</span>
+                      <span className="block text-xs text-gray-600">
+                        {otherFinalReport
+                          ? `Déjà utilisé par la tâche "${otherFinalReport.title}" — une seule par programme.`
+                          : "Ne compte pas dans le % de progression. L'approuver clôture immédiatement la mission du volontaire (score final + éligibilité attestation affichés dans son espace), sans attendre \"Terminer les missions\"."}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })()}
 
               <div className="border border-gray-200 rounded-xl p-3 space-y-3 bg-gray-50">
                 <div>
@@ -2405,6 +2497,132 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   </button>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === "reports" && (
+          <div className="space-y-6">
+            {!tasks.some((t) => t.isFinalReport) ? (
+              <p className="text-gray-500">
+                Ce programme n'a pas de tâche "Rapport de fin de mission" — activez-la dans l'onglet Tâches pour
+                voir apparaître les rapports ici.
+              </p>
+            ) : (
+              <>
+                <div className="border border-orange-200 bg-orange-50 rounded-xl p-4 space-y-3">
+                  <h3 className="font-semibold text-sm">🔓 Réactiver le rapport final</h3>
+                  <p className="text-xs text-gray-600">
+                    Rouvre LE rapport de fin de mission pour les volontaires sélectionnés, même si leur mission est
+                    déjà terminée — les autres tâches restent verrouillées pour eux.
+                  </p>
+                  <div className="flex flex-wrap gap-3 items-end">
+                    <label className="text-sm">
+                      <span className="block text-gray-600 mb-1">Groupe entier (optionnel)</span>
+                      <select value={reactivateGroupId} onChange={(e) => setReactivateGroupId(e.target.value)}
+                        className="border border-gray-300 rounded-xl p-2">
+                        <option value="">— Aucun —</option>
+                        {applicationGroups.map((g) => <option key={g._id} value={g._id}>{g.name}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                  <div>
+                    <input type="text" placeholder="🔍 Rechercher un volontaire à réactiver individuellement..."
+                      value={reactivateSearch} onChange={(e) => setReactivateSearch(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm mb-2" />
+                    <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg bg-white divide-y divide-gray-100">
+                      {programProgress
+                        .filter((p) => {
+                          const q = reactivateSearch.trim().toLowerCase();
+                          if (!q) return true;
+                          return `${p.prenom} ${p.nom} ${p.email}`.toLowerCase().includes(q);
+                        })
+                        .map((p) => (
+                          <label key={p.volunteerId} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" checked={reactivateVolunteerIds.has(String(p.volunteerId))}
+                              onChange={(e) => {
+                                setReactivateVolunteerIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(String(p.volunteerId)); else next.delete(String(p.volunteerId));
+                                  return next;
+                                });
+                              }} />
+                            {p.prenom} {p.nom} — <span className="text-gray-500">{p.statut}</span>
+                          </label>
+                        ))}
+                      {programProgress.length === 0 && <p className="text-gray-400 text-sm px-3 py-2">Aucun volontaire.</p>}
+                    </div>
+                  </div>
+                  <button type="button"
+                    onClick={() => {
+                      if (!reactivateGroupId && reactivateVolunteerIds.size === 0) {
+                        alert("Sélectionnez un groupe et/ou au moins un volontaire.");
+                        return;
+                      }
+                      reactivateFinalReport({ groupId: reactivateGroupId, volunteerIds: [...reactivateVolunteerIds] });
+                    }}
+                    className="bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-700">
+                    Réactiver
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-sm mb-3">🏁 Rapports de fin de mission</h3>
+                  {(() => {
+                    const reports = submissions.filter((s) => s.isFinalReport);
+                    if (reports.length === 0) {
+                      return <p className="text-gray-500">Aucun rapport de fin de mission pour ce filtre.</p>;
+                    }
+                    return (
+                      <div className="space-y-4">
+                        {reports.map((s) => (
+                          <div key={s._id} className="border border-gray-200 rounded-xl p-4">
+                            <div className="flex justify-between items-start gap-3 flex-wrap">
+                              <div className="min-w-0 break-words">
+                                <strong>{s.volunteerName}</strong>
+                                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${SUBMISSION_STATUS_CLASSES[s.status]}`}>
+                                  {SUBMISSION_STATUS_LABELS[s.status]}
+                                </span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Soumis : {formatSmartTime(s.submittedAt)}
+                                  {s.status !== "PENDING" && s.reviewedAt && (
+                                    <> · {s.status === "APPROVED" ? "Approuvé" : "Rejeté"} {formatSmartTime(s.reviewedAt)}
+                                      {s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}</>
+                                  )}
+                                </div>
+                              </div>
+                              {s.status === "PENDING" && (
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <button onClick={() => reviewSubmissionTask(s._id, "accept")}
+                                    className="bg-green-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-green-700">
+                                    Approuver
+                                  </button>
+                                  <button onClick={() => rejectSubmissionWithNote(s._id)}
+                                    className="bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-lg hover:bg-red-700">
+                                    Rejeter
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            <div className="mt-3">
+                              <ReportReadView
+                                proofFields={s.proofFields}
+                                responses={s.responses}
+                                internalNote={s.internalNote}
+                                onSaveNote={(note) => saveReportInternalNote(s._id, note)}
+                                onExportPdf={() => exportReportPdf({
+                                  programTitle: meta.title, volunteerName: s.volunteerName,
+                                  submittedAt: s.submittedAt, proofFields: s.proofFields, responses: s.responses,
+                                })}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>
             )}
           </div>
         )}

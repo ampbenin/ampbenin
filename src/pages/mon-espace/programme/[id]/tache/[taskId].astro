@@ -1,0 +1,19 @@
+---
+export const prerender = false;
+import Layout from '../../../../../layouts/BaseLayout.astro';
+import TaskTypeformForm from '../../../../../components/volunteer/TaskTypeformForm.jsx';
+
+const { id, taskId } = Astro.params;
+// "once" pour une tâche ONCE, sinon AAAA-MM-JJ de l'échéance visée (voir
+// ProgramProgress.jsx, lien construit avec ?occurrence=...).
+const occurrenceKey = Astro.url.searchParams.get('occurrence') || 'once';
+---
+
+<Layout
+  title="Soumettre une tâche — Mon espace volontaire | AMP BENIN"
+  description="Soumettez votre preuve pour cette tâche de mission."
+  url={`https://ampbenin.netlify.app/mon-espace/programme/${id}/tache/${taskId}`}
+  hideChrome
+>
+  <TaskTypeformForm programId={id} taskId={taskId} occurrenceKey={occurrenceKey} client:load />
+</Layout>

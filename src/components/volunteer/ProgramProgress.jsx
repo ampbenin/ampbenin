@@ -153,10 +153,19 @@ export default function ProgramProgress({ programId }) {
 
   const { progress } = data;
 
-  // Compte des échéances par statut, toutes tâches confondues — donne du
-  // contenu concret à "Vue d'ensemble" en plus de la barre de progression.
+  // Le rapport de fin de mission (s'il existe) est traité à part — jamais
+  // mélangé aux tâches habituelles ni compté dans leurs statistiques
+  // (décision utilisateur, 2026-08-19 : "prioritaire sur les autres
+  // tâches"). getMyProgramProgress ne le compte déjà plus dans progress
+  // (voir server), ici on l'exclut aussi de l'affichage/comptage "Mes tâches".
+  const regularTasks = data.tasks.filter((t) => !t.isFinalReport);
+  const finalReportTask = data.tasks.find((t) => t.isFinalReport) || null;
+
+  // Compte des échéances par statut, toutes tâches HABITUELLES confondues
+  // — donne du contenu concret à "Vue d'ensemble" en plus de la barre de
+  // progression.
   const occurrenceCounts = { TODO: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 };
-  data.tasks.forEach((task) => {
+  regularTasks.forEach((task) => {
     task.occurrences.forEach((occ) => {
       occurrenceCounts[occ.status] = (occurrenceCounts[occ.status] || 0) + 1;
     });
@@ -165,12 +174,157 @@ export default function ProgramProgress({ programId }) {
   // "Mes tâches" filtré par statut d'échéance (décision utilisateur,
   // 2026-08-18) — une tâche sans aucune échéance correspondant au filtre
   // actif disparaît entièrement (jamais une carte vide affichée pour rien).
-  const filteredTasks = data.tasks
+  const filteredTasks = regularTasks
     .map((task) => ({
       ...task,
       occurrences: occurrenceFilter ? task.occurrences.filter((occ) => occ.status === occurrenceFilter) : task.occurrences,
     }))
     .filter((task) => task.occurrences.length > 0);
+
+  // Verrouillage des soumissions une fois la mission clôturée (décision
+  // utilisateur, 2026-08-19) — sauf le rapport final s'il a été réactivé
+  // ciblé (voir reactivateFinalReport côté staff).
+  const canSubmitTask = (task) => !data.missionClosed || (task.isFinalReport && data.finalReportReopened);
+
+  // URL de l'assistant plein écran (style Typeform) pour une tâche/échéance
+  // donnée — décision utilisateur, 2026-08-19 : réglage displayStyle par
+  // tâche (VolunteerProgramEditor.jsx), pas réservé au rapport final.
+  const typeformHref = (task, occurrenceDate) => {
+    const occ = occurrenceDate ? new Date(occurrenceDate).toISOString().slice(0, 10) : "once";
+    return `/mon-espace/programme/${programId}/tache/${task.id}?occurrence=${occ}`;
+  };
+
+  // Bloc "soumettre une preuve" (formulaire compact, style STANDARD) —
+  // extrait en fonction plutôt que dupliqué entre la liste des tâches
+  // habituelles et la section à part du rapport de fin de mission (même
+  // portée de composant, mêmes closures responses/submit/etc.).
+  const renderSubmitForm = (task, occ) => {
+    const key = occurrenceKey(task.id, occ.occurrenceDate);
+    const proofFieldsById = new Map((task.proofFields || []).map((f) => [f.id, f]));
+    return (
+      <div className="pp-submit-form">
+        {submitError && <p className="pp-error">{submitError}</p>}
+
+        {task.proofFields
+          .filter((field) => isFieldVisible(field, responses, proofFieldsById))
+          .map((field) => (
+          <div key={field.id} className="pp-field">
+            <label className="pp-field__label">
+              {field.label} {field.required && <span className="pp-field__required">*</span>}
+            </label>
+
+            {field.type === "TEXTAREA" && (
+              <textarea rows={3} className="pp-input" value={responses[field.id] || ""}
+                onChange={(e) => setFieldValue(field.id, e.target.value)} />
+            )}
+
+            {["TEXT", "EMAIL", "PHONE"].includes(field.type) && (
+              <input type={field.type === "EMAIL" ? "email" : field.type === "PHONE" ? "tel" : "text"}
+                className="pp-input" value={responses[field.id] || ""}
+                onChange={(e) => setFieldValue(field.id, e.target.value)} />
+            )}
+
+            {field.type === "NUMBER" && (
+              <input type="number" className="pp-input" value={responses[field.id] ?? ""}
+                onChange={(e) => setFieldValue(field.id, e.target.value)} />
+            )}
+
+            {field.type === "DATE" && (
+              <input type="date" className="pp-input" value={responses[field.id] || ""}
+                onChange={(e) => setFieldValue(field.id, e.target.value)} />
+            )}
+
+            {field.type === "SELECT" && (
+              <select className="pp-input" value={responses[field.id] || ""}
+                onChange={(e) => setFieldValue(field.id, e.target.value)}>
+                <option value="">-- Choisir --</option>
+                {(field.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            )}
+
+            {field.type === "CHECKBOX" && (
+              <label className="pp-checkbox">
+                <input type="checkbox" checked={!!responses[field.id]}
+                  onChange={(e) => setFieldValue(field.id, e.target.checked)} />
+                Oui
+              </label>
+            )}
+
+            {field.type === "URL" && (
+              <>
+                <input type="url" className="pp-input" placeholder="https://..."
+                  value={responses[field.id] || ""}
+                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
+                {isUrlLike(responses[field.id]) && (
+                  <a href={responses[field.id]} target="_blank" rel="noreferrer" className="pp-url-preview">
+                    {responses[field.id]}
+                  </a>
+                )}
+              </>
+            )}
+
+            {field.type === "IMAGE" && (
+              <div className="pp-image-field">
+                <div className="pp-image-thumbs">
+                  {(responses[field.id] || []).map((url) => (
+                    <div key={url} className="pp-image-thumb">
+                      <img src={url} alt="" />
+                      <button type="button" onClick={() => removeImage(field.id, url)} aria-label="Retirer">✕</button>
+                    </div>
+                  ))}
+                </div>
+                {(!field.validation?.maxImages || (responses[field.id] || []).length < field.validation.maxImages) && (
+                  <label className="pp-image-upload-btn">
+                    {uploadingFieldId === field.id ? "Envoi..." : "+ Ajouter une photo"}
+                    <input type="file" accept="image/*" hidden disabled={uploadingFieldId === field.id}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadImage(field.id, file, field.validation?.maxImages);
+                        e.target.value = "";
+                      }} />
+                  </label>
+                )}
+                {field.validation?.maxImages && (
+                  <span className="pp-image-limit">
+                    {(responses[field.id] || []).length}/{field.validation.maxImages} photo(s)
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <div className="pp-submit-form__actions">
+          <button className="pp-btn pp-btn--ghost" onClick={() => setOpenKey(null)} disabled={submitting}>
+            Annuler
+          </button>
+          <button className="pp-btn pp-btn--primary" onClick={() => submit(task.id, occ.occurrenceDate)}
+            disabled={submitting || uploadingFieldId !== null}>
+            {submitting ? "Envoi..." : "Envoyer la preuve"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Bouton/lien "Soumettre"/"Resoumettre" d'une échéance — lien vers
+  // l'assistant plein écran si displayStyle === "TYPEFORM", sinon ouvre le
+  // formulaire compact inline (comportement inchangé). Rien du tout si la
+  // mission est clôturée et que ce n'est pas le rapport final réactivé.
+  const renderSubmitAction = (task, occ) => {
+    const key = occurrenceKey(task.id, occ.occurrenceDate);
+    const canSubmit = (occ.status === "TODO" || occ.status === "REJECTED") && canSubmitTask(task);
+    if (!canSubmit || openKey === key) return null;
+    const label = occ.status === "REJECTED" ? "Resoumettre →" : "Soumettre →";
+    if (task.displayStyle === "TYPEFORM") {
+      return <a href={typeformHref(task, occ.occurrenceDate)} className="pp-link-btn">{label}</a>;
+    }
+    return (
+      <button className="pp-link-btn" onClick={() => openSubmitForm(task.id, occ.occurrenceDate, occ.responses)}>
+        {label}
+      </button>
+    );
+  };
 
   return (
     <div className="pp" data-theme={theme}>
@@ -222,6 +376,71 @@ export default function ProgramProgress({ programId }) {
 
       {activeTab === "tasks" && (
       <div>
+      {data.missionClosed && (
+        <div className={`pp-mission-closed ${data.missionStatus === "Mission validée" ? "pp-mission-closed--validated" : ""}`}>
+          <strong>
+            {data.missionStatus === "Mission validée" ? "🎉 Mission terminée — Mission validée" : `Mission terminée — ${data.missionStatus}`}
+          </strong>
+          <p>Score final : {progress.approved}/{progress.totalDue} tâches validées ({progress.percent}%).</p>
+          {data.missionStatus === "Mission validée" && (
+            <p>Vous pouvez consulter votre éligibilité à l'attestation sur <a href="/monattestation">Mon attestation</a>.</p>
+          )}
+          {data.finalReportReopened && (
+            <p>Votre rapport de fin de mission a été réouvert — vous pouvez le soumettre à nouveau ci-dessous.</p>
+          )}
+          {!data.finalReportReopened && <p>Plus aucune tâche ne peut être soumise sur ce programme.</p>}
+        </div>
+      )}
+
+      {finalReportTask && (
+        <div className="pp-final-report">
+          <div className="pp-task__head">
+            <strong>🏁 {finalReportTask.title}</strong>
+          </div>
+          {finalReportTask.description && (
+            <div className="pp-task__desc">
+              <TruncatedDescription
+                text={finalReportTask.description}
+                title={finalReportTask.title}
+                times={[
+                  { label: "Publiée", value: finalReportTask.publishedAt ? formatSmartTime(finalReportTask.publishedAt) : "—" },
+                  ...(finalReportTask.dueAt ? [{ label: "Fermeture", value: formatSmartTime(finalReportTask.dueAt) }] : []),
+                ]}
+              />
+            </div>
+          )}
+          <p className="pp-task__times">
+            Publiée : {finalReportTask.publishedAt ? formatSmartTime(finalReportTask.publishedAt) : "—"}
+            {finalReportTask.dueAt && <> · Fermeture : {formatSmartTime(finalReportTask.dueAt)}</>}
+          </p>
+          <div className="pp-occurrences">
+            {finalReportTask.occurrences.map((occ) => {
+              const key = occurrenceKey(finalReportTask.id, occ.occurrenceDate);
+              return (
+                <div key={key} className="pp-occurrence">
+                  <div className="pp-occurrence__row">
+                    <span className={`pp-badge ${STATUS_CLASS[occ.status]}`}>{STATUS_LABELS[occ.status]}</span>
+                    {renderSubmitAction(finalReportTask, occ)}
+                  </div>
+                  {occ.submittedAt && (occ.status === "PENDING" || occ.status === "APPROVED" || occ.status === "REJECTED") && (
+                    <p className="pp-occurrence__submitted">
+                      Soumise : {formatSmartTime(occ.submittedAt)}
+                      {occ.status !== "PENDING" && occ.reviewedAt && (
+                        <> · {occ.status === "APPROVED" ? "Validée" : "Rejetée"} : {formatSmartTime(occ.reviewedAt)}</>
+                      )}
+                    </p>
+                  )}
+                  {occ.status === "REJECTED" && occ.reviewNote && (
+                    <p className="pp-occurrence__note">Motif du rejet : {occ.reviewNote}</p>
+                  )}
+                  {openKey === key && renderSubmitForm(finalReportTask, occ)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="pp-tabs pp-tabs--sub">
         {OCCURRENCE_FILTERS.map((f) => (
           <button key={f.value || "ALL"} type="button" onClick={() => setOccurrenceFilter(f.value)}
@@ -231,15 +450,13 @@ export default function ProgramProgress({ programId }) {
         ))}
       </div>
 
-      {data.tasks.length === 0 ? (
+      {regularTasks.length === 0 ? (
         <p className="pp-empty">Aucune tâche définie pour ce programme pour l'instant.</p>
       ) : filteredTasks.length === 0 ? (
         <p className="pp-empty">Aucune tâche ne correspond à ce filtre.</p>
       ) : (
         <div className="pp-tasks">
-          {filteredTasks.map((task) => {
-            const proofFieldsById = new Map((task.proofFields || []).map((f) => [f.id, f]));
-            return (
+          {filteredTasks.map((task) => (
             <div key={task.id} className="pp-task">
               <div className="pp-task__head">
                 <strong>{task.title}</strong>
@@ -265,7 +482,6 @@ export default function ProgramProgress({ programId }) {
               <div className="pp-occurrences">
                 {[...task.occurrences].reverse().map((occ) => {
                   const key = occurrenceKey(task.id, occ.occurrenceDate);
-                  const canSubmit = occ.status === "TODO" || occ.status === "REJECTED";
                   return (
                     <div key={key} className="pp-occurrence">
                       <div className="pp-occurrence__row">
@@ -275,14 +491,7 @@ export default function ProgramProgress({ programId }) {
                           </span>
                         )}
                         <span className={`pp-badge ${STATUS_CLASS[occ.status]}`}>{STATUS_LABELS[occ.status]}</span>
-                        {canSubmit && openKey !== key && (
-                          <button
-                            className="pp-link-btn"
-                            onClick={() => openSubmitForm(task.id, occ.occurrenceDate, occ.responses)}
-                          >
-                            {occ.status === "REJECTED" ? "Resoumettre →" : "Soumettre →"}
-                          </button>
-                        )}
+                        {renderSubmitAction(task, occ)}
                       </div>
 
                       {occ.submittedAt && (occ.status === "PENDING" || occ.status === "APPROVED" || occ.status === "REJECTED") && (
@@ -298,124 +507,13 @@ export default function ProgramProgress({ programId }) {
                         <p className="pp-occurrence__note">Motif du rejet : {occ.reviewNote}</p>
                       )}
 
-                      {openKey === key && (
-                        <div className="pp-submit-form">
-                          {submitError && <p className="pp-error">{submitError}</p>}
-
-                          {task.proofFields
-                            .filter((field) => isFieldVisible(field, responses, proofFieldsById))
-                            .map((field) => (
-                            <div key={field.id} className="pp-field">
-                              <label className="pp-field__label">
-                                {field.label} {field.required && <span className="pp-field__required">*</span>}
-                              </label>
-
-                              {field.type === "TEXTAREA" && (
-                                <textarea rows={3} className="pp-input" value={responses[field.id] || ""}
-                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
-                              )}
-
-                              {["TEXT", "EMAIL", "PHONE"].includes(field.type) && (
-                                <input type={field.type === "EMAIL" ? "email" : field.type === "PHONE" ? "tel" : "text"}
-                                  className="pp-input" value={responses[field.id] || ""}
-                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
-                              )}
-
-                              {field.type === "NUMBER" && (
-                                <input type="number" className="pp-input" value={responses[field.id] ?? ""}
-                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
-                              )}
-
-                              {field.type === "DATE" && (
-                                <input type="date" className="pp-input" value={responses[field.id] || ""}
-                                  onChange={(e) => setFieldValue(field.id, e.target.value)} />
-                              )}
-
-                              {field.type === "SELECT" && (
-                                <select className="pp-input" value={responses[field.id] || ""}
-                                  onChange={(e) => setFieldValue(field.id, e.target.value)}>
-                                  <option value="">-- Choisir --</option>
-                                  {(field.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                              )}
-
-                              {field.type === "CHECKBOX" && (
-                                <label className="pp-checkbox">
-                                  <input type="checkbox" checked={!!responses[field.id]}
-                                    onChange={(e) => setFieldValue(field.id, e.target.checked)} />
-                                  Oui
-                                </label>
-                              )}
-
-                              {field.type === "URL" && (
-                                <>
-                                  <input type="url" className="pp-input" placeholder="https://..."
-                                    value={responses[field.id] || ""}
-                                    onChange={(e) => setFieldValue(field.id, e.target.value)} />
-                                  {isUrlLike(responses[field.id]) && (
-                                    <a href={responses[field.id]} target="_blank" rel="noreferrer" className="pp-url-preview">
-                                      {responses[field.id]}
-                                    </a>
-                                  )}
-                                </>
-                              )}
-
-                              {field.type === "IMAGE" && (
-                                <div className="pp-image-field">
-                                  <div className="pp-image-thumbs">
-                                    {(responses[field.id] || []).map((url) => (
-                                      <div key={url} className="pp-image-thumb">
-                                        <img src={url} alt="" />
-                                        <button type="button" onClick={() => removeImage(field.id, url)} aria-label="Retirer">✕</button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {(!field.validation?.maxImages || (responses[field.id] || []).length < field.validation.maxImages) && (
-                                    <label className="pp-image-upload-btn">
-                                      {uploadingFieldId === field.id ? "Envoi..." : "+ Ajouter une photo"}
-                                      <input type="file" accept="image/*" hidden disabled={uploadingFieldId === field.id}
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) uploadImage(field.id, file, field.validation?.maxImages);
-                                          e.target.value = "";
-                                        }} />
-                                    </label>
-                                  )}
-                                  {field.validation?.maxImages && (
-                                    <span className="pp-image-limit">
-                                      {(responses[field.id] || []).length}/{field.validation.maxImages} photo(s)
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          <div className="pp-submit-form__actions">
-                            <button
-                              className="pp-btn pp-btn--ghost"
-                              onClick={() => setOpenKey(null)}
-                              disabled={submitting}
-                            >
-                              Annuler
-                            </button>
-                            <button
-                              className="pp-btn pp-btn--primary"
-                              onClick={() => submit(task.id, occ.occurrenceDate)}
-                              disabled={submitting || uploadingFieldId !== null}
-                            >
-                              {submitting ? "Envoi..." : "Envoyer la preuve"}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {openKey === key && renderSubmitForm(task, occ)}
                     </div>
                   );
                 })}
               </div>
             </div>
-            );
-          })}
+          ))}
         </div>
       )}
       </div>
@@ -503,6 +601,25 @@ export default function ProgramProgress({ programId }) {
         .pp-stat__label { font-size: var(--text-xs); color: var(--col-text-muted); }
 
         .pp-empty { color: var(--col-text-muted); }
+
+        /* Bannière de clôture de mission (décision utilisateur, 2026-08-19)
+           — toujours en tête de "Mes tâches" une fois missionClosed. */
+        .pp-mission-closed {
+          background: var(--col-accent-bg); border: 1px solid var(--col-accent, var(--col-border));
+          border-radius: var(--r-lg); padding: var(--sp-5); margin-bottom: var(--sp-5);
+        }
+        .pp-mission-closed p { margin: var(--sp-1) 0 0; font-size: var(--text-sm); color: var(--col-text-sec); }
+        .pp-mission-closed a { color: var(--col-primary); font-weight: 600; }
+        .pp-mission-closed--validated { border-color: var(--col-success, var(--col-primary)); }
+
+        /* Rapport de fin de mission — section à part, jamais mélangée aux
+           tâches habituelles filtrées (décision utilisateur, 2026-08-19 :
+           "prioritaire sur les autres tâches"). Même carte que .pp-task,
+           bordure orange pour la distinguer visuellement. */
+        .pp-final-report {
+          background: var(--col-white); border: 2px solid #f59e0b; border-radius: var(--r-lg);
+          padding: var(--sp-5); margin-bottom: var(--sp-6);
+        }
 
         .pp-tasks { display: flex; flex-direction: column; gap: var(--sp-5); }
         .pp-task {

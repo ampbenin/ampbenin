@@ -47,6 +47,8 @@ import { useEffect, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "@/components/admin/ReportVolunteerButton.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import ReportReadView from "@/components/shared/ReportReadView.jsx";
+import { exportReportPdf } from "@/utils/exportReportPdf.js";
 import { formatSmartTime } from "@/utils/formatSmartTime.js";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import jsPDF from "jspdf";
@@ -86,6 +88,7 @@ const DASHBOARD_TABS = [
   { value: "overview", label: "Vue d'ensemble" },
   { value: "progress", label: "Progression par volontaire" },
   { value: "submissions", label: "Soumissions" },
+  { value: "reports", label: "🏁 Rapports" },
 ];
 const SUBMISSIONS_PAGE_SIZE = 10;
 
@@ -275,6 +278,16 @@ export default function SupervisorDashboard() {
     } catch (err) {
       alert(err.message || "Erreur lors du rejet");
     }
+  };
+
+  // Note interne (onglet Rapports, décision utilisateur 2026-08-19) —
+  // fonctionne quel que soit le statut de la soumission, ne recharge pas
+  // loadProgress (aucun impact sur le statut mission).
+  const saveInternalNote = async (id, internalNote) => {
+    await adminFetch(`/api/volunteer-tasks/submissions/${id}/internal-note`, {
+      method: "PATCH", body: JSON.stringify({ internalNote }),
+    });
+    loadSubmissions(selectedProgramId, submissionFilter);
   };
 
   if (loading) return <LoadingSpinner />;
@@ -652,6 +665,62 @@ export default function SupervisorDashboard() {
           )}
         </>
       )}
+      </div>
+      )}
+
+      {activeTab === "reports" && (
+      <div>
+        <h3 style={{ margin: "0 0 12px" }}>🏁 Rapports de fin de mission</h3>
+        {(() => {
+          const reports = submissions.filter((s) => s.isFinalReport);
+          if (reports.length === 0) {
+            return <p style={{ color: "var(--sd-text-secondary)" }}>Aucun rapport de fin de mission pour ce filtre.</p>;
+          }
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {reports.map((s) => (
+                <div key={s._id} style={{ border: "1px solid var(--sd-border)", borderRadius: 8, padding: 16, color: "var(--sd-text)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                      <strong>{s.volunteerName}</strong>
+                      <span style={{ marginLeft: 8 }}>
+                        <span style={badgeStyle(SUBMISSION_STATUS_STYLE[s.status])}>{SUBMISSION_STATUS_LABELS[s.status]}</span>
+                      </span>
+                      <div style={{ fontSize: "0.8rem", color: "var(--sd-text-faint)", marginTop: 4 }}>
+                        Soumis : {formatSmartTime(s.submittedAt)}
+                        {s.status !== "PENDING" && s.reviewedAt && (
+                          <> · {s.status === "APPROVED" ? "Approuvé" : "Rejeté"} {formatSmartTime(s.reviewedAt)}{s.reviewerName && <> par <strong>{s.reviewerName}</strong></>}</>
+                        )}
+                      </div>
+                    </div>
+                    {s.status === "PENDING" && (
+                      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                        <button onClick={() => approve(s._id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
+                          Approuver
+                        </button>
+                        <button onClick={() => reject(s._id)} style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px", fontWeight: 700, cursor: "pointer" }}>
+                          Rejeter
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 12 }}>
+                    <ReportReadView
+                      proofFields={s.proofFields}
+                      responses={s.responses}
+                      internalNote={s.internalNote}
+                      onSaveNote={(note) => saveInternalNote(s._id, note)}
+                      onExportPdf={() => exportReportPdf({
+                        programTitle: selectedProgram?.title, volunteerName: s.volunteerName,
+                        submittedAt: s.submittedAt, proofFields: s.proofFields, responses: s.responses,
+                      })}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
       )}
 
