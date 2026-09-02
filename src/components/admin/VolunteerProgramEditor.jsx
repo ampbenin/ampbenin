@@ -139,6 +139,7 @@ const TABS = [
   { value: "applications", label: "Candidatures", icon: "📥" },
   { value: "tracking", label: "Suivi des tâches", icon: "📊" },
   { value: "reports", label: "Rapports", icon: "🏁" },
+  { value: "certificates", label: "Attestations", icon: "🎓" },
   { value: "partners", label: "Partenaires", icon: "🤝" },
 ];
 
@@ -262,6 +263,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [reactivateGroupId, setReactivateGroupId] = useState("");
   const [reactivateVolunteerIds, setReactivateVolunteerIds] = useState(new Set());
   const [reactivateSearch, setReactivateSearch] = useState("");
+
+  // Onglet "Attestations" (refonte 2026-08-19) — mêmes conventions que le
+  // panneau de réactivation ci-dessus (recherche + sélection multiple).
+  const [certEligible, setCertEligible] = useState([]);
+  const [certAlreadyGenerated, setCertAlreadyGenerated] = useState([]);
+  const [certLoading, setCertLoading] = useState(false);
+  const [certSelectedIds, setCertSelectedIds] = useState(new Set());
+  const [certSearch, setCertSearch] = useState("");
+  const [certGenerating, setCertGenerating] = useState(false);
 
   // Liste noire des volontaires bannis — chargée une fois, croisée côté
   // client (voir BlacklistWarning.jsx) sur les candidatures affichées.
@@ -1012,6 +1022,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
 
   useEffect(() => {
     if (activeTab === "tracking" || activeTab === "reports") loadTracking();
+    if (activeTab === "certificates") loadCertificates();
     if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -1222,6 +1233,46 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       loadTracking();
     } catch (err) {
       alert(err.message || "Erreur lors de la finalisation des missions");
+    }
+  };
+
+  // Onglet Attestations (refonte 2026-08-19) — remplace l'ancien panneau
+  // CMS séparé GenerateCertificate.jsx (cassé : "missions" jamais
+  // déclaré, reliquat de l'ancien système Mission). Scopé au programme
+  // déjà dans le contexte, autorisation canReviewProgram côté serveur.
+  const loadCertificates = async () => {
+    setCertLoading(true);
+    try {
+      const data = await adminFetch(`/api/certificates/programs/${programId}/eligible-volunteers`);
+      setCertEligible(data?.eligible || []);
+      setCertAlreadyGenerated(data?.alreadyGenerated || []);
+      setCertSelectedIds(new Set());
+    } catch (err) {
+      alert(err.message || "Erreur lors du chargement des attestations");
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
+  const generateCertificates = async () => {
+    const targetIds = [...certSelectedIds];
+    const label = targetIds.length > 0
+      ? `pour les ${targetIds.length} volontaire(s) sélectionné(s)`
+      : `pour TOUS les volontaires éligibles (${certEligible.length})`;
+    if (!window.confirm(`Générer les attestations ${label} ?`)) return;
+
+    setCertGenerating(true);
+    try {
+      const res = await adminFetch(`/api/certificates/programs/${programId}/generate`, {
+        method: "POST",
+        body: JSON.stringify({ volunteerIds: targetIds.length > 0 ? targetIds : undefined }),
+      });
+      alert(`${res?.generated || 0} attestation(s) générée(s).`);
+      loadCertificates();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la génération des attestations");
+    } finally {
+      setCertGenerating(false);
     }
   };
 
@@ -2621,6 +2672,89 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                       </div>
                     );
                   })()}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "certificates" && (
+          <div className="space-y-6">
+            {certLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <>
+                <div>
+                  <h3 className="font-semibold text-sm mb-3">🎓 Attestations déjà générées ({certAlreadyGenerated.length})</h3>
+                  {certAlreadyGenerated.length === 0 ? (
+                    <p className="text-gray-500">Aucune attestation générée pour l'instant sur ce programme.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {certAlreadyGenerated.map((v) => (
+                        <div key={v.volunteerId} className="flex justify-between items-center gap-3 border border-gray-200 rounded-xl p-3 flex-wrap">
+                          <div className="min-w-0 break-words">
+                            <strong>{v.prenom} {v.nom}</strong>
+                            <span className="text-xs text-gray-500 ml-2">{v.email}</span>
+                            <div className="text-xs text-gray-500">
+                              Générée {v.uploadedAt ? formatSmartTime(v.uploadedAt) : "—"}
+                            </div>
+                          </div>
+                          <a href={v.fileUrl} target="_blank" rel="noreferrer"
+                            className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 flex-shrink-0">
+                            Télécharger →
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="font-semibold text-sm mb-1">🎓 Volontaires éligibles ({certEligible.length})</h3>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Mission validée sur ce programme, attestation pas encore générée.
+                  </p>
+                  {certEligible.length === 0 ? (
+                    <p className="text-gray-500">
+                      Aucun volontaire éligible pour l'instant — la mission doit être "Mission validée"
+                      (voir l'onglet Suivi des tâches / Rapports).
+                    </p>
+                  ) : (
+                    <>
+                      <input type="text" placeholder="🔍 Rechercher un volontaire..."
+                        value={certSearch} onChange={(e) => setCertSearch(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm mb-2" />
+                      <div className="max-h-56 overflow-y-auto border border-gray-200 rounded-lg bg-white divide-y divide-gray-100 mb-3">
+                        {certEligible
+                          .filter((v) => {
+                            const q = certSearch.trim().toLowerCase();
+                            if (!q) return true;
+                            return `${v.prenom} ${v.nom} ${v.email}`.toLowerCase().includes(q);
+                          })
+                          .map((v) => (
+                            <label key={v.volunteerId} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50">
+                              <input type="checkbox" checked={certSelectedIds.has(String(v.volunteerId))}
+                                onChange={(e) => {
+                                  setCertSelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(String(v.volunteerId)); else next.delete(String(v.volunteerId));
+                                    return next;
+                                  });
+                                }} />
+                              {v.prenom} {v.nom} — <span className="text-gray-500">{v.email}</span>
+                            </label>
+                          ))}
+                      </div>
+                      <button type="button" onClick={generateCertificates} disabled={certGenerating}
+                        className="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-700 disabled:opacity-50">
+                        {certGenerating
+                          ? "Génération..."
+                          : certSelectedIds.size > 0
+                            ? `Générer pour la sélection (${certSelectedIds.size})`
+                            : `Générer pour tous les éligibles (${certEligible.length})`}
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}

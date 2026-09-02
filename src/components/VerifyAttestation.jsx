@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 
+// Corrigé le 2026-08-19 : pointait en dur vers un backend Koyeb abandonné
+// (potential-rafa-amp1-00541efa.koyeb.app) au lieu de PUBLIC_API_BASE,
+// comme partout ailleurs dans ce projet — la vérification par QR code
+// échouait donc silencieusement en production.
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
+
 export default function VerifyAttestation({ id }) {
   const [data, setData] = useState(null);
   const [step, setStep] = useState("loading"); // Étapes possibles : loading | showData | error | thanks | report
@@ -14,7 +20,7 @@ export default function VerifyAttestation({ id }) {
     console.log("📡 Vérification en cours pour l'ID :", id);
 
     // Appel de l'API backend
-    fetch(`https://potential-rafa-amp1-00541efa.koyeb.app/api/certificates/verify/${id}`)
+    fetch(`${API_BASE}/api/certificates/verify/${id}`)
       .then((res) => {
         console.log("📥 Réponse brute du serveur :", res);
         return res.json();

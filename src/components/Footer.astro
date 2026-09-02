@@ -36,7 +36,12 @@ const t = useTranslations(lang);
           <li><a href="/adhesion"    class="ftr__nav-link">{t('nav', 'adhesion')}</a></li>
           <li><a href="/16jours"                class="ftr__nav-link">{t('nav', 'jours16')}</a></li>
           <li><a href="/recrutement"    class="ftr__nav-link">{t('nav', 'jobs')}</a></li>
-          <li><a href="/monattestation" class="ftr__nav-link">{t('nav', 'attestation')}</a></li>
+          <!-- Pointait vers l'auto-service par email/nom (monattestation.astro),
+               supprimé le 2026-08-19 : chaque volontaire retrouve désormais
+               ses attestations dans son espace authentifié ("Mes attestations",
+               Dashboard.jsx), redirigé vers la connexion si besoin
+               (useVolunteerGuard). -->
+          <li><a href="/mon-espace" class="ftr__nav-link">{t('nav', 'attestation')}</a></li>
         </ul>
       </nav>
     </div>

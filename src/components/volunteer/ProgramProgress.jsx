@@ -383,7 +383,7 @@ export default function ProgramProgress({ programId }) {
           </strong>
           <p>Score final : {progress.approved}/{progress.totalDue} tâches validées ({progress.percent}%).</p>
           {data.missionStatus === "Mission validée" && (
-            <p>Vous pouvez consulter votre éligibilité à l'attestation sur <a href="/monattestation">Mon attestation</a>.</p>
+            <p>Retrouvez votre attestation dans <a href="/mon-espace">Mon espace</a> dès qu'elle est disponible.</p>
           )}
           {data.finalReportReopened && (
             <p>Votre rapport de fin de mission a été réouvert — vous pouvez le soumettre à nouveau ci-dessous.</p>

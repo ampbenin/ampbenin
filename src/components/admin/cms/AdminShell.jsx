@@ -16,7 +16,6 @@ import VolunteersManager from '../../VolunteersManager.jsx';
 import VolunteerProgramsManager from '../VolunteerProgramsManager.jsx';
 import VolunteerFormTemplatesManager from '../VolunteerFormTemplatesManager.jsx';
 import SaveVolunteers from '../../SaveVolunteers.jsx';
-import GenerateCertificate from '../../GenerateCertificate.jsx';
 import PartnerActivityOverview from '../PartnerActivityOverview.jsx';
 import DisciplineManager from '../DisciplineManager.jsx';
 import SiteSettingsManager from '../SiteSettingsManager.jsx';
@@ -49,7 +48,6 @@ const MISSIONS_TABS = [
   { id: 'volunteer-form-templates', label: 'Modèles de formulaire' },
   { id: 'volunteers-roster', label: 'Volontaires (fichier)' },
   { id: 'save-volunteer', label: 'Enregistrer un volontaire' },
-  { id: 'certificates', label: 'Générer attestations' },
   { id: 'partner-activity', label: 'Activité des partenaires' },
   // Traitement des signalements/sanctions réservé aux ADMIN (décision
   // explicite de l'utilisateur) — retiré de la liste pour un EDITOR, voir
@@ -176,7 +174,6 @@ export default function AdminShell() {
         {active === 'volunteer-form-templates' && <VolunteerFormTemplatesManager />}
         {active === 'volunteers-roster' && <VolunteersManager />}
         {active === 'save-volunteer' && <SaveVolunteers />}
-        {active === 'certificates' && <GenerateCertificate />}
         {active === 'partner-activity' && <PartnerActivityOverview />}
         {active === 'discipline' && role === 'ADMIN' && <DisciplineManager />}
         {active === 'emergency-reset' && role === 'ADMIN' && <EmergencyResetManager />}
