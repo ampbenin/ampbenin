@@ -28,7 +28,7 @@ export const CAMPAIGNS = [
     intro:
       "Chaque rentrée scolaire, des centaines d'enfants béninois en situation difficile — orphelins recueillis par des proches, enfants de familles démunies, enfants vulnérables suivis par nos institutions spécialisées — risquent de rester sans cahiers, sans stylos, parfois sans cartable. Faute de quelques milliers de FCFA, leur année scolaire commence déjà avec un handicap.",
     story: [
-      "AMP BENIN, à travers sa Section d'Éducation et de Promotion de l'Enfance (SEPE-AMP), va à la rencontre de ces enfants dans les communes où l'association est présente, en particulier à Tori-Bossito et dans ses environs. Beaucoup d'entre eux sont orphelins, démunis ou simplement nés dans des familles qui n'arrivent pas à couvrir les frais de scolarité de base.",
+      "AMP BENIN, à travers sa Section d'Éducation et de Promotion de l'Enfance (SEPE-AMP) et ses coordinations locales AMP Zones, va à la rencontre de ces enfants dans plusieurs localités du Bénin — à Cotonou, Porto-Novo, Abomey-Calavi, Tori-Bossito, Kpomassè, Ouidah et Comè, jusqu'à Parakou et Djougou au nord. Beaucoup d'entre eux sont orphelins, démunis ou simplement nés dans des familles qui n'arrivent pas à couvrir les frais de scolarité de base.",
       "Cette collecte permettra de constituer et de distribuer des kits scolaires complets à ces enfants, pour qu'ils puissent suivre les cours dans les mêmes conditions que les autres — avec la dignité et l'égalité des chances que chaque enfant mérite.",
       "Votre don, quel que soit son montant, contribue directement à l'achat du matériel scolaire et à son acheminement jusqu'aux enfants, avec le soutien de nos volontaires sur le terrain.",
     ],
