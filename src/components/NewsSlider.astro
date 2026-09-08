@@ -1,8 +1,11 @@
 ---
 // Contenu géré depuis le CMS admin (/admin/dashboard → Articles) : les 3
-// actualités les plus récentes publiées. Repli sur 3 cartes codées en dur
-// si l'API est indisponible ou pas encore alimentée, pour ne jamais casser
-// l'affichage public.
+// actualités les plus récentes publiées, complétées par des cartes codées
+// en dur (jamais migrées en base) si le CMS n'en fournit pas assez.
+// Important : on FUSIONNE avec le CMS plutôt que de le remplacer — sinon,
+// dès qu'un premier article est publié depuis l'admin, ces cartes de
+// secours disparaissent d'un coup au lieu de rester en complément (bug
+// constaté le 08/09/2026, même cause que sur /actualites).
 const FALLBACK_SLIDES = [
   {
     image: "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903910/ong-site/images/16jours/1J16-16jours-25.webp",
@@ -48,7 +51,7 @@ try {
   if (res.ok) {
     const data = await res.json();
     if (Array.isArray(data?.items) && data.items.length > 0) {
-      slides = data.items.map((a: any) => ({
+      const cmsSlides = data.items.map((a: any) => ({
         image: a.coverImage,
         title: a.title,
         description: a.excerpt,
@@ -57,6 +60,8 @@ try {
         badge: a.date || (a.publishedAt ? formatDate(a.publishedAt) : ""),
         tag: (a.tags && a.tags[0]) || "Actualité",
       }));
+      const cmsLinks = new Set(cmsSlides.map((s: any) => s.link));
+      slides = [...cmsSlides, ...FALLBACK_SLIDES.filter((f) => !cmsLinks.has(f.link))].slice(0, 3);
     }
   }
 } catch {

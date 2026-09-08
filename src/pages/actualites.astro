@@ -52,8 +52,14 @@ const FALLBACK_ARTICLES = [
   }
 ];
 
-// Contenu géré depuis le CMS admin (/admin/dashboard → Articles),
-// avec repli sur les 5 cartes codées en dur si l'API est indisponible.
+// Contenu géré depuis le CMS admin (/admin/dashboard → Articles), complété
+// par les 5 cartes historiques codées en dur (jamais migrées en base).
+// Important : on FUSIONNE avec le CMS plutôt que de le remplacer — sinon,
+// dès qu'un premier article est publié depuis l'admin, l'API cesse de
+// renvoyer un tableau vide et ces 5 cartes disparaissent purement et
+// simplement de la page (bug constaté le 08/09/2026 : publier "Kits
+// scolaires" faisait disparaître les autres actualités tant qu'aucune
+// autre n'était aussi en base).
 let articles = FALLBACK_ARTICLES;
 try {
   const apiBase = import.meta.env.PUBLIC_API_BASE || '';
@@ -61,7 +67,8 @@ try {
   if (res.ok) {
     const data = await res.json();
     if (Array.isArray(data?.items) && data.items.length > 0) {
-      articles = data.items;
+      const cmsSlugs = new Set(data.items.map((a: any) => a.slug));
+      articles = [...data.items, ...FALLBACK_ARTICLES.filter((f) => !cmsSlugs.has(f.slug))];
     }
   }
 } catch {
