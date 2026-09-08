@@ -7,8 +7,16 @@
 import { useEffect, useRef, useState } from "react";
 import { getDonationStatus } from "../services/donations/api";
 
-const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_ATTEMPTS = 8; // ~20s avant de basculer sur le message "en cours de confirmation"
+// Deux paliers : on interroge vite au début (le webhook FedaPay arrive
+// souvent en quelques secondes), puis on bascule sur un message rassurant
+// tout en continuant à vérifier en arrière-plan, plus lentement, pendant
+// plusieurs minutes — sans ça, un webhook un peu lent (>20s, observé en
+// conditions réelles) laissait la page bloquée sur "en cours" indéfiniment
+// au lieu de basculer sur le message de remerciement dès la confirmation.
+const FAST_INTERVAL_MS = 2500;
+const FAST_ATTEMPTS = 10; // ~25s
+const SLOW_INTERVAL_MS = 6000;
+const SLOW_ATTEMPTS = 40; // ~4 minutes de plus
 
 export default function DonationStatus({ status, transactionId, close }) {
   const [phase, setPhase] = useState("checking"); // checking | cancelled | paid | pending-long | failed | error
@@ -43,13 +51,23 @@ export default function DonationStatus({ status, transactionId, close }) {
           setPhase("failed");
           return;
         }
-        // "pending" (ou toute valeur inattendue) : on continue à réessayer un moment
+        // "pending" (ou toute valeur inattendue) : on continue à réessayer.
         attemptsRef.current += 1;
-        if (attemptsRef.current >= MAX_POLL_ATTEMPTS) {
+        const attempt = attemptsRef.current;
+
+        if (attempt === FAST_ATTEMPTS) {
+          // On informe l'utilisateur que ça prend plus longtemps que prévu,
+          // mais on continue à vérifier tout seul en arrière-plan — la page
+          // basculera d'elle-même sur le message de remerciement dès que le
+          // webhook confirme, pas besoin de recharger.
           setPhase("pending-long");
-          return;
         }
-        timerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
+        if (attempt >= FAST_ATTEMPTS + SLOW_ATTEMPTS) {
+          return; // on arrête de solliciter le serveur ; le message rassurant reste affiché
+        }
+
+        const interval = attempt < FAST_ATTEMPTS ? FAST_INTERVAL_MS : SLOW_INTERVAL_MS;
+        timerRef.current = setTimeout(poll, interval);
       } catch {
         setPhase("error");
       }
@@ -92,10 +110,12 @@ export default function DonationStatus({ status, transactionId, close }) {
 
       {phase === "pending-long" && (
         <>
+          <p className="don-spinner don-spinner--sm" aria-hidden="true" />
           <h1 className="don-status__title">Confirmation en cours</h1>
           <p className="don-status__text">
             Votre paiement est en cours de confirmation — cela peut prendre quelques minutes.
-            Vous recevrez une confirmation sous peu, pas besoin de réessayer le paiement.
+            Cette page vérifie automatiquement et affichera la confirmation dès qu'elle arrive ;
+            vous pouvez aussi la laisser ouverte ou revenir plus tard, pas besoin de réessayer le paiement.
           </p>
           <a href="/" className="btn btn--primary">Retour à l'accueil</a>
         </>
@@ -154,6 +174,7 @@ function DonationStatusStyles() {
         border-radius: 50%;
         animation: don-spin 0.8s linear infinite;
       }
+      .don-spinner--sm { width: 1.75rem; height: 1.75rem; border-width: 2.5px; }
       @keyframes don-spin { to { transform: rotate(360deg); } }
       @media (prefers-reduced-motion: reduce) {
         .don-spinner { animation: none; }
