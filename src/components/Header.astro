@@ -40,6 +40,7 @@ const t = useTranslations(lang);
       <a href="/contact"    class="hdr-nav__link">{t('nav', 'contact')}</a>
       <span class="hdr-lang-sep" aria-hidden="true"></span>
       <LanguageSwitcher client:load currentLang={lang} variant="desktop" />
+      <a href="/don"        class="btn btn--accent hdr-nav__cta">{t('nav', 'donate')}</a>
       <a href="/adhesion"   class="btn btn--primary hdr-nav__cta">{t('nav', 'join')}</a>
     </nav>
 
@@ -73,6 +74,7 @@ const t = useTranslations(lang);
       <a href="/actualites" class="hdr-mobile__link">{t('nav', 'news')}</a>
       <a href="/contact"    class="hdr-mobile__link">{t('nav', 'contact')}</a>
       <LanguageSwitcher client:load currentLang={lang} variant="mobile" />
+      <a href="/don"        class="hdr-mobile__cta hdr-mobile__cta--accent">{t('nav', 'donate')} →</a>
       <a href="/adhesion"   class="hdr-mobile__cta">{t('nav', 'join')} →</a>
     </nav>
   </div>
@@ -338,6 +340,14 @@ const t = useTranslations(lang);
     background: var(--col-primary-light);
     color: var(--col-white);
     transform: scale(1.02);
+  }
+  .hdr-mobile__cta--accent {
+    background: var(--col-accent);
+    color: var(--col-dark);
+  }
+  .hdr-mobile__cta--accent:hover {
+    background: var(--col-accent-dark);
+    color: var(--col-dark);
   }
 
   @media (min-width: 768px) {

@@ -26,6 +26,8 @@ const es: Translations = {
     recrutementDesc: "Consulte las ofertas de empleo y prácticas propuestas por AMP BENIN.",
     partenaireTitle: "Ser aliado — AMP BENIN",
     partenaireDesc: "Únase a la red de aliados de AMP BENIN para ampliar el impacto en los ODS en Benín.",
+    donTitle: "Hacer una donación — AMP BENIN",
+    donDesc: "Apoye las acciones de AMP BENIN en Benín con una donación segura en línea, a partir del monto que elija.",
   },
 
   nav: {
@@ -35,6 +37,7 @@ const es: Translations = {
     news: "Noticias",
     contact: "Contacto",
     join: "Únete",
+    donate: "Donar",
     actions: "Nuestras acciones",
     adhesion: "Membresía",
     jours16: "16 Días",

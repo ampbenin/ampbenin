@@ -1,0 +1,186 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/BaseLayout.astro';
+import { getCampaignBySlug } from '../../../data/campaigns';
+import SchoolKitChild from '../../../components/illustrations/SchoolKitChild.astro';
+
+const { slug } = Astro.params;
+const campaign = getCampaignBySlug(slug);
+
+// Illustration par collecte : une seule pour l'instant (kits scolaires).
+// Vectorielle plutôt que photo — voir le commentaire dans
+// SchoolKitChild.astro (consentement/protection de l'enfance).
+const illustrations = { 'kits-scolaires': SchoolKitChild };
+const Illustration = illustrations[campaign.slug];
+
+// Collecte inconnue ou désactivée : on renvoie vers le hub des dons plutôt
+// qu'une 404 brute — la page /don liste les collectes actuellement actives.
+if (!campaign) {
+  return Astro.redirect('/don');
+}
+---
+
+<Layout
+  title={`${campaign.title} — Faire un don — AMP BENIN`}
+  description={campaign.shortDescription}
+  url={`https://ampbenin.netlify.app/don/campagnes/${campaign.slug}`}
+  keywords={`don ${campaign.title}, cagnote AMP BENIN, ${campaign.category}`}
+>
+
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Faire un don", "item": "https://ampbenin.netlify.app/don" },
+      { "@type": "ListItem", "position": 3, "name": campaign.title, "item": `https://ampbenin.netlify.app/don/campagnes/${campaign.slug}` },
+    ],
+  })} />
+
+  <section class="camp-hero section-py">
+    <div class="container camp-hero__grid">
+      <div class="camp-hero__text fade-up">
+        <a href="/don" class="camp-back">← Toutes les collectes</a>
+        <span class="section-label section-label--accent">{campaign.category}</span>
+        <h1 class="camp-hero__title">{campaign.title}</h1>
+        <p class="camp-hero__intro">{campaign.intro}</p>
+        <a href={`/don/campagnes/${campaign.slug}/don`} class="btn btn--accent btn--lg">Faire un don pour cette collecte →</a>
+      </div>
+
+      {Illustration && (
+        <div class="camp-hero__art fade-up">
+          <Illustration />
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="camp-body section-py">
+    <div class="container camp-body__grid">
+      <div class="camp-story fade-up">
+        <h2 class="camp-h2">Pourquoi cette collecte ?</h2>
+        {campaign.story.map((p) => <p class="camp-p">{p}</p>)}
+      </div>
+
+      <aside class="camp-side fade-up">
+        {campaign.goalText && (
+          <div class="camp-card">
+            <h3 class="camp-card__title">{campaign.goalLabel || 'Notre objectif'}</h3>
+            <p class="camp-card__text">{campaign.goalText}</p>
+          </div>
+        )}
+
+        {campaign.kitContents?.length > 0 && (
+          <div class="camp-card">
+            <h3 class="camp-card__title">Contenu d'un kit scolaire</h3>
+            <ul class="camp-list">
+              {campaign.kitContents.map((item) => (
+                <li>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7" /></svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <a href={`/don/campagnes/${campaign.slug}/don`} class="btn btn--primary camp-side__cta">Je fais un don →</a>
+      </aside>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .camp-hero__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-10);
+    align-items: center;
+    max-width: 64rem;
+    margin-inline: auto;
+  }
+  .camp-hero__text { text-align: center; }
+  @media (min-width: 800px) {
+    .camp-hero__grid { grid-template-columns: 1.3fr 1fr; }
+    .camp-hero__text { text-align: start; }
+  }
+  .camp-hero__art {
+    max-width: 20rem;
+    margin-inline: auto;
+  }
+  .camp-back {
+    display: inline-block;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--col-text-muted);
+    margin-bottom: var(--sp-5);
+  }
+  .camp-back:hover { color: var(--col-primary); }
+  .camp-hero__title {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    color: var(--col-text);
+    margin-bottom: var(--sp-5);
+    line-height: 1.2;
+  }
+  .camp-hero__intro {
+    font-size: var(--text-lg);
+    color: var(--col-text-sec);
+    line-height: 1.7;
+    margin-bottom: var(--sp-8);
+  }
+
+  .camp-body { padding-top: 0; }
+  .camp-body__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-12);
+    max-width: 64rem;
+    margin-inline: auto;
+  }
+  @media (min-width: 900px) {
+    .camp-body__grid { grid-template-columns: 1.6fr 1fr; align-items: start; }
+  }
+
+  .camp-h2 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-2xl);
+    color: var(--col-text);
+    margin-bottom: var(--sp-5);
+  }
+  .camp-p {
+    font-size: var(--text-base);
+    color: var(--col-text-sec);
+    line-height: 1.75;
+    margin-bottom: var(--sp-5);
+  }
+
+  .camp-side { display: flex; flex-direction: column; gap: var(--sp-6); }
+  .camp-card {
+    background: var(--col-surface);
+    border-radius: var(--r-xl);
+    padding: var(--sp-6);
+  }
+  .camp-card__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-lg);
+    color: var(--col-text);
+    margin-bottom: var(--sp-3);
+  }
+  .camp-card__text {
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    line-height: 1.65;
+  }
+  .camp-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+  .camp-list li {
+    display: flex; align-items: flex-start; gap: var(--sp-3);
+    font-size: var(--text-sm); color: var(--col-text-sec); line-height: 1.5;
+  }
+  .camp-list svg { width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-top: 2px; color: var(--col-primary); }
+  .camp-side__cta { width: 100%; text-align: center; }
+</style>

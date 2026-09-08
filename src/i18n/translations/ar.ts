@@ -26,6 +26,8 @@ const ar: Translations = {
     recrutementDesc: "اطّلع على فرص العمل والتدريب التي تقدمها AMP BENIN.",
     partenaireTitle: "كن شريكاً — AMP BENIN",
     partenaireDesc: "انضم إلى شبكة شركاء AMP BENIN لتعزيز الأثر على أهداف التنمية المستدامة في بنين.",
+    donTitle: "تبرع — AMP BENIN",
+    donDesc: "ادعم أعمال AMP BENIN في بنين من خلال تبرع آمن عبر الإنترنت، بالمبلغ الذي تختاره.",
   },
 
   nav: {
@@ -35,6 +37,7 @@ const ar: Translations = {
     news: "الأخبار",
     contact: "تواصل",
     join: "انضم إلينا",
+    donate: "تبرع",
     actions: "أعمالنا",
     adhesion: "العضوية",
     jours16: "16 يوم",

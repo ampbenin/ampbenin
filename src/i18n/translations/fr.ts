@@ -24,6 +24,8 @@ const fr = {
     recrutementDesc: "Consultez les offres de recrutement et stages proposés par AMP BENIN.",
     partenaireTitle: "Devenir partenaire — AMP BENIN",
     partenaireDesc: "Rejoignez le réseau de partenaires d'AMP BENIN pour amplifier l'impact sur les ODD au Bénin.",
+    donTitle: "Faire un don — AMP BENIN",
+    donDesc: "Soutenez les actions d'AMP BENIN au Bénin en faisant un don sécurisé en ligne, à partir du montant de votre choix.",
   },
 
   nav: {
@@ -33,6 +35,7 @@ const fr = {
     news: "Actualités",
     contact: "Contact",
     join: "Nous rejoindre",
+    donate: "Faire un don",
     actions: "Nos actions",
     adhesion: "Adhésion",
     jours16: "16 Jours",

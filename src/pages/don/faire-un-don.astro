@@ -1,0 +1,13 @@
+---
+import Layout from '../../layouts/BaseLayout.astro';
+import DonationTypeform from '../../components/DonationTypeform.jsx';
+---
+
+<Layout
+  title="Faire un don — AMP BENIN"
+  description="Faites un don libre en ligne à AMP BENIN, en toute sécurité."
+  url="https://ampbenin.netlify.app/don/faire-un-don"
+  hideChrome
+>
+  <DonationTypeform client:load />
+</Layout>

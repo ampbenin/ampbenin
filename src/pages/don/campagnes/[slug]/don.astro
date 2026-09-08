@@ -1,0 +1,22 @@
+---
+export const prerender = false;
+import Layout from '../../../../layouts/BaseLayout.astro';
+import DonationTypeform from '../../../../components/DonationTypeform.jsx';
+import { getCampaignBySlug } from '../../../../data/campaigns';
+
+const { slug } = Astro.params;
+const campaign = getCampaignBySlug(slug);
+
+if (!campaign) {
+  return Astro.redirect('/don');
+}
+---
+
+<Layout
+  title={`Faire un don — ${campaign.title} — AMP BENIN`}
+  description={campaign.shortDescription}
+  url={`https://ampbenin.netlify.app/don/campagnes/${campaign.slug}/don`}
+  hideChrome
+>
+  <DonationTypeform campaign={campaign} client:load />
+</Layout>

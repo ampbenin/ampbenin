@@ -1,0 +1,213 @@
+---
+import Layout from '../layouts/BaseLayout.astro';
+import { useTranslations, resolveLang } from '../i18n/utils';
+import { getActiveCampaigns } from '../data/campaigns';
+import SchoolKitChild from '../components/illustrations/SchoolKitChild.astro';
+const lang = resolveLang(Astro);
+const t = useTranslations(lang);
+
+// Illustration par collecte : une seule pour l'instant (kits scolaires) —
+// voir SchoolKitChild.astro. Les collectes sans illustration dédiée
+// retombent sur l'icône générique ci-dessous.
+const illustrations = { 'kits-scolaires': SchoolKitChild };
+
+// Le paiement et l'enregistrement des dons sont entièrement gérés par un
+// backend externe (server-miss-culture-benin, /api/amp-benin) — voir
+// src/services/donations/api.js et src/components/DonationTypeform.jsx.
+// Cette page ne fait qu'héberger la liste des collectes et le lien vers le
+// don libre, sans logique côté serveur.
+const campaigns = getActiveCampaigns();
+---
+
+<Layout
+  title={t('meta', 'donTitle')}
+  description={t('meta', 'donDesc')}
+  url="https://ampbenin.netlify.app/don"
+  keywords="don AMP BENIN, faire un don, cagnote AMP BENIN, kits scolaires, soutenir ONG Bénin, dons en ligne Bénin"
+>
+
+  <script type="application/ld+json" slot="head">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://ampbenin.netlify.app" },
+      { "@type": "ListItem", "position": 2, "name": "Faire un don", "item": "https://ampbenin.netlify.app/don" }
+    ]
+  }
+  </script>
+
+  <section class="don-head section-py">
+    <div class="container">
+      <div class="don-head__inner fade-up">
+        <span class="section-label section-label--accent">Faire un don</span>
+        <h1 class="don-head__title">Soutenez les actions d'AMP BENIN</h1>
+        <p class="don-head__subtitle">
+          Chaque don, quel que soit son montant, nous aide à mobiliser la jeunesse, défendre les droits des femmes
+          et agir pour un Bénin plus durable. Le paiement est sécurisé, en ligne, en quelques clics.
+        </p>
+      </div>
+
+      {campaigns.length > 0 && (
+        <div class="don-campaigns">
+          <h2 class="don-section-title fade-up">Nos collectes en cours</h2>
+          <div class="don-campaigns__grid">
+            {campaigns.map((c) => {
+              const Illustration = illustrations[c.slug];
+              return (
+              <a href={`/don/campagnes/${c.slug}`} class="don-camp-card fade-up">
+                {Illustration ? (
+                  <div class="don-camp-card__illus" aria-hidden="true">
+                    <Illustration />
+                  </div>
+                ) : (
+                  <div class="don-camp-card__art" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                      <path d="M12 3v9M4 7.5l8 4.5M20 7.5l-8 4.5" />
+                    </svg>
+                  </div>
+                )}
+                <span class="don-camp-card__category">{c.category}</span>
+                <h3 class="don-camp-card__title">{c.title}</h3>
+                <p class="don-camp-card__desc">{c.shortDescription}</p>
+                <span class="don-camp-card__cta">Découvrir la collecte →</span>
+              </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div class="don-free fade-up">
+        <h2 class="don-free__title">Envie de soutenir sans collecte précise ?</h2>
+        <p class="don-free__desc">
+          Faites un don libre : il sera affecté là où AMP BENIN en a le plus besoin, au fil de ses programmes.
+        </p>
+        <a href="/don/faire-un-don" class="btn btn--accent btn--lg">Faire un don libre →</a>
+      </div>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .don-head__inner {
+    max-width: var(--container-narrow);
+    margin-inline: auto;
+    text-align: center;
+    margin-bottom: var(--sp-16);
+  }
+  .don-head__title {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    color: var(--col-text);
+    margin-bottom: var(--sp-4);
+  }
+  .don-head__subtitle {
+    font-size: var(--text-lg);
+    color: var(--col-text-sec);
+    line-height: 1.65;
+  }
+
+  .don-section-title {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    font-size: var(--text-2xl);
+    color: var(--col-text);
+    text-align: center;
+    margin-bottom: var(--sp-8);
+  }
+
+  .don-campaigns { margin-bottom: var(--sp-20); }
+  .don-campaigns__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--sp-6);
+    max-width: 64rem;
+    margin-inline: auto;
+  }
+
+  .don-camp-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--col-white);
+    border: 1px solid var(--col-border-light);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh-sm);
+    padding: var(--sp-6);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
+  }
+  .don-camp-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-lg);
+    border-color: var(--col-primary-light);
+    color: inherit;
+  }
+  .don-camp-card__art {
+    width: 3rem; height: 3rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--r-lg);
+    background: var(--col-primary-bg);
+    color: var(--col-primary);
+    margin-bottom: var(--sp-5);
+  }
+  .don-camp-card__art svg { width: 1.5rem; height: 1.5rem; }
+  .don-camp-card__illus {
+    width: 6rem;
+    margin-bottom: var(--sp-5);
+  }
+  .don-camp-card__category {
+    display: inline-block;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--col-accent-dark);
+    margin-bottom: var(--sp-2);
+  }
+  .don-camp-card__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    color: var(--col-text);
+    margin-bottom: var(--sp-3);
+  }
+  .don-camp-card__desc {
+    font-size: var(--text-sm);
+    color: var(--col-text-sec);
+    line-height: 1.6;
+    margin-bottom: var(--sp-5);
+    flex: 1;
+  }
+  .don-camp-card__cta {
+    font-weight: 600;
+    font-size: var(--text-sm);
+    color: var(--col-primary);
+  }
+  .don-camp-card:hover .don-camp-card__cta { color: var(--col-accent-dark); }
+
+  .don-free {
+    max-width: var(--container-narrow);
+    margin-inline: auto;
+    text-align: center;
+    padding: var(--sp-10) var(--sp-6);
+    background: var(--col-surface);
+    border-radius: var(--r-2xl);
+  }
+  .don-free__title {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: var(--text-xl);
+    color: var(--col-text);
+    margin-bottom: var(--sp-3);
+  }
+  .don-free__desc {
+    font-size: var(--text-base);
+    color: var(--col-text-sec);
+    margin-bottom: var(--sp-6);
+  }
+</style>
