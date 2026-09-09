@@ -1,22 +1,28 @@
 // src/components/DonationStatus.jsx
 // Page de retour après paiement (/don/status), deux origines possibles :
 // 1. FedaPay redirige ici lui-même avec
-//    ?status=approved&id=<transactionId>&close=<true|false>.
+//    ?status=approved&id=<transactionId>&close=<true|false>. FedaPay ne
+//    renvoie ce paramètre "approved" QUE lorsque le paiement a réellement
+//    abouti de leur côté — même principe de confiance immédiate que
+//    VotePaymentStatus.jsx/TicketPaymentStatus.jsx sur les autres sites du
+//    groupe : on affiche le succès tout de suite, SANS attendre que notre
+//    propre webhook ait confirmé le don (il arrive presque toujours en
+//    quelques secondes, mais peut parfois prendre bien plus longtemps — le
+//    donateur n'a aucune raison d'attendre pour ça, le paiement a déjà
+//    réussi). Un appel non-bloquant récupère ensuite le montant pour
+//    l'afficher, mais n'empêche jamais le message de succès de s'afficher.
 // 2. Pour SebPay (pas de redirection agrégateur : collecte directe), c'est
 //    DonationTypeform.jsx qui navigue ici juste après l'initiation, avec
 //    ?provider=sebpay&id=<transactionId> — même convention que
-//    TicketPaymentStatus.jsx sur les autres sites du groupe.
-// En cas d'annulation FedaPay (close=true) ou d'échec, ce composant propose
-// de réessayer.
+//    TicketPaymentStatus.jsx. Ici, contrairement à FedaPay, il n'existe pas
+//    de signal "approuvé" au moment de la redirection (le donateur doit
+//    encore valider sur son téléphone) : un vrai suivi par sondage reste
+//    nécessaire, seul ce cas-là interroge le serveur en boucle.
 import { useEffect, useRef, useState } from "react";
 import { getDonationStatus } from "../services/donations/api";
 
-// Deux paliers : on interroge vite au début (le webhook FedaPay arrive
-// souvent en quelques secondes), puis on bascule sur un message rassurant
-// tout en continuant à vérifier en arrière-plan, plus lentement, pendant
-// plusieurs minutes — sans ça, un webhook un peu lent (>20s, observé en
-// conditions réelles) laissait la page bloquée sur "en cours" indéfiniment
-// au lieu de basculer sur le message de remerciement dès la confirmation.
+// Sondage SebPay uniquement (voir commentaire ci-dessus) : deux paliers, vite
+// au début puis plus lentement en arrière-plan pendant plusieurs minutes.
 const FAST_INTERVAL_MS = 2500;
 const FAST_ATTEMPTS = 10; // ~25s
 const SLOW_INTERVAL_MS = 6000;
@@ -34,56 +40,61 @@ export default function DonationStatus({ status, transactionId, close, provider 
   }, []);
 
   useEffect(() => {
-    // CHANGED: flux SebPay — pas de redirection agrégateur, on arrive ici
-    // directement après l'initiation (voir DonationTypeform.jsx). Le
-    // paiement doit encore être validé par le donateur sur son téléphone :
-    // on l'indique clairement plutôt que d'afficher "vérification..." comme
-    // pour le retour FedaPay ci-dessous.
     if (provider === "sebpay" && transactionId) {
+      // Flux SebPay : pas de signal "approuvé" à la redirection, le donateur
+      // doit encore valider sur son téléphone — un vrai sondage est ici
+      // nécessaire (voir poll() ci-dessous).
       setPhase("mobile-pending");
-    } else if (close === "true") {
+
+      const poll = async () => {
+        try {
+          const data = await getDonationStatus(transactionId);
+          if (data?.status === "paid") {
+            setAmount(data.montant ?? null);
+            setPhase("paid");
+            return;
+          }
+          if (data?.status === "failed") {
+            setPhase("failed");
+            return;
+          }
+          attemptsRef.current += 1;
+          const attempt = attemptsRef.current;
+
+          if (attempt === FAST_ATTEMPTS) {
+            setPhase("pending-long");
+          }
+          if (attempt >= FAST_ATTEMPTS + SLOW_ATTEMPTS) {
+            return;
+          }
+
+          const interval = attempt < FAST_ATTEMPTS ? FAST_INTERVAL_MS : SLOW_INTERVAL_MS;
+          timerRef.current = setTimeout(poll, interval);
+        } catch {
+          setPhase("error");
+        }
+      };
+
+      poll();
+      return;
+    }
+
+    if (close === "true") {
       setPhase("cancelled");
       return;
-    } else if (status !== "approved" || !transactionId) {
+    }
+    if (status !== "approved" || !transactionId) {
       setPhase("error");
       return;
     }
 
-    const poll = async () => {
-      try {
-        const data = await getDonationStatus(transactionId);
-        if (data?.status === "paid") {
-          setAmount(data.montant ?? null);
-          setPhase("paid");
-          return;
-        }
-        if (data?.status === "failed") {
-          setPhase("failed");
-          return;
-        }
-        // "pending" (ou toute valeur inattendue) : on continue à réessayer.
-        attemptsRef.current += 1;
-        const attempt = attemptsRef.current;
-
-        if (attempt === FAST_ATTEMPTS) {
-          // On informe l'utilisateur que ça prend plus longtemps que prévu,
-          // mais on continue à vérifier tout seul en arrière-plan — la page
-          // basculera d'elle-même sur le message de remerciement dès que le
-          // webhook confirme, pas besoin de recharger.
-          setPhase("pending-long");
-        }
-        if (attempt >= FAST_ATTEMPTS + SLOW_ATTEMPTS) {
-          return; // on arrête de solliciter le serveur ; le message rassurant reste affiché
-        }
-
-        const interval = attempt < FAST_ATTEMPTS ? FAST_INTERVAL_MS : SLOW_INTERVAL_MS;
-        timerRef.current = setTimeout(poll, interval);
-      } catch {
-        setPhase("error");
-      }
-    };
-
-    poll();
+    // Flux FedaPay : succès affiché immédiatement (voir commentaire en tête
+    // de fichier) — le montant est récupéré à part, en best-effort, sans
+    // jamais retarder ni conditionner l'affichage du message de succès.
+    setPhase("paid");
+    getDonationStatus(transactionId)
+      .then((data) => setAmount(data?.montant ?? null))
+      .catch(() => {});
   }, [status, transactionId, close, provider]);
 
   return (
