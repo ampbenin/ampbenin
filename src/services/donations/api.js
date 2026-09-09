@@ -29,3 +29,16 @@ export const createDonation = (payload) =>
 // { status: "pending"|"paid"|"failed", provider, montant }
 export const getDonationStatus = (transactionId) =>
   request(`/donations/status/${transactionId}`);
+
+// Routage Local/Afrique (voir server-miss-culture-benin/memory/sebpay_integration.md) :
+// { paymentType: "local"|"afrique", countries: [{ code, name, prefix, provider }] }
+// `countries` est vide en mode "local" — c'est ce qui permet au frontend de
+// savoir s'il doit afficher l'étape "pays" sans avoir à connaître paymentType
+// séparément.
+export const getDonationCountries = () => request("/payments/countries");
+
+// { available: true, operators: [{ name, slug, code, otpRequired, ussdCode }] }
+// ou { available: false, message, sebpayCountries } si SebPay ne couvre plus
+// ce pays au moment de l'appel (le mapping admin peut être périmé).
+export const getDonationOperators = (countryCode) =>
+  request(`/payments/operators?country=${encodeURIComponent(countryCode)}`);

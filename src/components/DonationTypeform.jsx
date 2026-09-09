@@ -14,7 +14,12 @@
 // envoyé avec `[messageTag]` pour que l'équipe AMP puisse repérer
 // manuellement les dons liés à cette collecte (pas de comptage automatique).
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getDonationSettings, createDonation } from "../services/donations/api";
+import {
+  getDonationSettings,
+  createDonation,
+  getDonationCountries,
+  getDonationOperators,
+} from "../services/donations/api";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 20000];
 const DEFAULT_MIN_AMOUNT = 500;
@@ -37,6 +42,17 @@ export default function DonationTypeform({ campaign = null }) {
   const [settingsError, setSettingsError] = useState("");
   const [donationsEnabled, setDonationsEnabled] = useState(false);
   const [minAmount, setMinAmount] = useState(DEFAULT_MIN_AMOUNT);
+
+  // CHANGED: routage Local/Afrique (voir server-miss-culture-benin/memory/
+  // sebpay_integration.md) — `countries` vide = mode "local", l'étape pays
+  // n'apparaît alors jamais dans `steps` ci-dessous (comportement identique
+  // à avant cet ajout). Chargé en parallèle des réglages, best-effort : une
+  // erreur ici laisse simplement le formulaire en FedaPay simple.
+  const [countries, setCountries] = useState([]);
+  const [operators, setOperators] = useState([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
+  const [operatorsError, setOperatorsError] = useState("");
+  const [sebpayCountryNames, setSebpayCountryNames] = useState(null);
 
   const [started, setStarted] = useState(false);
   const [answers, setAnswers] = useState({ anonymous: null });
@@ -64,23 +80,78 @@ export default function DonationTypeform({ campaign = null }) {
 
   useEffect(() => {
     loadSettings();
+    // Best-effort : une erreur ici laisse `countries` vide, donc le
+    // formulaire reste en FedaPay simple (comme avant cette fonctionnalité).
+    getDonationCountries()
+      .then((data) => setCountries(data?.countries || []))
+      .catch(() => setCountries([]));
   }, []);
+
+  const selectedCountry = countries.find((c) => c.code === answers.country) || null;
+  const selectedProvider = selectedCountry?.provider || null;
+  const selectedOperatorObj = operators.find((o) => o.slug === answers.operator) || null;
+
+  // Charge les opérateurs dès qu'un pays routé SebPay est choisi (Étape 2.2,
+  // même principe que TicketPurchase.jsx sur les autres sites du groupe) —
+  // vérifie EN DIRECT contre SebPay, le mapping admin pouvant être périmé.
+  useEffect(() => {
+    if (selectedProvider !== "sebpay" || !answers.country) {
+      setOperators([]);
+      setOperatorsError("");
+      setSebpayCountryNames(null);
+      return;
+    }
+    setOperatorsLoading(true);
+    setOperatorsError("");
+    setSebpayCountryNames(null);
+    getDonationOperators(answers.country)
+      .then((data) => {
+        if (!data?.available) {
+          setOperatorsError(data?.message || "Pays non disponible actuellement");
+          setSebpayCountryNames((data?.sebpayCountries || []).map((c) => c.name));
+          setOperators([]);
+          return;
+        }
+        setOperators(data.operators || []);
+      })
+      .catch((err) => setOperatorsError(err.message || "Erreur lors du chargement des opérateurs."))
+      .finally(() => setOperatorsLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers.country, selectedProvider]);
 
   const steps = useMemo(() => {
     const list = [
       { id: "amount", type: "AMOUNT", label: "Quel montant souhaitez-vous donner ?" },
-      { id: "anonymous", type: "CHOICE", label: "Souhaitez-vous faire ce don anonymement ?" },
     ];
+    if (countries.length > 0) {
+      list.push({ id: "country", type: "COUNTRY", label: "Depuis quel pays donnez-vous ?" });
+    }
+    if (selectedProvider === "sebpay") {
+      list.push({ id: "operator", type: "OPERATOR", label: "Quel est votre opérateur mobile money ?" });
+      list.push({ id: "phone", type: "PHONE", label: "Votre numéro de téléphone mobile money ?" });
+      if (selectedOperatorObj?.otpRequired) {
+        list.push({
+          id: "otpCode",
+          type: "TEXT",
+          label: `Code reçu après avoir composé ${selectedOperatorObj.ussdCode || "le code USSD"} sur votre téléphone`,
+        });
+      }
+    }
+    list.push({ id: "anonymous", type: "CHOICE", label: "Souhaitez-vous faire ce don anonymement ?" });
     if (answers.anonymous === false) {
       list.push(
         { id: "nom", type: "TEXT", label: "Quel est votre nom ?", hint: "Optionnel" },
         { id: "email", type: "EMAIL", label: "Votre adresse email ?", hint: "Optionnel — utile pour un futur reçu" },
-        { id: "pays", type: "TEXT", label: "Depuis quel pays donnez-vous ?", hint: "Optionnel" },
       );
+      // Déjà demandé ci-dessus si le mode "Afrique" est actif — pas besoin
+      // de reposer la question une seconde fois.
+      if (countries.length === 0) {
+        list.push({ id: "pays", type: "TEXT", label: "Depuis quel pays donnez-vous ?", hint: "Optionnel" });
+      }
     }
     list.push({ id: "message", type: "TEXTAREA", label: "Un mot pour l'équipe AMP BENIN ?", hint: "Optionnel" });
     return list;
-  }, [answers.anonymous]);
+  }, [answers.anonymous, countries, selectedProvider, selectedOperatorObj]);
 
   const totalSteps = steps.length;
   const isReview = currentIndex === totalSteps;
@@ -105,6 +176,10 @@ export default function DonationTypeform({ campaign = null }) {
     if (!currentStep) return "";
     const value = answers[currentStep.id];
     if (currentStep.id === "amount") return validateAmount(value, minAmount);
+    if (currentStep.id === "country") return isEmpty(value) ? "Merci de choisir un pays." : "";
+    if (currentStep.id === "operator") return isEmpty(value) ? "Merci de choisir un opérateur." : "";
+    if (currentStep.id === "phone") return isEmpty(value) ? "Merci d'indiquer votre numéro mobile money." : "";
+    if (currentStep.id === "otpCode") return isEmpty(value) ? "Merci d'indiquer le code reçu." : "";
     if (currentStep.id === "anonymous") return value === null || value === undefined ? "Merci de faire un choix." : "";
     if (currentStep.id === "email") return validateEmail(value);
     return "";
@@ -150,18 +225,53 @@ export default function DonationTypeform({ campaign = null }) {
         anonymous: !!answers.anonymous,
         message,
       };
+      // Pays choisi pour le routage du paiement (voir resolveProvider côté
+      // backend) — absent en mode "local", auquel cas le champ n'a jamais
+      // été demandé (voir `steps` ci-dessus).
+      if (answers.country) payload.country = answers.country;
       if (!answers.anonymous) {
+        // Réutilise le pays de paiement déjà choisi comme pays d'identité si
+        // disponible (évite de reposer la même question deux fois — voir
+        // `steps` ci-dessus, qui ne redemande "pays" en texte libre que si
+        // aucun sélecteur de pays n'a été affiché).
+        const paysValue = answers.pays?.trim() || selectedCountry?.name || undefined;
         payload.donor = {
           ...(answers.nom?.trim() && { nom: answers.nom.trim() }),
           ...(answers.email?.trim() && { email: answers.email.trim() }),
-          ...(answers.pays?.trim() && { pays: answers.pays.trim() }),
+          ...(paysValue && { pays: paysValue }),
         };
+      }
+      // CHANGED: flux SebPay — `phone` est distinct de `donor` côté API
+      // (mécanique du mobile money, indépendante de l'anonymat, voir
+      // donation.controller.js) : envoyé même pour un don anonyme, mais
+      // jamais conservé par le serveur dans ce cas.
+      if (selectedProvider === "sebpay") {
+        payload.phone = answers.phone;
+        payload.operator = selectedOperatorObj?.code;
+        if (selectedOperatorObj?.otpRequired) payload.otpCode = answers.otpCode;
       }
 
       const data = await createDonation(payload);
-      if (!data?.payment_url) throw new Error("Réponse inattendue du serveur de dons.");
-      setRedirecting(true);
-      window.location.href = data.payment_url;
+
+      if (data?.payment_url) {
+        setRedirecting(true);
+        window.location.href = data.payment_url;
+        return;
+      }
+      // CHANGED: flux SebPay — pas de payment_url (collecte directe, pas de
+      // redirection agrégateur). `providerLink` (observé avec Wave) doit
+      // s'ouvrir dans un nouvel onglet ; dans tous les cas on bascule sur
+      // l'écran d'attente /don/status, qui interroge le statut lui-même
+      // (voir DonationStatus.jsx).
+      if (data?.transactionId) {
+        if (data.providerLink) {
+          window.open(data.providerLink, "_blank", "noopener,noreferrer");
+        }
+        setRedirecting(true);
+        window.location.href = `/don/status?provider=sebpay&id=${encodeURIComponent(data.transactionId)}`;
+        return;
+      }
+      throw new Error("Réponse inattendue du serveur de dons.");
     } catch (err) {
       setSubmitError(err.message || "Erreur lors de la création du don. Merci de réessayer.");
       setSubmitting(false);
@@ -256,11 +366,18 @@ export default function DonationTypeform({ campaign = null }) {
               <dl className="dtf-review__facts">
                 <dt>Montant</dt>
                 <dd>{Number(answers.amount).toLocaleString("fr-FR")} FCFA</dd>
+                {selectedCountry && (<><dt>Pays</dt><dd>{selectedCountry.name}</dd></>)}
+                {selectedProvider === "sebpay" && selectedOperatorObj && (
+                  <><dt>Opérateur</dt><dd>{selectedOperatorObj.name}</dd></>
+                )}
+                {selectedProvider === "sebpay" && answers.phone && (
+                  <><dt>Téléphone</dt><dd>{answers.phone}</dd></>
+                )}
                 <dt>Don anonyme</dt>
                 <dd>{answers.anonymous ? "Oui" : "Non"}</dd>
                 {!answers.anonymous && answers.nom && (<><dt>Nom</dt><dd>{answers.nom}</dd></>)}
                 {!answers.anonymous && answers.email && (<><dt>Email</dt><dd>{answers.email}</dd></>)}
-                {!answers.anonymous && answers.pays && (<><dt>Pays</dt><dd>{answers.pays}</dd></>)}
+                {!answers.anonymous && !selectedCountry && answers.pays && (<><dt>Pays</dt><dd>{answers.pays}</dd></>)}
                 {answers.message && (<><dt>Message</dt><dd>{answers.message}</dd></>)}
               </dl>
               {submitError && <p className="dtf-error" role="alert">{submitError}</p>}
@@ -270,7 +387,11 @@ export default function DonationTypeform({ campaign = null }) {
                   {submitting ? "Redirection..." : "Faire mon don →"}
                 </button>
               </div>
-              <p className="dtf-note">Vous serez redirigé·e vers notre partenaire de paiement sécurisé (FedaPay).</p>
+              <p className="dtf-note">
+                {selectedProvider === "sebpay"
+                  ? "Vous recevrez une demande de confirmation sur votre téléphone (mobile money)."
+                  : "Vous serez redirigé·e vers notre partenaire de paiement sécurisé (FedaPay)."}
+              </p>
             </div>
           ) : (
             <form
@@ -309,6 +430,74 @@ export default function DonationTypeform({ campaign = null }) {
                   />
                   <span className="dtf-suffix">FCFA</span>
                 </>
+              )}
+
+              {currentStep.type === "COUNTRY" && (
+                <div className="dtf-choices dtf-choices--scroll">
+                  {countries.map((c) => (
+                    <button
+                      type="button"
+                      key={c.code}
+                      className={`dtf-choice ${answers.country === c.code ? "dtf-choice--selected" : ""}`}
+                      onClick={() => {
+                        // Change de pays réinitialise les réponses liées au
+                        // paiement précédent (opérateur/téléphone/otp), qui
+                        // ne sont plus forcément valides pour le nouveau pays.
+                        setAnswers((prev) => ({ ...prev, country: c.code, operator: undefined, phone: undefined, otpCode: undefined }));
+                        setStepError("");
+                        setDirection("forward");
+                        setTimeout(() => setCurrentIndex((i) => i + 1), 260);
+                      }}
+                    >
+                      <span className="dtf-choice__label">{c.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {currentStep.type === "OPERATOR" && (
+                <>
+                  {operatorsLoading ? (
+                    <p className="dtf-question__hint">Chargement des opérateurs disponibles...</p>
+                  ) : operatorsError ? (
+                    <div>
+                      <p className="dtf-error" role="alert">{operatorsError}</p>
+                      {sebpayCountryNames && sebpayCountryNames.length > 0 && (
+                        <p className="dtf-question__hint">
+                          Pays actuellement disponibles : {sebpayCountryNames.join(", ")}
+                        </p>
+                      )}
+                      <button type="button" className="dtf-btn dtf-btn--ghost" style={{ marginTop: "var(--sp-4)" }} onClick={goPrev}>
+                        ← Choisir un autre pays
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="dtf-choices dtf-choices--scroll">
+                      {operators.map((op) => (
+                        <button
+                          type="button"
+                          key={op.slug}
+                          className={`dtf-choice ${answers.operator === op.slug ? "dtf-choice--selected" : ""}`}
+                          onClick={() => selectChoice(op.slug)}
+                        >
+                          <span className="dtf-choice__label">{op.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {currentStep.type === "PHONE" && (
+                <input
+                  ref={inputRef}
+                  className="dtf-input"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="Ex : 90000000"
+                  value={answers.phone || ""}
+                  onChange={(e) => setValue(e.target.value)}
+                />
               )}
 
               {currentStep.type === "CHOICE" && (
@@ -449,6 +638,7 @@ function DonationTypeformStyles() {
       .dtf-suffix { display: inline-block; margin-top: var(--sp-2); font-size: var(--text-sm); color: rgba(255,255,255,0.65); }
 
       .dtf-choices { display: flex; flex-direction: column; gap: var(--sp-3); }
+      .dtf-choices--scroll { max-height: 22rem; overflow-y: auto; padding-right: var(--sp-2); }
       .dtf-choice {
         display: flex; align-items: center; gap: var(--sp-4);
         background: rgba(255,255,255,0.10); border: 2px solid rgba(255,255,255,0.28);

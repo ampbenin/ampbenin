@@ -1,9 +1,13 @@
 // src/components/DonationStatus.jsx
-// Page de retour après paiement FedaPay (/don/status). URL de callback fixe,
-// configurée côté backend server-miss-culture-benin — voir
-// src/services/donations/api.js. FedaPay redirige ici avec
-// ?status=approved&id=<transactionId>&close=<true|false> ; en cas
-// d'annulation (close=true) ou d'échec, ce composant propose de réessayer.
+// Page de retour après paiement (/don/status), deux origines possibles :
+// 1. FedaPay redirige ici lui-même avec
+//    ?status=approved&id=<transactionId>&close=<true|false>.
+// 2. Pour SebPay (pas de redirection agrégateur : collecte directe), c'est
+//    DonationTypeform.jsx qui navigue ici juste après l'initiation, avec
+//    ?provider=sebpay&id=<transactionId> — même convention que
+//    TicketPaymentStatus.jsx sur les autres sites du groupe.
+// En cas d'annulation FedaPay (close=true) ou d'échec, ce composant propose
+// de réessayer.
 import { useEffect, useRef, useState } from "react";
 import { getDonationStatus } from "../services/donations/api";
 
@@ -18,8 +22,9 @@ const FAST_ATTEMPTS = 10; // ~25s
 const SLOW_INTERVAL_MS = 6000;
 const SLOW_ATTEMPTS = 40; // ~4 minutes de plus
 
-export default function DonationStatus({ status, transactionId, close }) {
-  const [phase, setPhase] = useState("checking"); // checking | cancelled | paid | pending-long | failed | error
+export default function DonationStatus({ status, transactionId, close, provider }) {
+  // checking | mobile-pending | cancelled | paid | pending-long | failed | error
+  const [phase, setPhase] = useState("checking");
   const [amount, setAmount] = useState(null);
   const attemptsRef = useRef(0);
   const timerRef = useRef(null);
@@ -29,12 +34,17 @@ export default function DonationStatus({ status, transactionId, close }) {
   }, []);
 
   useEffect(() => {
-    if (close === "true") {
+    // CHANGED: flux SebPay — pas de redirection agrégateur, on arrive ici
+    // directement après l'initiation (voir DonationTypeform.jsx). Le
+    // paiement doit encore être validé par le donateur sur son téléphone :
+    // on l'indique clairement plutôt que d'afficher "vérification..." comme
+    // pour le retour FedaPay ci-dessous.
+    if (provider === "sebpay" && transactionId) {
+      setPhase("mobile-pending");
+    } else if (close === "true") {
       setPhase("cancelled");
       return;
-    }
-
-    if (status !== "approved" || !transactionId) {
+    } else if (status !== "approved" || !transactionId) {
       setPhase("error");
       return;
     }
@@ -74,7 +84,7 @@ export default function DonationStatus({ status, transactionId, close }) {
     };
 
     poll();
-  }, [status, transactionId, close]);
+  }, [status, transactionId, close, provider]);
 
   return (
     <div className="don-card don-card--center">
@@ -82,6 +92,17 @@ export default function DonationStatus({ status, transactionId, close }) {
         <>
           <p className="don-spinner" aria-hidden="true" />
           <p className="don-status__text">Vérification de votre paiement…</p>
+        </>
+      )}
+
+      {phase === "mobile-pending" && (
+        <>
+          <p className="don-spinner" aria-hidden="true" />
+          <h1 className="don-status__title">Confirmez sur votre téléphone</h1>
+          <p className="don-status__text">
+            Une demande de paiement a été envoyée à votre numéro. Validez-la (notification ou code USSD reçu) pour
+            confirmer votre don — cette page se met à jour automatiquement dès la confirmation.
+          </p>
         </>
       )}
 

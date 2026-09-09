@@ -3,13 +3,18 @@ export const prerender = false;
 import Layout from '../../layouts/BaseLayout.astro';
 import DonationStatus from '../../components/DonationStatus.jsx';
 
-// URL de callback FedaPay fixe (configurée côté backend, ne pas renommer
-// sans prévenir) : ?status=approved&id=<transactionId>&close=<true|false>.
-// Voir src/components/DonationStatus.jsx pour la logique de suivi.
+// Deux façons d'arriver ici :
+// 1. Callback FedaPay fixe (configurée côté backend, ne pas renommer sans
+//    prévenir) : ?status=approved&id=<transactionId>&close=<true|false>.
+// 2. Redirection interne après initiation SebPay (voir DonationTypeform.jsx,
+//    même convention que TicketPurchase.jsx/TicketPaymentStatus.jsx sur les
+//    autres sites du groupe) : ?provider=sebpay&id=<transactionId>.
+// Voir src/components/DonationStatus.jsx pour la logique de suivi de chaque cas.
 const params = Astro.url.searchParams;
 const status = params.get('status');
 const transactionId = params.get('id');
 const close = params.get('close');
+const provider = params.get('provider');
 ---
 
 <Layout
@@ -19,7 +24,7 @@ const close = params.get('close');
 >
   <section class="don-status-section section-py">
     <div class="container">
-      <DonationStatus status={status} transactionId={transactionId} close={close} client:load />
+      <DonationStatus status={status} transactionId={transactionId} close={close} provider={provider} client:load />
     </div>
   </section>
 </Layout>
