@@ -12,7 +12,7 @@ const occurrenceKey = Astro.url.searchParams.get('occurrence') || 'once';
 <Layout
   title="Soumettre une tâche — Mon espace volontaire | AMP BENIN"
   description="Soumettez votre preuve pour cette tâche de mission."
-  url={`https://ampbenin.netlify.app/mon-espace/programme/${id}/tache/${taskId}`}
+  url={`https://ampbenin.org/mon-espace/programme/${id}/tache/${taskId}`}
   hideChrome
 >
   <TaskTypeformForm programId={id} taskId={taskId} occurrenceKey={occurrenceKey} client:load />

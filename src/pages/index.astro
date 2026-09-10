@@ -11,7 +11,7 @@ import { useTranslations, resolveLang } from "../i18n/utils";
 
 const lang = resolveLang(Astro);
 const t = useTranslations(lang);
-const SITE = "https://ampbenin.netlify.app";
+const SITE = "https://ampbenin.org";
 
 // Contenu géré depuis le CMS admin (/admin/dashboard → Pages du site → Accueil),
 // avec repli sur les composants existants (leurs valeurs par défaut) si l'API
@@ -43,8 +43,8 @@ try {
     "@type": "NGO",
     "name": "AMP BENIN",
     "alternateName": "Action Monde Productif",
-    "url": "https://ampbenin.netlify.app",
-    "logo": "https://ampbenin.netlify.app/images/Logo.png",
+    "url": "https://ampbenin.org",
+    "logo": "https://ampbenin.org/images/Logo.png",
     "description": "Organisation sociale béninoise engagée dans la promotion des Objectifs de Développement Durable (ODD) au Bénin à travers des initiatives citoyennes, des programmes d'engagement communautaire et la mobilisation des jeunes.",
     "foundingDate": "2021",
     "areaServed": { "@type": "Country", "name": "Bénin" },

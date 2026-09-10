@@ -6,7 +6,7 @@ import netlify from "@astrojs/netlify";
 import path from "path";
 
 export default defineConfig({
-  site: "https://ampbenin.netlify.app",
+  site: "https://ampbenin.org",
 
   integrations: [
     tailwind(),

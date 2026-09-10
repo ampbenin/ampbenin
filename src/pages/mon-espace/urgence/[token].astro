@@ -9,7 +9,7 @@ const { token } = Astro.params;
 <Layout
   title="Réinitialisation d'urgence — Mon espace volontaire | AMP BENIN"
   description="Réinitialisez votre mot de passe volontaire suite à un lien expiré."
-  url={`https://ampbenin.netlify.app/mon-espace/urgence/${token}`}
+  url={`https://ampbenin.org/mon-espace/urgence/${token}`}
 >
   <EmergencyResetForm token={token} client:load />
 </Layout>
