@@ -272,6 +272,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [certSelectedIds, setCertSelectedIds] = useState(new Set());
   const [certSearch, setCertSearch] = useState("");
   const [certGenerating, setCertGenerating] = useState(false);
+  // Visuel du certificat (2026-09-10) — même principe que les "types de
+  // tickets" de server-miss-culture-benin : un visuel (SVG/PNG/JPG) + des
+  // zones positionnables (qr/nom/description), propres à CE programme.
+  const [certTemplateFile, setCertTemplateFile] = useState(null);
+  const [certZonesText, setCertZonesText] = useState("[]");
+  const [certDescriptionText, setCertDescriptionText] = useState("");
+  const [uploadingCertTemplate, setUploadingCertTemplate] = useState(false);
 
   // Liste noire des volontaires bannis — chargée une fois, croisée côté
   // client (voir BlacklistWarning.jsx) sur les candidatures affichées.
@@ -1247,10 +1254,58 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setCertEligible(data?.eligible || []);
       setCertAlreadyGenerated(data?.alreadyGenerated || []);
       setCertSelectedIds(new Set());
+      // Pré-remplit l'éditeur de zones avec ce qui est déjà enregistré sur
+      // le programme (déjà chargé dans `program`, pas besoin d'un second
+      // appel réseau) — seulement à l'ouverture de l'onglet, pour ne
+      // jamais écraser une saisie en cours de l'utilisateur.
+      setCertZonesText(JSON.stringify(program?.certificateZones || [], null, 2));
+      setCertDescriptionText(program?.certificateDescription || "");
     } catch (err) {
       alert(err.message || "Erreur lors du chargement des attestations");
     } finally {
       setCertLoading(false);
+    }
+  };
+
+  // Visuel du certificat — multipart, même pattern que uploadPartnersBar
+  // ci-dessus (adminFetch force JSON, un fetch brut est nécessaire ici).
+  const uploadCertificateTemplate = async () => {
+    if (!certTemplateFile) { alert("Choisissez d'abord un fichier (SVG, PNG ou JPG)."); return; }
+    let zones;
+    try {
+      zones = JSON.parse(certZonesText || "[]");
+      if (!Array.isArray(zones)) throw new Error();
+    } catch {
+      alert("Les zones doivent être un JSON valide (tableau).");
+      return;
+    }
+    setUploadingCertTemplate(true);
+    try {
+      const form = new FormData();
+      form.append("file", certTemplateFile);
+      form.append("zones", JSON.stringify(zones));
+      form.append("certificateDescription", certDescriptionText);
+      const token = localStorage.getItem("amp_token");
+      const res = await fetch(`${API_BASE}/api/certificates/programs/${programId}/template`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message || "Erreur lors de l'envoi du visuel");
+      setProgram((prev) => ({
+        ...prev,
+        certificateTemplateUrl: body.certificateTemplateUrl,
+        certificateTemplateFormat: body.certificateTemplateFormat,
+        certificateZones: body.certificateZones,
+        certificateDescription: body.certificateDescription,
+      }));
+      setCertTemplateFile(null);
+      alert("Visuel de certificat enregistré.");
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'envoi du visuel");
+    } finally {
+      setUploadingCertTemplate(false);
     }
   };
 
@@ -2684,6 +2739,75 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               <LoadingSpinner />
             ) : (
               <>
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <h3 className="font-semibold text-sm mb-1">🖼️ Visuel du certificat</h3>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Le visuel (SVG, PNG ou JPG) sur lequel le QR code, le nom du volontaire et la description sont
+                    superposés automatiquement à la génération. <strong>Obligatoire</strong> avant de pouvoir générer
+                    des attestations pour ce programme.
+                  </p>
+
+                  {program?.certificateTemplateUrl && (
+                    <div className="mb-4 flex items-center gap-3">
+                      <img
+                        src={program.certificateTemplateUrl}
+                        alt="Visuel de certificat actuel"
+                        style={{ maxHeight: 90, maxWidth: 220, objectFit: "contain" }}
+                        className="border border-gray-200 rounded-lg bg-white"
+                      />
+                      <span className="text-xs text-gray-500">
+                        Visuel actuel ({program.certificateTemplateFormat === "raster" ? "image" : "SVG"})
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Fichier {program?.certificateTemplateUrl ? "(laisser vide pour ne pas changer)" : "(requis)"}
+                      </label>
+                      <input
+                        type="file"
+                        accept=".svg,image/svg+xml,.png,image/png,.jpg,.jpeg,image/jpeg"
+                        onChange={(e) => setCertTemplateFile(e.target.files?.[0] || null)}
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Description affichée sur le certificat (zone "description")
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={certDescriptionText}
+                        onChange={(e) => setCertDescriptionText(e.target.value)}
+                        placeholder='Ex : "pour sa participation exemplaire et son engagement remarquable dans le cadre du programme"'
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Zones (JSON avancé) — {"nom"} possibles : <code>qr</code>, <code>nom</code>, <code>description</code>
+                      </label>
+                      <textarea
+                        rows={6}
+                        value={certZonesText}
+                        onChange={(e) => setCertZonesText(e.target.value)}
+                        placeholder={'[\n  { "nom": "qr", "x": 600, "y": 80, "width": 150, "height": 150 },\n  { "nom": "nom", "x": 100, "y": 250, "width": 400, "height": 40, "fontSize": 24, "color": "#1B4332" },\n  { "nom": "description", "x": 100, "y": 300, "width": 600, "height": 60, "fontSize": 14, "color": "#333333" }\n]'}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-mono"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={uploadCertificateTemplate}
+                      disabled={uploadingCertTemplate}
+                      className="bg-primary text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 disabled:opacity-50"
+                    >
+                      {uploadingCertTemplate ? "Envoi..." : program?.certificateTemplateUrl ? "Mettre à jour le visuel" : "Enregistrer le visuel"}
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="font-semibold text-sm mb-3">🎓 Attestations déjà générées ({certAlreadyGenerated.length})</h3>
                   {certAlreadyGenerated.length === 0 ? (
@@ -2714,6 +2838,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <p className="text-xs text-gray-600 mb-3">
                     Mission validée sur ce programme, attestation pas encore générée.
                   </p>
+                  {!program?.certificateTemplateUrl && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                      ⚠️ Aucun visuel de certificat enregistré pour ce programme — importez-en un ci-dessus avant de
+                      pouvoir générer des attestations.
+                    </p>
+                  )}
                   {certEligible.length === 0 ? (
                     <p className="text-gray-500">
                       Aucun volontaire éligible pour l'instant — la mission doit être "Mission validée"
@@ -2745,7 +2875,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             </label>
                           ))}
                       </div>
-                      <button type="button" onClick={generateCertificates} disabled={certGenerating}
+                      <button type="button" onClick={generateCertificates} disabled={certGenerating || !program?.certificateTemplateUrl}
                         className="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-green-700 disabled:opacity-50">
                         {certGenerating
                           ? "Génération..."
