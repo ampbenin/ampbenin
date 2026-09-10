@@ -33,13 +33,16 @@ function validateAmount(value, minAmount) {
 }
 // `answers.amount` reste toujours des chiffres bruts (ex: "1000"), jamais la
 // version formatée — c'est CETTE fonction, appliquée uniquement à
-// l'affichage du champ, qui ajoute les séparateurs de milliers (ex:
-// "1 000"). Number(answers.amount) reste donc valable partout ailleurs
-// (validation, payload envoyé à l'API) sans aucun changement.
+// l'affichage du champ, qui ajoute les séparateurs de milliers. Number(
+// answers.amount) reste donc valable partout ailleurs (validation, payload
+// envoyé à l'API) sans aucun changement.
+// Séparateur volontairement deux espaces (pas toLocaleString("fr-FR") dont
+// l'espace fine/insécable est peu visible dans un champ de saisie) — plus
+// lisible, sur demande explicite.
 function formatAmountInput(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (!digits) return "";
-  return Number(digits).toLocaleString("fr-FR");
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "  ");
 }
 function validateEmail(value) {
   if (isEmpty(value)) return "";
