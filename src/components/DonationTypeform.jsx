@@ -21,7 +21,6 @@ import {
   getDonationOperators,
 } from "../services/donations/api";
 
-const QUICK_AMOUNTS = [1000, 5000, 10000, 20000];
 const DEFAULT_MIN_AMOUNT = 500;
 
 const isEmpty = (v) => v === undefined || v === null || String(v).trim() === "";
@@ -31,6 +30,16 @@ function validateAmount(value, minAmount) {
   if (isEmpty(value) || Number.isNaN(n) || n <= 0) return "Merci d'indiquer un montant valide.";
   if (n < minAmount) return `Le montant minimum pour un don est de ${minAmount.toLocaleString("fr-FR")} FCFA.`;
   return "";
+}
+// `answers.amount` reste toujours des chiffres bruts (ex: "1000"), jamais la
+// version formatée — c'est CETTE fonction, appliquée uniquement à
+// l'affichage du champ, qui ajoute les séparateurs de milliers (ex:
+// "1 000"). Number(answers.amount) reste donc valable partout ailleurs
+// (validation, payload envoyé à l'API) sans aucun changement.
+function formatAmountInput(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("fr-FR");
 }
 function validateEmail(value) {
   if (isEmpty(value)) return "";
@@ -406,27 +415,14 @@ export default function DonationTypeform({ campaign = null }) {
 
               {currentStep.type === "AMOUNT" && (
                 <>
-                  <div className="dtf-quick">
-                    {QUICK_AMOUNTS.map((qa) => (
-                      <button
-                        type="button"
-                        key={qa}
-                        className={`dtf-quick__btn ${Number(answers.amount) === qa ? "dtf-quick__btn--active" : ""}`}
-                        onClick={() => setValue(String(qa))}
-                      >
-                        {qa.toLocaleString("fr-FR")}
-                      </button>
-                    ))}
-                  </div>
                   <input
                     ref={inputRef}
                     className="dtf-input"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={minAmount}
-                    placeholder={`Autre montant (min. ${minAmount.toLocaleString("fr-FR")} FCFA)`}
-                    value={answers.amount || ""}
-                    onChange={(e) => setValue(e.target.value)}
+                    placeholder={`Montant (min. ${minAmount.toLocaleString("fr-FR")} FCFA)`}
+                    value={formatAmountInput(answers.amount)}
+                    onChange={(e) => setValue(e.target.value.replace(/\D/g, ""))}
                   />
                   <span className="dtf-suffix">FCFA</span>
                 </>
@@ -613,19 +609,6 @@ function DonationTypeformStyles() {
         font-family: var(--font-heading); font-weight: 500; line-height: 1.25; color: #FFFFFF;
         font-size: clamp(1.5rem, 4vw, 2.25rem); margin-bottom: var(--sp-8);
       }
-
-      .dtf-quick { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-bottom: var(--sp-5); }
-      .dtf-quick__btn {
-        padding: var(--sp-3) var(--sp-5);
-        border: 2px solid rgba(255,255,255,0.35);
-        border-radius: var(--r-full);
-        background: rgba(255,255,255,0.08);
-        color: #FFFFFF;
-        font-family: var(--font-body); font-weight: 600; font-size: var(--text-base);
-        cursor: pointer; transition: all var(--tr-fast);
-      }
-      .dtf-quick__btn:hover { border-color: var(--col-accent-light); background: rgba(255,255,255,0.16); }
-      .dtf-quick__btn--active { border-color: var(--col-accent); background: rgba(201,144,58,0.32); }
 
       .dtf-input, .dtf-textarea {
         width: 100%; background: transparent; border: none; border-bottom: 2px solid rgba(255,255,255,0.5);
