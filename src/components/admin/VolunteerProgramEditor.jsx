@@ -6,7 +6,7 @@
 // style Tailwind de ce site et à l'absence de "leçons"/"progression"
 // (concepts propres à NumSAL, sans équivalent pour un programme de
 // volontariat).
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { adminFetch } from "@/services/admin/api";
 import ReportVolunteerButton from "./ReportVolunteerButton.jsx";
 import { findBlacklistMatch, BlacklistBadge } from "./BlacklistWarning.jsx";
@@ -279,6 +279,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [certZonesText, setCertZonesText] = useState("[]");
   const [certDescriptionText, setCertDescriptionText] = useState("");
   const [uploadingCertTemplate, setUploadingCertTemplate] = useState(false);
+
+  // Éditeur riche de la description certificat (gras/souligné/couleur/
+  // taille/alignement, appliqués à la sélection) — contentEditable non
+  // contrôlé par React (voir effet ci-dessous) : on lit `certDescriptionText`
+  // en HTML brut (innerHTML), envoyé tel quel au backend qui sait le parser
+  // (voir certificateGenerator.js#parseRichDescription côté server-amp-sites).
+  const certRichEditorRef = useRef(null);
+  const certSavedRangeRef = useRef(null);
 
   // Liste noire des volontaires bannis — chargée une fois, croisée côté
   // client (voir BlacklistWarning.jsx) sur les candidatures affichées.
@@ -1034,6 +1042,20 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  // Initialise le contenu de l'éditeur riche UNE FOIS que les données sont
+  // chargées (donc que le <div contentEditable> est monté — il est masqué
+  // tant que certLoading est vrai). Volontairement non lié à
+  // certDescriptionText : le contentEditable est non contrôlé après cette
+  // initialisation (sinon chaque frappe ferait sauter le curseur).
+  useEffect(() => {
+    if (!certLoading && activeTab === "certificates" && certRichEditorRef.current) {
+      const raw = certDescriptionText;
+      const isHtml = /<[a-z][\s\S]*>/i.test(raw);
+      certRichEditorRef.current.innerHTML = isHtml ? raw : plainTextToEditableHtml(raw);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [certLoading, activeTab]);
+
   // Recharge les soumissions quand on change de filtre de statut (onglet
   // Suivi déjà actif — le useEffect ci-dessus ne se redéclenche pas juste
   // pour ça puisque activeTab ne change pas).
@@ -1270,7 +1292,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // Visuel du certificat — multipart, même pattern que uploadPartnersBar
   // ci-dessus (adminFetch force JSON, un fetch brut est nécessaire ici).
   const uploadCertificateTemplate = async () => {
-    if (!certTemplateFile) { alert("Choisissez d'abord un fichier (SVG, PNG ou JPG)."); return; }
+    // Le fichier n'est requis que pour le tout premier envoi — une fois un
+    // visuel déjà enregistré, on peut mettre à jour juste la description
+    // et/ou les zones sans le réuploader (voir certificateController.js).
+    if (!certTemplateFile && !program?.certificateTemplateUrl) {
+      alert("Choisissez d'abord un fichier (SVG, PNG ou JPG).");
+      return;
+    }
     let zones;
     try {
       zones = JSON.parse(certZonesText || "[]");
@@ -1282,7 +1310,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     setUploadingCertTemplate(true);
     try {
       const form = new FormData();
-      form.append("file", certTemplateFile);
+      if (certTemplateFile) form.append("file", certTemplateFile);
       form.append("zones", JSON.stringify(zones));
       form.append("certificateDescription", certDescriptionText);
       const token = localStorage.getItem("amp_token");
@@ -1307,6 +1335,65 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     } finally {
       setUploadingCertTemplate(false);
     }
+  };
+
+  // ── Éditeur riche "Description certificat" ─────────────────────────────
+  // Convertit un ancien texte brut (enregistré avant cette fonctionnalité,
+  // éventuellement multi-paragraphes via \n) en HTML éditable — un <div>
+  // par paragraphe, comme ce que produit nativement un contentEditable à
+  // chaque Entrée. Au premier edit, l'utilisateur re-sauvegarde alors du
+  // vrai HTML, migrant silencieusement l'ancien format.
+  const escapeForEditableHtml = (s) =>
+    String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const plainTextToEditableHtml = (text) =>
+    String(text || "")
+      .split(/\n+/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => `<div>${escapeForEditableHtml(p)}</div>`)
+      .join("");
+
+  // Sauvegarde la sélection courante DANS l'éditeur — nécessaire car les
+  // widgets natifs de la barre d'outils (sélecteur de taille, pastille
+  // couleur) volent le focus au clic, ce qui ferait perdre la sélection de
+  // texte avant que la commande ne s'applique si on ne la restaure pas.
+  const saveCertSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && certRichEditorRef.current?.contains(sel.anchorNode)) {
+      certSavedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+  const restoreCertSelection = () => {
+    const sel = window.getSelection();
+    if (sel && certSavedRangeRef.current) {
+      sel.removeAllRanges();
+      sel.addRange(certSavedRangeRef.current);
+    }
+  };
+  const withCertSelection = (fn) => {
+    certRichEditorRef.current?.focus();
+    restoreCertSelection();
+    fn();
+    setCertDescriptionText(certRichEditorRef.current?.innerHTML || "");
+  };
+  const applyCertCommand = (command, value = null) => withCertSelection(() => document.execCommand(command, false, value));
+  const applyCertColor = (hex) => applyCertCommand("foreColor", hex);
+  const applyCertFontSize = (px) => {
+    withCertSelection(() => {
+      // execCommand("fontSize") ne connaît que les tailles 1-7 (mots-clé
+      // CSS xx-small..xx-large) — astuce classique : on applique la valeur
+      // 7 (peu probable d'être utilisée sinon), puis on remplace les
+      // balises <font size="7"> générées par un <span style="font-size:
+      // ...px">, seul moyen d'obtenir une taille en pixels précise.
+      document.execCommand("fontSize", false, "7");
+      const el = certRichEditorRef.current;
+      el?.querySelectorAll('font[size="7"]').forEach((node) => {
+        const span = document.createElement("span");
+        span.style.fontSize = `${px}px`;
+        span.innerHTML = node.innerHTML;
+        node.replaceWith(span);
+      });
+    });
   };
 
   const generateCertificates = async () => {
@@ -2775,15 +2862,59 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Description affichée sur le certificat (zone "description")
+                        Description affichée sur le certificat (zone "description") — laisser vide pour ne rien
+                        afficher dans cette zone
                       </label>
-                      <textarea
-                        rows={3}
-                        value={certDescriptionText}
-                        onChange={(e) => setCertDescriptionText(e.target.value)}
-                        placeholder='Ex : "pour sa participation exemplaire et son engagement remarquable dans le cadre du programme"'
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
+                      <div className="border border-gray-300 rounded-lg overflow-hidden">
+                        <div className="flex flex-wrap items-center gap-1 bg-gray-50 border-b border-gray-200 px-2 py-1.5">
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("bold")} title="Gras" className="w-7 h-7 rounded hover:bg-gray-200 font-bold text-sm">G</button>
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("underline")} title="Souligné" className="w-7 h-7 rounded hover:bg-gray-200 underline text-sm">S</button>
+                          <span className="w-px h-5 bg-gray-300 mx-1" />
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("justifyLeft")} title="Aligner à gauche" className="w-7 h-7 rounded hover:bg-gray-200 text-sm">⯇</button>
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("justifyCenter")} title="Centrer" className="w-7 h-7 rounded hover:bg-gray-200 text-sm">☰</button>
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("justifyRight")} title="Aligner à droite" className="w-7 h-7 rounded hover:bg-gray-200 text-sm">⯈</button>
+                          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => applyCertCommand("justifyFull")} title="Justifier" className="w-7 h-7 rounded hover:bg-gray-200 text-sm">≡</button>
+                          <span className="w-px h-5 bg-gray-300 mx-1" />
+                          <select
+                            defaultValue=""
+                            onMouseDown={saveCertSelection}
+                            onChange={(e) => {
+                              if (e.target.value) applyCertFontSize(Number(e.target.value));
+                              e.target.value = "";
+                            }}
+                            title="Taille du texte"
+                            className="text-xs border border-gray-300 rounded px-1 py-1 bg-white"
+                          >
+                            <option value="">Taille…</option>
+                            {[14, 16, 18, 20, 24, 28, 32, 36, 40].map((s) => (
+                              <option key={s} value={s}>{s}px</option>
+                            ))}
+                          </select>
+                          <input
+                            type="color"
+                            onMouseDown={saveCertSelection}
+                            onChange={(e) => applyCertColor(e.target.value)}
+                            title="Couleur du texte"
+                            className="w-7 h-7 border border-gray-300 rounded cursor-pointer p-0.5 bg-white"
+                          />
+                        </div>
+                        <div
+                          ref={certRichEditorRef}
+                          contentEditable
+                          suppressContentEditableWarning
+                          onInput={(e) => setCertDescriptionText(e.currentTarget.innerHTML)}
+                          onMouseUp={saveCertSelection}
+                          onKeyUp={saveCertSelection}
+                          className="cert-rich-editor w-full min-h-[90px] px-3 py-2 text-sm outline-none"
+                          data-placeholder='Ex : "pour sa participation exemplaire et son engagement remarquable dans le cadre du programme"'
+                        />
+                      </div>
+                      <style>{`.cert-rich-editor:empty:before { content: attr(data-placeholder); color: #9ca3af; }`}</style>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Sélectionnez du texte puis utilisez la barre d'outils pour le mettre en forme. Plusieurs
+                        paragraphes (Entrée) sont acceptés — un petit interligne est automatiquement ajouté entre eux
+                        sur le certificat.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
