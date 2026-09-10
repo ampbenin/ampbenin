@@ -29,6 +29,7 @@ if (!campaign) {
   description={campaign.shortDescription}
   url={`https://ampbenin.netlify.app/don/campagnes/${campaign.slug}`}
   keywords={`don ${campaign.title}, cagnote AMP BENIN, ${campaign.category}`}
+  image={photo}
 >
 
   <script type="application/ld+json" slot="head" set:html={JSON.stringify({

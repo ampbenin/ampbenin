@@ -7,6 +7,12 @@ import { getCampaignBySlug } from '../../../../data/campaigns';
 const { slug } = Astro.params;
 const campaign = getCampaignBySlug(slug);
 
+// Même photo officielle que la page de présentation de la collecte (voir
+// don/campagnes/[slug].astro) — sinon l'aperçu de lien (WhatsApp, Facebook...)
+// retombe sur l'image générique du site au lieu du visuel de la collecte.
+const photos = { 'kits-scolaires': '/images/don/kits-scolaires-2026.webp' };
+const photo = campaign ? photos[campaign.slug] : null;
+
 if (!campaign) {
   return Astro.redirect('/don');
 }
@@ -16,6 +22,7 @@ if (!campaign) {
   title={`Faire un don — ${campaign.title} — AMP BENIN`}
   description={campaign.shortDescription}
   url={`https://ampbenin.netlify.app/don/campagnes/${campaign.slug}/don`}
+  image={photo}
   hideChrome
 >
   <DonationTypeform campaign={campaign} client:load />
