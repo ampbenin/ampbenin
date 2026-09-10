@@ -7,11 +7,15 @@ import SchoolKitChild from '../../../components/illustrations/SchoolKitChild.ast
 const { slug } = Astro.params;
 const campaign = getCampaignBySlug(slug);
 
-// Illustration par collecte : une seule pour l'instant (kits scolaires).
-// Vectorielle plutôt que photo — voir le commentaire dans
-// SchoolKitChild.astro (consentement/protection de l'enfance).
+// Photo par collecte : visuel officiel déjà publié par AMP BENIN (accord
+// confirmé — voir don-camp-card__photo ci-dessous pour la même image en
+// miniature sur /don). Prioritaire sur l'illustration vectorielle
+// (SchoolKitChild.astro), qui reste le repli si une future collecte n'a pas
+// encore de photo officielle.
+const photos = { 'kits-scolaires': '/images/don/kits-scolaires-2026.webp' };
 const illustrations = { 'kits-scolaires': SchoolKitChild };
-const Illustration = illustrations[campaign.slug];
+const photo = campaign ? photos[campaign.slug] : null;
+const Illustration = campaign ? illustrations[campaign.slug] : null;
 
 // Collecte inconnue ou désactivée : on renvoie vers le hub des dons plutôt
 // qu'une 404 brute — la page /don liste les collectes actuellement actives.
@@ -47,9 +51,24 @@ if (!campaign) {
         <a href={`/don/campagnes/${campaign.slug}/don`} class="btn btn--accent btn--lg">Faire un don pour cette collecte →</a>
       </div>
 
-      {Illustration && (
+      {(photo || Illustration) && (
         <div class="camp-hero__art fade-up">
-          <Illustration />
+          {photo ? (
+            <div class="camp-photo">
+              <div class="camp-photo__decor" aria-hidden="true"></div>
+              <img
+                src={photo}
+                alt={`Photo officielle de la collecte « ${campaign.title} »`}
+                class="camp-photo__img"
+                width="1080"
+                height="1080"
+                loading="eager"
+              />
+              <span class="camp-photo__badge">💚 Collecte en cours</span>
+            </div>
+          ) : (
+            <Illustration />
+          )}
         </div>
       )}
     </div>
@@ -108,6 +127,59 @@ if (!campaign) {
   .camp-hero__art {
     max-width: 20rem;
     margin-inline: auto;
+  }
+
+  /* Visuel photo premium : cadre décalé en dégradé derrière la photo,
+     léger flottement continu, badge flottant en bas — même famille que le
+     reste du site (tokens.css : ombres teintées, rayons cohérents). */
+  .camp-photo {
+    position: relative;
+    max-width: 22rem;
+    margin-inline: auto;
+    animation: camp-float 6s ease-in-out infinite;
+  }
+  .camp-photo__decor {
+    position: absolute;
+    inset: -16px 18px 18px -16px;
+    background: linear-gradient(135deg, var(--col-accent-light), var(--col-primary-light));
+    border-radius: var(--r-2xl);
+    z-index: 0;
+  }
+  .camp-photo__img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--r-2xl);
+    box-shadow: var(--sh-xl);
+    border: 5px solid var(--col-white);
+  }
+  .camp-photo__badge {
+    position: absolute;
+    z-index: 2;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    background: var(--col-white);
+    color: var(--col-primary);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    padding: var(--sp-2) var(--sp-5);
+    border-radius: var(--r-full);
+    box-shadow: var(--sh-md);
+    white-space: nowrap;
+  }
+  @keyframes camp-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .camp-photo { animation: none; }
   }
   .camp-back {
     display: inline-block;

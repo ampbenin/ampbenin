@@ -586,10 +586,50 @@ function DonationTypeformStyles() {
       }
       .dtf-shell--center { align-items: center; justify-content: center; text-align: center; padding: var(--sp-8); gap: var(--sp-6); }
 
+      /* Orbes flottants décoratifs — profondeur "premium", en CSS pur
+         (::before/::after) pour apparaître sur tous les écrans du composant
+         sans dupliquer de markup. Discrets, jamais au-dessus du contenu
+         (z-index négatif). */
+      .dtf-shell::before,
+      .dtf-shell::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(70px);
+        pointer-events: none;
+        z-index: -1;
+      }
+      .dtf-shell::before {
+        width: 24rem; height: 24rem;
+        top: -7rem; right: -7rem;
+        background: rgba(232, 196, 122, 0.35);
+        animation: dtf-drift-a 16s ease-in-out infinite;
+      }
+      .dtf-shell::after {
+        width: 20rem; height: 20rem;
+        bottom: -5rem; left: -5rem;
+        background: rgba(82, 183, 136, 0.3);
+        animation: dtf-drift-b 20s ease-in-out infinite;
+      }
+      @keyframes dtf-drift-a {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(-36px, 30px); }
+      }
+      @keyframes dtf-drift-b {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(30px, -26px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dtf-shell::before, .dtf-shell::after { animation: none; }
+      }
+
       .dtf-loading, .dtf-fatal { font-size: var(--text-lg); }
 
-      .dtf-progress { height: 4px; width: 100%; background: rgba(255,255,255,0.18); flex-shrink: 0; }
-      .dtf-progress__bar { height: 100%; background: var(--col-accent); transition: width var(--tr-slow); }
+      .dtf-progress { height: 4px; width: 100%; background: rgba(255,255,255,0.18); flex-shrink: 0; position: relative; z-index: 1; }
+      .dtf-progress__bar {
+        height: 100%; background: var(--col-accent); transition: width var(--tr-slow);
+        box-shadow: 0 0 12px 1px rgba(201, 144, 58, 0.7);
+      }
 
       .dtf-topbar {
         display: flex; align-items: center; justify-content: space-between;
@@ -634,6 +674,18 @@ function DonationTypeformStyles() {
       }
       .dtf-choice:hover { border-color: var(--col-accent-light); background: rgba(255,255,255,0.16); transform: translateX(4px); }
       .dtf-choice--selected { border-color: var(--col-accent); background: rgba(201,144,58,0.32); }
+      .dtf-choice--selected::after {
+        content: "✓";
+        margin-left: auto;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--col-accent);
+        animation: dtf-check-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes dtf-check-pop {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
       .dtf-choice__badge {
         display: flex; align-items: center; justify-content: center;
         width: 2rem; height: 2rem; border-radius: var(--r-sm); flex-shrink: 0;

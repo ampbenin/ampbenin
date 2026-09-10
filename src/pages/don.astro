@@ -6,9 +6,11 @@ import SchoolKitChild from '../components/illustrations/SchoolKitChild.astro';
 const lang = resolveLang(Astro);
 const t = useTranslations(lang);
 
-// Illustration par collecte : une seule pour l'instant (kits scolaires) —
-// voir SchoolKitChild.astro. Les collectes sans illustration dédiée
-// retombent sur l'icône générique ci-dessous.
+// Photo officielle par collecte (accord confirmé, même image que la page de
+// présentation dédiée — voir don/campagnes/[slug].astro), prioritaire sur
+// l'illustration vectorielle (SchoolKitChild.astro), gardée en repli pour
+// une future collecte sans photo officielle. Sans les deux : icône générique.
+const photos = { 'kits-scolaires': '/images/don/kits-scolaires-2026.webp' };
 const illustrations = { 'kits-scolaires': SchoolKitChild };
 
 // Le paiement et l'enregistrement des dons sont entièrement gérés par un
@@ -53,25 +55,33 @@ const campaigns = getActiveCampaigns();
           <h2 class="don-section-title fade-up">Nos collectes en cours</h2>
           <div class="don-campaigns__grid">
             {campaigns.map((c) => {
+              const photo = photos[c.slug];
               const Illustration = illustrations[c.slug];
               return (
               <a href={`/don/campagnes/${c.slug}`} class="don-camp-card fade-up">
-                {Illustration ? (
-                  <div class="don-camp-card__illus" aria-hidden="true">
-                    <Illustration />
-                  </div>
-                ) : (
-                  <div class="don-camp-card__art" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-                      <path d="M12 3v9M4 7.5l8 4.5M20 7.5l-8 4.5" />
-                    </svg>
+                {photo && (
+                  <div class="don-camp-card__photo">
+                    <img src={photo} alt="" loading="lazy" width="600" height="338" />
                   </div>
                 )}
-                <span class="don-camp-card__category">{c.category}</span>
-                <h3 class="don-camp-card__title">{c.title}</h3>
-                <p class="don-camp-card__desc">{c.shortDescription}</p>
-                <span class="don-camp-card__cta">Découvrir la collecte →</span>
+                <div class="don-camp-card__body">
+                  {!photo && Illustration ? (
+                    <div class="don-camp-card__illus" aria-hidden="true">
+                      <Illustration />
+                    </div>
+                  ) : !photo ? (
+                    <div class="don-camp-card__art" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                        <path d="M12 3v9M4 7.5l8 4.5M20 7.5l-8 4.5" />
+                      </svg>
+                    </div>
+                  ) : null}
+                  <span class="don-camp-card__category">{c.category}</span>
+                  <h3 class="don-camp-card__title">{c.title}</h3>
+                  <p class="don-camp-card__desc">{c.shortDescription}</p>
+                  <span class="don-camp-card__cta">Découvrir la collecte →</span>
+                </div>
               </a>
               );
             })}
@@ -136,7 +146,7 @@ const campaigns = getActiveCampaigns();
     border: 1px solid var(--col-border-light);
     border-radius: var(--r-xl);
     box-shadow: var(--sh-sm);
-    padding: var(--sp-6);
+    overflow: hidden;
     text-decoration: none;
     color: inherit;
     transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
@@ -146,6 +156,25 @@ const campaigns = getActiveCampaigns();
     box-shadow: var(--sh-lg);
     border-color: var(--col-primary-light);
     color: inherit;
+  }
+  .don-camp-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--sp-6);
+  }
+  .don-camp-card__photo {
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+  }
+  .don-camp-card__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--tr-slow);
+  }
+  .don-camp-card:hover .don-camp-card__photo img {
+    transform: scale(1.06);
   }
   .don-camp-card__art {
     width: 3rem; height: 3rem;
