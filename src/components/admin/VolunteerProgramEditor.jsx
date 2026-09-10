@@ -1418,6 +1418,28 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  // Réinitialise l'attestation d'UN volontaire (le fait réapparaître dans
+  // "éligibles" pour pouvoir relancer la génération — utile par exemple
+  // pour les attestations générées avant le correctif du bug de police
+  // cassée en production). Bouton individuel plutôt qu'une sélection
+  // groupée : action destructive, plus sûr de la confirmer une par une.
+  const [certResettingId, setCertResettingId] = useState(null);
+  const resetCertificate = async (volunteerId, label) => {
+    if (!window.confirm(`Réinitialiser l'attestation de ${label} ? Elle redeviendra "éligible" pour être régénérée (le fichier déjà généré reste téléchargeable via son ancien lien jusqu'à régénération).`)) return;
+    setCertResettingId(volunteerId);
+    try {
+      await adminFetch(`/api/certificates/programs/${programId}/reset`, {
+        method: "POST",
+        body: JSON.stringify({ volunteerIds: [volunteerId] }),
+      });
+      loadCertificates();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la réinitialisation");
+    } finally {
+      setCertResettingId(null);
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (error || !program) return <LoadingSpinner message={error || "Programme introuvable"} error />;
 
@@ -2954,10 +2976,21 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                               Générée {v.uploadedAt ? formatSmartTime(v.uploadedAt) : "—"}
                             </div>
                           </div>
-                          <a href={v.fileUrl} target="_blank" rel="noreferrer"
-                            className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 flex-shrink-0">
-                            Télécharger →
-                          </a>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <a href={v.fileUrl} target="_blank" rel="noreferrer"
+                              className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800">
+                              Télécharger →
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => resetCertificate(v.volunteerId, `${v.prenom} ${v.nom}`)}
+                              disabled={certResettingId === v.volunteerId}
+                              title="Retirer cette attestation pour pouvoir la régénérer"
+                              className="bg-red-50 text-red-700 border border-red-200 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                            >
+                              {certResettingId === v.volunteerId ? "..." : "↺ Réinitialiser"}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
