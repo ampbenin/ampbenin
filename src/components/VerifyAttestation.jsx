@@ -10,34 +10,6 @@ export default function VerifyAttestation({ id }) {
   const [data, setData] = useState(null);
   const [step, setStep] = useState("loading"); // Étapes possibles : loading | showData | error | thanks | report
   const [report, setReport] = useState({ anonymous: true, name: "", message: "" });
-  const [downloading, setDownloading] = useState(false);
-
-  // Force le nom (et l'extension .pdf) du fichier téléchargé — même
-  // contournement que côté admin (VolunteerProgramEditor.jsx) : le compte
-  // Cloudinary bloque la livraison dès que ".pdf" apparaît dans l'URL
-  // elle-même (désactiver cette restriction est une fonctionnalité
-  // payante), donc le nom voulu est imposé ici, côté navigateur, via un
-  // blob + l'attribut `download`.
-  const downloadAttestation = async (url, filename) => {
-    setDownloading(true);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Échec du téléchargement");
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      alert("Erreur lors du téléchargement du fichier.");
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   useEffect(() => {
     if (!id) {
@@ -135,20 +107,11 @@ export default function VerifyAttestation({ id }) {
               <p><span className="font-semibold">Mission :</span> {data.mission}</p>
               <p><span className="font-semibold">Email :</span> {data.email}</p>
               <p><span className="font-semibold">Date :</span> {new Date(data.date).toLocaleDateString()}</p>
-              {data.fileUrl && (
-                <p>
-                  <span className="font-semibold">PDF :</span>{" "}
-                  <button
-                    type="button"
-                    onClick={() => downloadAttestation(data.fileUrl, data.fileName || `${data.prenom} ${data.nom} AMP BENIN.pdf`)}
-                    disabled={downloading}
-                    className="text-blue-600 underline disabled:opacity-50"
-                  >
-                    {downloading ? "Téléchargement..." : "Télécharger"}
-                  </button>
-                </p>
-              )}
             </div>
+            {/* Pas de téléchargement ici (2026-09-11) : cette page est
+                PUBLIQUE (accessible à quiconque scanne le QR code, sans
+                connexion) — elle sert à authentifier, pas à distribuer le
+                PDF. Le volontaire télécharge depuis son espace authentifié. */}
 
             <div className="mt-6">
               <p className="text-gray-700 font-medium mb-4">

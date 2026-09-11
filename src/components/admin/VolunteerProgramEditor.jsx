@@ -1470,6 +1470,37 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  // Activer/désactiver la visibilité de l'attestation dans "Mon espace"
+  // pour une sélection de volontaires (ou tous, si rien n'est sélectionné —
+  // même convention que generateCertificates ci-dessus). Contrairement à
+  // "Réinitialiser", ça ne supprime rien : juste un masquage réversible.
+  const [certVisibilitySelectedIds, setCertVisibilitySelectedIds] = useState(new Set());
+  const [certVisibilityUpdating, setCertVisibilityUpdating] = useState(false);
+  const toggleCertVisibility = async (visible) => {
+    const targetIds = [...certVisibilitySelectedIds];
+    const label = targetIds.length > 0
+      ? `pour les ${targetIds.length} volontaire(s) sélectionné(s)`
+      : `pour TOUTES les attestations déjà générées (${certAlreadyGenerated.length})`;
+    const verb = visible ? "Activer" : "Désactiver";
+    if (!window.confirm(`${verb} l'attestation ${label} dans leur espace volontaire ?`)) return;
+
+    setCertVisibilityUpdating(true);
+    try {
+      await adminFetch(`/api/certificates/programs/${programId}/visibility`, {
+        method: "POST",
+        body: JSON.stringify({
+          volunteerIds: targetIds.length > 0 ? targetIds : certAlreadyGenerated.map((v) => v.volunteerId),
+          visible,
+        }),
+      });
+      loadCertificates();
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour de la visibilité");
+    } finally {
+      setCertVisibilityUpdating(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (error || !program) return <LoadingSpinner message={error || "Programme introuvable"} error />;
 
@@ -2992,41 +3023,98 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-sm mb-3">🎓 Attestations déjà générées ({certAlreadyGenerated.length})</h3>
+                  <h3 className="font-semibold text-sm mb-1">🎓 Attestations déjà générées ({certAlreadyGenerated.length})</h3>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Une attestation générée est visible/téléchargeable immédiatement dans l'espace du volontaire.
+                    Sélectionnez-en (ou aucune = toutes) pour l'activer/la désactiver dans leur espace, sans la supprimer.
+                  </p>
                   {certAlreadyGenerated.length === 0 ? (
                     <p className="text-gray-500">Aucune attestation générée pour l'instant sur ce programme.</p>
                   ) : (
-                    <div className="space-y-2">
-                      {certAlreadyGenerated.map((v) => (
-                        <div key={v.volunteerId} className="flex justify-between items-center gap-3 border border-gray-200 rounded-xl p-3 flex-wrap">
-                          <div className="min-w-0 break-words">
-                            <strong>{v.prenom} {v.nom}</strong>
-                            <span className="text-xs text-gray-500 ml-2">{v.email}</span>
-                            <div className="text-xs text-gray-500">
-                              Générée {v.uploadedAt ? formatSmartTime(v.uploadedAt) : "—"}
+                    <>
+                      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={certVisibilitySelectedIds.size === certAlreadyGenerated.length}
+                            onChange={(e) => {
+                              setCertVisibilitySelectedIds(
+                                e.target.checked ? new Set(certAlreadyGenerated.map((v) => String(v.volunteerId))) : new Set()
+                              );
+                            }}
+                          />
+                          Tout sélectionner
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleCertVisibility(true)}
+                            disabled={certVisibilityUpdating}
+                            className="bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-100 disabled:opacity-50"
+                          >
+                            ✓ Activer {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : "tout"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleCertVisibility(false)}
+                            disabled={certVisibilityUpdating}
+                            className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-100 disabled:opacity-50"
+                          >
+                            ⊘ Désactiver {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : "tout"}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {certAlreadyGenerated.map((v) => (
+                          <div key={v.volunteerId} className="flex justify-between items-center gap-3 border border-gray-200 rounded-xl p-3 flex-wrap">
+                            <div className="min-w-0 break-words flex items-start gap-2">
+                              <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={certVisibilitySelectedIds.has(String(v.volunteerId))}
+                                onChange={(e) => {
+                                  setCertVisibilitySelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (e.target.checked) next.add(String(v.volunteerId)); else next.delete(String(v.volunteerId));
+                                    return next;
+                                  });
+                                }}
+                              />
+                              <div>
+                                <strong>{v.prenom} {v.nom}</strong>
+                                <span className="text-xs text-gray-500 ml-2">{v.email}</span>
+                                {v.visibleToVolunteer === false ? (
+                                  <span className="ml-2 text-[11px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Masquée</span>
+                                ) : (
+                                  <span className="ml-2 text-[11px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Visible</span>
+                                )}
+                                <div className="text-xs text-gray-500">
+                                  Générée {v.uploadedAt ? formatSmartTime(v.uploadedAt) : "—"}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => downloadAttestation(v.volunteerId, v.fileUrl, v.fileName || `${v.prenom} ${v.nom} AMP BENIN.pdf`)}
+                                disabled={certDownloadingId === v.volunteerId}
+                                className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 disabled:opacity-50">
+                                {certDownloadingId === v.volunteerId ? "..." : "Télécharger →"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => resetCertificate(v.volunteerId, `${v.prenom} ${v.nom}`)}
+                                disabled={certResettingId === v.volunteerId}
+                                title="Retirer cette attestation pour pouvoir la régénérer"
+                                className="bg-red-50 text-red-700 border border-red-200 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                              >
+                                {certResettingId === v.volunteerId ? "..." : "↺ Réinitialiser"}
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => downloadAttestation(v.volunteerId, v.fileUrl, v.fileName || `${v.prenom} ${v.nom} AMP BENIN.pdf`)}
-                              disabled={certDownloadingId === v.volunteerId}
-                              className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 disabled:opacity-50">
-                              {certDownloadingId === v.volunteerId ? "..." : "Télécharger →"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => resetCertificate(v.volunteerId, `${v.prenom} ${v.nom}`)}
-                              disabled={certResettingId === v.volunteerId}
-                              title="Retirer cette attestation pour pouvoir la régénérer"
-                              className="bg-red-50 text-red-700 border border-red-200 text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-red-100 disabled:opacity-50"
-                            >
-                              {certResettingId === v.volunteerId ? "..." : "↺ Réinitialiser"}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
 
