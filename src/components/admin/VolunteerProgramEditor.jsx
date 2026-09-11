@@ -1476,23 +1476,33 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // "Réinitialiser", ça ne supprime rien : juste un masquage réversible.
   const [certVisibilitySelectedIds, setCertVisibilitySelectedIds] = useState(new Set());
   const [certVisibilityUpdating, setCertVisibilityUpdating] = useState(false);
+  // Case à cocher distincte (pas un défaut forcé) — décision explicite de
+  // l'admin à chaque activation, comme demandé.
+  const [certSendEmailOnActivate, setCertSendEmailOnActivate] = useState(false);
   const toggleCertVisibility = async (visible) => {
     const targetIds = [...certVisibilitySelectedIds];
     const label = targetIds.length > 0
       ? `pour les ${targetIds.length} volontaire(s) sélectionné(s)`
       : `pour TOUTES les attestations déjà générées (${certAlreadyGenerated.length})`;
     const verb = visible ? "Activer" : "Désactiver";
-    if (!window.confirm(`${verb} l'attestation ${label} dans leur espace volontaire ?`)) return;
+    const emailNote = visible && certSendEmailOnActivate
+      ? "\n\nUn email de notification sera envoyé à chaque volontaire concerné."
+      : "";
+    if (!window.confirm(`${verb} l'attestation ${label} dans leur espace volontaire ?${emailNote}`)) return;
 
     setCertVisibilityUpdating(true);
     try {
-      await adminFetch(`/api/certificates/programs/${programId}/visibility`, {
+      const res = await adminFetch(`/api/certificates/programs/${programId}/visibility`, {
         method: "POST",
         body: JSON.stringify({
           volunteerIds: targetIds.length > 0 ? targetIds : certAlreadyGenerated.map((v) => v.volunteerId),
           visible,
+          sendEmail: visible && certSendEmailOnActivate,
         }),
       });
+      if (visible && certSendEmailOnActivate) {
+        alert(`${res?.updated || 0} attestation(s) activée(s), ${res?.emailed || 0} email(s) envoyé(s).`);
+      }
       loadCertificates();
     } catch (err) {
       alert(err.message || "Erreur lors de la mise à jour de la visibilité");
@@ -3045,7 +3055,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                           />
                           Tout sélectionner
                         </label>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer" title="S'applique uniquement à l'activation">
+                            <input
+                              type="checkbox"
+                              checked={certSendEmailOnActivate}
+                              onChange={(e) => setCertSendEmailOnActivate(e.target.checked)}
+                            />
+                            📧 Notifier par email (à l'activation)
+                          </label>
                           <button
                             type="button"
                             onClick={() => toggleCertVisibility(true)}
