@@ -3099,6 +3099,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                                 }}
                               />
                               <div>
+                                <span className="text-[11px] font-bold bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded mr-1">{v.score}%</span>
                                 <strong>{v.prenom} {v.nom}</strong>
                                 <span className="text-xs text-gray-500 ml-2">{v.email}</span>
                                 {v.visibleToVolunteer === false ? (
@@ -3154,6 +3155,9 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     </p>
                   ) : (
                     <>
+                      <p className="text-[11px] text-gray-500 mb-2">
+                        Triés par score (%) décroissant — les volontaires les plus avancés sur ce programme en premier.
+                      </p>
                       <input type="text" placeholder="🔍 Rechercher un volontaire..."
                         value={certSearch} onChange={(e) => setCertSearch(e.target.value)}
                         className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm mb-2" />
@@ -3174,6 +3178,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                                     return next;
                                   });
                                 }} />
+                              <span className="text-[11px] font-bold bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded flex-shrink-0">{v.score}%</span>
                               {v.prenom} {v.nom} — <span className="text-gray-500">{v.email}</span>
                             </label>
                           ))}

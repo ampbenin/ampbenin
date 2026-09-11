@@ -21,6 +21,35 @@ export default function Dashboard() {
   const [warnings, setWarnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingIdx, setDownloadingIdx] = useState(null);
+
+  // Force le nom (et l'extension .pdf) du fichier téléchargé — même
+  // contournement que côté admin (VolunteerProgramEditor.jsx) : le compte
+  // Cloudinary bloque la livraison dès que ".pdf" apparaît dans l'URL
+  // elle-même (désactiver cette restriction est une fonctionnalité
+  // payante), donc le nom voulu est imposé ici, côté navigateur, via un
+  // blob + l'attribut `download` — sans ça, le lien direct vers fileUrl
+  // téléchargeait bien le fichier mais sans extension .pdf.
+  const downloadAttestation = async (idx, url, filename) => {
+    setDownloadingIdx(idx);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Échec du téléchargement");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert("Erreur lors du téléchargement du fichier.");
+    } finally {
+      setDownloadingIdx(null);
+    }
+  };
 
   const load = async () => {
     try {
@@ -144,9 +173,14 @@ export default function Dashboard() {
               <div key={i} className="dash-row">
                 <strong>{a.programTitle || "Programme"}</strong>
                 {a.fileUrl ? (
-                  <a href={a.fileUrl} target="_blank" rel="noreferrer" className="dash-btn dash-btn--sm">
-                    Télécharger →
-                  </a>
+                  <button
+                    type="button"
+                    onClick={() => downloadAttestation(i, a.fileUrl, a.fileName || `${profile.prenom} ${profile.nom} AMP BENIN.pdf`)}
+                    disabled={downloadingIdx === i}
+                    className="dash-btn dash-btn--sm"
+                  >
+                    {downloadingIdx === i ? "..." : "Télécharger →"}
+                  </button>
                 ) : (
                   <span className="dash-row__meta">Pas encore générée</span>
                 )}
