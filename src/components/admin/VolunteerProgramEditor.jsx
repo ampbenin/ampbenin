@@ -268,6 +268,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // panneau de réactivation ci-dessus (recherche + sélection multiple).
   const [certEligible, setCertEligible] = useState([]);
   const [certAlreadyGenerated, setCertAlreadyGenerated] = useState([]);
+  // Dénonciations reçues via la page publique de vérification (bouton
+  // "Non, les infos ne correspondent pas") — voir certificateController.js
+  // #fetchAttestationReports.
+  const [certReports, setCertReports] = useState([]);
+  const [certReportDismissingId, setCertReportDismissingId] = useState(null);
   const [certLoading, setCertLoading] = useState(false);
   const [certSelectedIds, setCertSelectedIds] = useState(new Set());
   const [certSearch, setCertSearch] = useState("");
@@ -1272,9 +1277,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const loadCertificates = async () => {
     setCertLoading(true);
     try {
-      const data = await adminFetch(`/api/certificates/programs/${programId}/eligible-volunteers`);
+      const [data, reportsData] = await Promise.all([
+        adminFetch(`/api/certificates/programs/${programId}/eligible-volunteers`),
+        adminFetch(`/api/certificates/programs/${programId}/reports`),
+      ]);
       setCertEligible(data?.eligible || []);
       setCertAlreadyGenerated(data?.alreadyGenerated || []);
+      setCertReports(reportsData?.reports || []);
       setCertSelectedIds(new Set());
       // Pré-remplit l'éditeur de zones avec ce qui est déjà enregistré sur
       // le programme (déjà chargé dans `program`, pas besoin d'un second
@@ -1286,6 +1295,21 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       alert(err.message || "Erreur lors du chargement des attestations");
     } finally {
       setCertLoading(false);
+    }
+  };
+
+  const dismissReport = async (volunteerId, reportId) => {
+    if (!window.confirm("Marquer cette dénonciation comme traitée ? Elle sera retirée de la liste.")) return;
+    setCertReportDismissingId(reportId);
+    try {
+      await adminFetch(`/api/certificates/programs/${programId}/reports/${volunteerId}/${reportId}`, {
+        method: "DELETE",
+      });
+      setCertReports((prev) => prev.filter((r) => r.reportId !== reportId));
+    } catch (err) {
+      alert(err.message || "Erreur lors du traitement de la dénonciation");
+    } finally {
+      setCertReportDismissingId(null);
     }
   };
 
@@ -2919,6 +2943,40 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               <LoadingSpinner />
             ) : (
               <>
+                {certReports.length > 0 && (
+                  <div className="border border-red-200 bg-red-50 rounded-xl p-4">
+                    <h3 className="font-semibold text-sm mb-1 text-red-800">
+                      🚨 Dénonciations reçues ({certReports.length})
+                    </h3>
+                    <p className="text-xs text-red-700 mb-3">
+                      Signalées depuis la page publique de vérification (bouton "Non, les infos ne correspondent pas").
+                      Vérifiez, agissez si besoin (ex : "↺ Réinitialiser" ci-dessous pour régénérer), puis marquez comme traité.
+                    </p>
+                    <div className="space-y-2">
+                      {certReports.map((r) => (
+                        <div key={r.reportId} className="bg-white border border-red-200 rounded-lg p-3 flex justify-between items-start gap-3 flex-wrap">
+                          <div className="min-w-0 break-words">
+                            <strong>{r.volunteerPrenom} {r.volunteerNom}</strong>
+                            <span className="text-xs text-gray-500 ml-2">{r.volunteerEmail}</span>
+                            <div className="text-xs text-gray-600 mt-1">
+                              Par : {r.anonymous ? "Anonyme" : r.reporterName || "(nom non renseigné)"} · {formatSmartTime(r.reportedAt)}
+                            </div>
+                            <p className="text-sm text-gray-800 mt-1 whitespace-pre-wrap">{r.message}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => dismissReport(r.volunteerId, r.reportId)}
+                            disabled={certReportDismissingId === r.reportId}
+                            className="bg-gray-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 disabled:opacity-50 flex-shrink-0"
+                          >
+                            {certReportDismissingId === r.reportId ? "..." : "✓ Marquer comme traité"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="border border-gray-200 rounded-xl p-4">
                   <h3 className="font-semibold text-sm mb-1">🖼️ Visuel du certificat</h3>
                   <p className="text-xs text-gray-600 mb-3">
