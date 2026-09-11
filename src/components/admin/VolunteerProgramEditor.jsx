@@ -1418,6 +1418,36 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  // Force le nom (et l'extension .pdf) du fichier téléchargé — Cloudinary
+  // ne peut pas le faire lui-même côté serveur ici : le compte a la
+  // restriction de sécurité "Restricted media types" active (fonctionnalité
+  // payante pour la désactiver), qui bloque la livraison dès que ".pdf"
+  // apparaît dans l'URL. Contournement 100% côté navigateur : on récupère
+  // le fichier en mémoire (blob), puis on déclenche un téléchargement local
+  // avec le nom voulu via l'attribut `download` d'un <a> pointant vers ce
+  // blob — aucune dépendance à ce que le serveur distant suggère comme nom.
+  const [certDownloadingId, setCertDownloadingId] = useState(null);
+  const downloadAttestation = async (volunteerId, url, filename) => {
+    setCertDownloadingId(volunteerId);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Échec du téléchargement");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert("Erreur lors du téléchargement du fichier.");
+    } finally {
+      setCertDownloadingId(null);
+    }
+  };
+
   // Réinitialise l'attestation d'UN volontaire (le fait réapparaître dans
   // "éligibles" pour pouvoir relancer la génération — utile par exemple
   // pour les attestations générées avant le correctif du bug de police
@@ -2977,10 +3007,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <a href={v.fileUrl} target="_blank" rel="noreferrer"
-                              className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800">
-                              Télécharger →
-                            </a>
+                            <button
+                              type="button"
+                              onClick={() => downloadAttestation(v.volunteerId, v.fileUrl, v.fileName || `${v.prenom} ${v.nom} AMP BENIN.pdf`)}
+                              disabled={certDownloadingId === v.volunteerId}
+                              className="bg-gray-700 text-white text-sm font-semibold px-3 py-1.5 rounded-lg hover:bg-gray-800 disabled:opacity-50">
+                              {certDownloadingId === v.volunteerId ? "..." : "Télécharger →"}
+                            </button>
                             <button
                               type="button"
                               onClick={() => resetCertificate(v.volunteerId, `${v.prenom} ${v.nom}`)}
