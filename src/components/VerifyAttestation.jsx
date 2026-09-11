@@ -43,25 +43,32 @@ export default function VerifyAttestation({ id }) {
       });
   }, [id]);
 
-  // Soumission de la dénonciation  FONCTION NETLIFY
+  // Soumission de la dénonciation — corrigé le 2026-09-11 : pointait vers
+  // /.netlify/functions/reportAttestation, une fonction Netlify jamais
+  // implémentée (aucun fichier source côté amp-benin-site) — le bouton ne
+  // faisait donc rien (404 silencieux). Redirigé vers la vraie route
+  // backend (server-amp-sites), cohérente avec le reste du site.
   const handleReportSubmit = async (e) => {
     e.preventDefault();
     console.log("📤 Envoi du rapport :", { attestationId: id, ...report });
 
     try {
-      const response = await fetch("/.netlify/functions/reportAttestation", {
+      const response = await fetch(`${API_BASE}/api/certificates/verify/${id}/report`, {
         method: "POST",
-        body: JSON.stringify({ attestationId: id, ...report }),
+        body: JSON.stringify(report),
         headers: { "Content-Type": "application/json" },
       });
 
       console.log("📥 Réponse à la dénonciation :", response);
 
-      if (!response.ok) throw new Error("Erreur côté serveur");
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || "Erreur côté serveur");
+      }
       setStep("thanks");
     } catch (err) {
       console.error("🚨 Erreur lors de l'envoi de la dénonciation :", err);
-      alert("Erreur lors de l'envoi, veuillez réessayer.");
+      alert(err.message || "Erreur lors de l'envoi, veuillez réessayer.");
     }
   };
 
