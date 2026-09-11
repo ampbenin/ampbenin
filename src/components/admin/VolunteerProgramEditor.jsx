@@ -1499,15 +1499,29 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // même convention que generateCertificates ci-dessus). Contrairement à
   // "Réinitialiser", ça ne supprime rien : juste un masquage réversible.
   const [certVisibilitySelectedIds, setCertVisibilitySelectedIds] = useState(new Set());
+  // Filtre d'affichage de la liste "déjà générées" — "all" | "visible" |
+  // "hidden". La liste sous-jacente (certAlreadyGenerated) n'est pas
+  // touchée, seul l'affichage + les actions groupées ("tout") en tiennent
+  // compte (voir certAlreadyGeneratedFiltered).
+  const [certVisibilityFilter, setCertVisibilityFilter] = useState("all");
+  const certAlreadyGeneratedFiltered = certAlreadyGenerated.filter((v) => {
+    if (certVisibilityFilter === "visible") return v.visibleToVolunteer !== false;
+    if (certVisibilityFilter === "hidden") return v.visibleToVolunteer === false;
+    return true;
+  });
   const [certVisibilityUpdating, setCertVisibilityUpdating] = useState(false);
   // Case à cocher distincte (pas un défaut forcé) — décision explicite de
   // l'admin à chaque activation, comme demandé.
   const [certSendEmailOnActivate, setCertSendEmailOnActivate] = useState(false);
   const toggleCertVisibility = async (visible) => {
     const targetIds = [...certVisibilitySelectedIds];
+    // "aucune sélection" = agit sur tout ce qui est actuellement AFFICHÉ
+    // (donc respecte le filtre Visible/Masquée en cours), pas sur la liste
+    // complète non filtrée.
+    const fallbackIds = certAlreadyGeneratedFiltered.map((v) => v.volunteerId);
     const label = targetIds.length > 0
       ? `pour les ${targetIds.length} volontaire(s) sélectionné(s)`
-      : `pour TOUTES les attestations déjà générées (${certAlreadyGenerated.length})`;
+      : `pour les ${fallbackIds.length} attestation(s) affichée(s)${certVisibilityFilter !== "all" ? " (filtre en cours)" : ""}`;
     const verb = visible ? "Activer" : "Désactiver";
     const emailNote = visible && certSendEmailOnActivate
       ? "\n\nUn email de notification sera envoyé à chaque volontaire concerné."
@@ -1519,7 +1533,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       const res = await adminFetch(`/api/certificates/programs/${programId}/visibility`, {
         method: "POST",
         body: JSON.stringify({
-          volunteerIds: targetIds.length > 0 ? targetIds : certAlreadyGenerated.map((v) => v.volunteerId),
+          volunteerIds: targetIds.length > 0 ? targetIds : fallbackIds,
           visible,
           sendEmail: visible && certSendEmailOnActivate,
         }),
@@ -3100,18 +3114,38 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     <p className="text-gray-500">Aucune attestation générée pour l'instant sur ce programme.</p>
                   ) : (
                     <>
+                      <div className="flex items-center gap-1.5 mb-3">
+                        {[
+                          { key: "all", label: `Toutes (${certAlreadyGenerated.length})` },
+                          { key: "visible", label: `👁️ Visibles (${certAlreadyGenerated.filter((v) => v.visibleToVolunteer !== false).length})` },
+                          { key: "hidden", label: `🚫 Masquées (${certAlreadyGenerated.filter((v) => v.visibleToVolunteer === false).length})` },
+                        ].map((f) => (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() => { setCertVisibilityFilter(f.key); setCertVisibilitySelectedIds(new Set()); }}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-lg border ${
+                              certVisibilityFilter === f.key
+                                ? "bg-gray-800 text-white border-gray-800"
+                                : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
                       <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
                         <label className="flex items-center gap-2 text-sm cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={certVisibilitySelectedIds.size === certAlreadyGenerated.length}
+                            checked={certVisibilitySelectedIds.size === certAlreadyGeneratedFiltered.length && certAlreadyGeneratedFiltered.length > 0}
                             onChange={(e) => {
                               setCertVisibilitySelectedIds(
-                                e.target.checked ? new Set(certAlreadyGenerated.map((v) => String(v.volunteerId))) : new Set()
+                                e.target.checked ? new Set(certAlreadyGeneratedFiltered.map((v) => String(v.volunteerId))) : new Set()
                               );
                             }}
                           />
-                          Tout sélectionner
+                          Tout sélectionner {certVisibilityFilter !== "all" ? "(dans ce filtre)" : ""}
                         </label>
                         <div className="flex items-center gap-3 flex-wrap">
                           <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer" title="S'applique uniquement à l'activation">
@@ -3128,7 +3162,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             disabled={certVisibilityUpdating}
                             className="bg-green-50 text-green-700 border border-green-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-100 disabled:opacity-50"
                           >
-                            ✓ Activer {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : "tout"}
+                            ✓ Activer {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : `(${certAlreadyGeneratedFiltered.length})`}
                           </button>
                           <button
                             type="button"
@@ -3136,12 +3170,14 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                             disabled={certVisibilityUpdating}
                             className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-amber-100 disabled:opacity-50"
                           >
-                            ⊘ Désactiver {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : "tout"}
+                            ⊘ Désactiver {certVisibilitySelectedIds.size > 0 ? `(${certVisibilitySelectedIds.size})` : `(${certAlreadyGeneratedFiltered.length})`}
                           </button>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {certAlreadyGenerated.map((v) => (
+                        {certAlreadyGeneratedFiltered.length === 0 ? (
+                          <p className="text-gray-500 text-sm">Aucune attestation dans ce filtre.</p>
+                        ) : certAlreadyGeneratedFiltered.map((v) => (
                           <div key={v.volunteerId} className="flex justify-between items-center gap-3 border border-gray-200 rounded-xl p-3 flex-wrap">
                             <div className="min-w-0 break-words flex items-start gap-2">
                               <input
