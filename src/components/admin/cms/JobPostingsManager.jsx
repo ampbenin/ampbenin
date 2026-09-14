@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { adminFetch } from '@/services/admin/api';
 
 const emptyForm = {
-  title: '', category: 'Consultance', location: '', applyUrl: '', deadline: '', order: 0, status: 'DRAFT',
+  title: '', category: 'Consultance', location: '', applyUrl: '', applicationLink: '', deadline: '', order: 0, status: 'DRAFT',
 };
 
 export default function JobPostingsManager() {
@@ -27,6 +27,7 @@ export default function JobPostingsManager() {
       category: item.category || 'Consultance',
       location: item.location || '',
       applyUrl: item.applyUrl || '',
+      applicationLink: item.applicationLink || '',
       deadline: item.deadline ? item.deadline.slice(0, 10) : '',
       order: item.order ?? 0,
       status: item.status || 'DRAFT',
@@ -80,8 +81,13 @@ export default function JobPostingsManager() {
         </div>
         <input placeholder="Lieu" value={form.location}
           onChange={(e) => setForm({ ...form, location: e.target.value })} className="border px-2 py-1 rounded" />
-        <input placeholder="Lien du document (Google Drive...)" value={form.applyUrl}
+        <input placeholder="Lien du document / TDR (Google Drive...)" value={form.applyUrl}
           onChange={(e) => setForm({ ...form, applyUrl: e.target.value })} required className="border px-2 py-1 rounded" />
+        <input placeholder="Lien de candidature (formulaire, email mailto:...) — optionnel" value={form.applicationLink}
+          onChange={(e) => setForm({ ...form, applicationLink: e.target.value })} className="border px-2 py-1 rounded" />
+        <p className="text-xs text-gray-500 -mt-1">
+          Si renseigné, un bouton "Postuler ici" apparaît sur la carte de l'offre en plus de l'aperçu/téléchargement du document.
+        </p>
         <div className="flex gap-2 items-center">
           <label>Date limite (optionnel)</label>
           <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className="border px-2 py-1 rounded" />
@@ -109,6 +115,9 @@ export default function JobPostingsManager() {
             <div>
               <strong>{item.title}</strong> <span className="text-xs text-gray-500">({item.status})</span>
               <div className="text-sm text-gray-600">{item.category} — {item.location}</div>
+              {!item.applicationLink && (
+                <div className="text-xs text-orange-600 mt-0.5">⚠️ Pas de lien de candidature — bouton "Postuler ici" masqué</div>
+              )}
             </div>
             <div className="flex gap-2">
               <button onClick={() => edit(item)} className="underline">Éditer</button>

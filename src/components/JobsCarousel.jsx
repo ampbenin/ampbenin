@@ -114,11 +114,28 @@ export default function JobsCarousel() {
                 {job.location}
               </p>
 
-              {/* Actions */}
+              {/* Actions — "Postuler ici" est l'action principale quand un
+                  lien de candidature est renseigné (décision utilisateur,
+                  2026-09-15) ; sinon "Aperçu" reste l'action mise en avant,
+                  comme avant. */}
               <div className="job-card__actions">
+                {job.applicationLink && (
+                  <a
+                    href={job.applicationLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="job-card__btn job-card__btn--primary"
+                    aria-label={`Postuler : ${job.title}`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Postuler ici
+                  </a>
+                )}
                 <button
                   onClick={() => setSelectedPdf(fileUrl.replace("/view", "/preview"))}
-                  className="job-card__btn job-card__btn--primary"
+                  className={`job-card__btn ${job.applicationLink ? "job-card__btn--outline" : "job-card__btn--primary"}`}
                   aria-label={`Aperçu : ${job.title}`}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
