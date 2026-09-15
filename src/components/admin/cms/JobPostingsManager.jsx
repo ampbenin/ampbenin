@@ -109,22 +109,33 @@ export default function JobPostingsManager() {
         </div>
       </form>
 
-      <div style={{ maxHeight: 400, overflow: 'auto' }}>
-        {items.map((item) => (
-          <div key={item._id} className="border-b py-2 flex justify-between items-center">
-            <div>
-              <strong>{item.title}</strong> <span className="text-xs text-gray-500">({item.status})</span>
-              <div className="text-sm text-gray-600">{item.category} — {item.location}</div>
-              {!item.applicationLink && (
-                <div className="text-xs text-orange-600 mt-0.5">⚠️ Pas de lien de candidature — bouton "Postuler ici" masqué</div>
-              )}
+      {/* Pas de hauteur limitée avec scroll interne ici : une liste
+          courte dans une boîte à défilement donne l'impression que les
+          anciennes offres "disparaissent" dès qu'on en crée une nouvelle
+          qui pousse les autres hors du cadre visible (retour utilisateur,
+          2026-09-15). La liste s'étend simplement avec la page. */}
+      <div>
+        {items.map((item) => {
+          const isExpired = item.deadline && new Date(item.deadline) < new Date(new Date().setHours(0, 0, 0, 0));
+          return (
+            <div key={item._id} className="border-b py-2 flex justify-between items-center">
+              <div>
+                <strong>{item.title}</strong> <span className="text-xs text-gray-500">({item.status})</span>
+                <div className="text-sm text-gray-600">{item.category} — {item.location}</div>
+                {!item.applicationLink && (
+                  <div className="text-xs text-orange-600 mt-0.5">⚠️ Pas de lien de candidature — bouton "Postuler ici" masqué</div>
+                )}
+                {isExpired && (
+                  <div className="text-xs text-red-600 mt-0.5">⏳ Date limite dépassée — masquée de la page publique</div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => edit(item)} className="underline">Éditer</button>
+                <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => edit(item)} className="underline">Éditer</button>
-              <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

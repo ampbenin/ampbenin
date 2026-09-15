@@ -35,9 +35,8 @@ export default function JobsCarousel() {
   }, []);
 
   // Logique identique
-  const [search,      setSearch]      = useState("");
-  const [filter,      setFilter]      = useState("All");
-  const [selectedPdf, setSelectedPdf] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
 
   const filteredJobs = jobsData.filter((job) =>
     (filter === "All" || job.category === filter) &&
@@ -114,10 +113,18 @@ export default function JobsCarousel() {
                 {job.location}
               </p>
 
+              {job.deadline && (
+                <p className="job-card__deadline">
+                  Date limite : {new Date(job.deadline).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </p>
+              )}
+
               {/* Actions — "Postuler ici" est l'action principale quand un
                   lien de candidature est renseigné (décision utilisateur,
-                  2026-09-15) ; sinon "Aperçu" reste l'action mise en avant,
-                  comme avant. */}
+                  2026-09-15). Bouton "Aperçu" (modale iframe) retiré le
+                  même jour — "Consulter" (ex-"Télécharger") ouvre
+                  directement le document dans un nouvel onglet, plus
+                  simple qu'une modale pour un seul document. */}
               <div className="job-card__actions">
                 {job.applicationLink && (
                   <a
@@ -133,27 +140,17 @@ export default function JobsCarousel() {
                     Postuler ici
                   </a>
                 )}
-                <button
-                  onClick={() => setSelectedPdf(fileUrl.replace("/view", "/preview"))}
-                  className={`job-card__btn ${job.applicationLink ? "job-card__btn--outline" : "job-card__btn--primary"}`}
-                  aria-label={`Aperçu : ${job.title}`}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>
-                  Aperçu
-                </button>
                 <a
                   href={fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="job-card__btn job-card__btn--outline"
-                  aria-label={`Télécharger : ${job.title}`}
+                  className={`job-card__btn ${job.applicationLink ? "job-card__btn--outline" : "job-card__btn--primary"}`}
+                  aria-label={`Consulter : ${job.title}`}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                   </svg>
-                  Télécharger
+                  Consulter
                 </a>
               </div>
             </article>
@@ -162,34 +159,6 @@ export default function JobsCarousel() {
           <p className="jobs-empty">Aucune offre ne correspond à votre recherche.</p>
         )}
       </div>
-
-      {/* Modal aperçu PDF */}
-      {selectedPdf && (
-        <div
-          className="jobs-modal-backdrop"
-          onClick={(e) => { if (e.target === e.currentTarget) setSelectedPdf(null); }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Aperçu du document"
-        >
-          <div className="jobs-modal">
-            <button
-              onClick={() => setSelectedPdf(null)}
-              className="jobs-modal__close"
-              aria-label="Fermer l'aperçu"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <iframe
-              src={selectedPdf}
-              title="Aperçu du document"
-              className="jobs-modal__iframe"
-            />
-          </div>
-        </div>
-      )}
 
       <style>{`
         .jobs-wrap {
@@ -342,6 +311,12 @@ export default function JobsCarousel() {
           color: var(--col-text-muted);
         }
 
+        .job-card__deadline {
+          font-size: var(--text-xs);
+          font-weight: 600;
+          color: var(--col-primary);
+        }
+
         .job-card__actions {
           display: flex;
           gap: var(--sp-3);
@@ -379,54 +354,6 @@ export default function JobsCarousel() {
           border-color: var(--col-primary);
         }
         .job-card__btn--outline:hover { background: var(--col-primary-bg); }
-
-        /* Modal */
-        .jobs-modal-backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.65);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 200;
-          padding: var(--sp-4);
-          backdrop-filter: blur(4px);
-        }
-        .jobs-modal {
-          position: relative;
-          width: 90%;
-          height: 90vh;
-          background: var(--col-white);
-          border-radius: var(--r-2xl);
-          box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
-          overflow: hidden;
-        }
-        .jobs-modal__close {
-          position: absolute;
-          top: var(--sp-3);
-          right: var(--sp-3);
-          z-index: 10;
-          width: 2.25rem;
-          height: 2.25rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--col-primary);
-          color: var(--col-white);
-          border: none;
-          border-radius: var(--r-full);
-          cursor: pointer;
-          transition: background var(--tr-base), transform var(--tr-base);
-        }
-        .jobs-modal__close svg { width: 1rem; height: 1rem; }
-        .jobs-modal__close:hover { background: #dc2626; transform: scale(1.08); }
-        .jobs-modal__close:focus-visible { outline: 2px solid var(--col-accent); outline-offset: 3px; }
-
-        .jobs-modal__iframe {
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
       `}</style>
     </div>
   );
