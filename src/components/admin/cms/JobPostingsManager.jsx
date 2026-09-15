@@ -12,7 +12,7 @@ export default function JobPostingsManager() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
-  const [recruitingJob, setRecruitingJob] = useState(null);
+  const [recruitingJobId, setRecruitingJobId] = useState(null);
 
   const load = () => {
     adminFetch('/api/cms/jobs/admin').then((data) => setItems(data?.items || [])).catch(console.error);
@@ -64,6 +64,18 @@ export default function JobPostingsManager() {
     await adminFetch(`/api/cms/jobs/admin/${id}`, { method: 'DELETE' });
     load();
   };
+
+  // Page dédiée (comme VolunteerProgramEditor pour les programmes), pas une
+  // modale — retour utilisateur 2026-09-15 : "il faut que ça soit une vraie
+  // page de dashboard qui s'ouvre comme le cas avec les programmes".
+  if (recruitingJobId) {
+    return (
+      <JobRecruitmentManager
+        jobId={recruitingJobId}
+        onBack={() => { setRecruitingJobId(null); load(); }}
+      />
+    );
+  }
 
   return (
     <div className="p-4 bg-white rounded shadow">
@@ -132,7 +144,7 @@ export default function JobPostingsManager() {
                 )}
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setRecruitingJob(item)} className="underline text-blue-700">Gérer le recrutement</button>
+                <button onClick={() => setRecruitingJobId(item._id)} className="underline text-blue-700">Gérer le recrutement</button>
                 <button onClick={() => edit(item)} className="underline">Éditer</button>
                 <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
               </div>
@@ -140,10 +152,6 @@ export default function JobPostingsManager() {
           );
         })}
       </div>
-
-      {recruitingJob && (
-        <JobRecruitmentManager job={recruitingJob} onClose={() => { setRecruitingJob(null); load(); }} />
-      )}
     </div>
   );
 }
