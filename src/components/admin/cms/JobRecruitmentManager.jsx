@@ -28,6 +28,7 @@ const FIELD_TYPES = [
   { value: 'DATE', label: 'Date' },
   { value: 'SELECT', label: 'Choix (liste déroulante)' },
   { value: 'CHECKBOX', label: 'Case à cocher' },
+  { value: 'FILE', label: 'Fichier (CV, diplôme...)' },
 ];
 
 const STATUS_LABELS = {
@@ -59,6 +60,7 @@ const CONDITIONAL_TRIGGER_TYPES = ['SELECT', 'CHECKBOX'];
 const emptyFieldForm = {
   label: '', type: 'TEXT', required: false, optionsText: '',
   minLength: '', maxLength: '', pattern: '', min: '', max: '',
+  maxFileSizeMB: '', allowedFileTypesText: '',
   conditionalFieldId: '', conditionalValues: [],
 };
 
@@ -223,6 +225,10 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         pattern: fieldForm.pattern || '',
         min: fieldForm.min ? Number(fieldForm.min) : null,
         max: fieldForm.max ? Number(fieldForm.max) : null,
+        maxFileSizeMB: fieldForm.maxFileSizeMB ? Number(fieldForm.maxFileSizeMB) : null,
+        allowedFileTypes: fieldForm.allowedFileTypesText
+          ? fieldForm.allowedFileTypesText.split(',').map((t) => t.trim().toLowerCase().replace(/^\./, '')).filter(Boolean)
+          : [],
       },
       conditional: !fieldForm.conditionalFieldId
         ? { fieldId: '', values: [] }
@@ -250,6 +256,8 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
       pattern: field.validation?.pattern || '',
       min: field.validation?.min ?? '',
       max: field.validation?.max ?? '',
+      maxFileSizeMB: field.validation?.maxFileSizeMB ?? '',
+      allowedFileTypesText: (field.validation?.allowedFileTypes || []).join(', '),
       conditionalFieldId: field.conditional?.fieldId || '',
       conditionalValues: field.conditional?.values || [],
     });
@@ -469,6 +477,21 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
               className="border border-gray-300 rounded-xl p-2" />
           </div>
         )}
+        {fieldForm.type === 'FILE' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" min="1" max="15" placeholder="Taille max (Mo)" value={fieldForm.maxFileSizeMB}
+              onChange={(e) => setFieldForm({ ...fieldForm, maxFileSizeMB: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+            <input type="text" placeholder="Extensions acceptées (ex: pdf, docx)" value={fieldForm.allowedFileTypesText}
+              onChange={(e) => setFieldForm({ ...fieldForm, allowedFileTypesText: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+          </div>
+        )}
+        {fieldForm.type === 'FILE' && (
+          <p className="text-xs text-gray-500 -mt-2">
+            Laissez vide pour accepter tout type/toute taille (jusqu'à 15 Mo, plafond serveur).
+          </p>
+        )}
 
         <div className="border border-gray-200 rounded-xl p-3">
           <label className="text-sm font-semibold text-gray-700">Afficher ce champ seulement si...</label>
@@ -572,6 +595,7 @@ function ApplicationsTab({ job }) {
   };
 
   const fieldLabelById = new Map((job.applicationForm?.fields || []).map((f) => [f.id, f.label]));
+  const fieldById = new Map((job.applicationForm?.fields || []).map((f) => [f.id, f]));
 
   return (
     <div>
@@ -622,7 +646,13 @@ function ApplicationsTab({ job }) {
               {Object.entries(selected.responses || {}).map(([key, value]) => (
                 <div key={key}>
                   <dt className="inline font-semibold">{fieldLabelById.get(key) || key} : </dt>
-                  <dd className="inline">{value === true ? 'Oui' : value === false ? 'Non' : String(value ?? '—')}</dd>
+                  <dd className="inline">
+                    {fieldById.get(key)?.type === 'FILE' && value ? (
+                      <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">📎 Voir le fichier</a>
+                    ) : (
+                      value === true ? 'Oui' : value === false ? 'Non' : String(value ?? '—')
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

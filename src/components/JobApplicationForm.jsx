@@ -140,6 +140,8 @@ export default function JobApplicationForm({ jobPostingId }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [done, setDone] = useState(false);
+  const [uploadingFieldId, setUploadingFieldId] = useState(null);
+  const [fileNames, setFileNames] = useState({}); // nom lisible du fichier choisi, par field.id — jamais envoyé au serveur (seule l'URL Cloudinary l'est)
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -185,6 +187,47 @@ export default function JobApplicationForm({ jobPostingId }) {
   const setValue = (value) => {
     if (!currentStep) return;
     setAnswers((prev) => ({ ...prev, [currentStep.id]: value }));
+  };
+
+  // Contrôles taille/type imposés côté client uniquement (comme maxImages
+  // pour les champs IMAGE ailleurs dans ce projet, voir
+  // jobApplicationController.js#uploadApplicationFile) — pas re-vérifiés
+  // côté serveur, seul le plafond global (15 Mo) l'est via multer.
+  const uploadFile = async (fieldId, file, validation) => {
+    const maxSizeMB = validation?.maxFileSizeMB;
+    if (maxSizeMB && file.size > maxSizeMB * 1024 * 1024) {
+      setStepError(`Le fichier dépasse la taille maximale autorisée (${maxSizeMB} Mo).`);
+      return;
+    }
+    const allowedTypes = validation?.allowedFileTypes || [];
+    if (allowedTypes.length > 0) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!allowedTypes.includes(ext)) {
+        setStepError(`Type de fichier non accepté (attendu : ${allowedTypes.join(", ")}).`);
+        return;
+      }
+    }
+
+    setStepError("");
+    setUploadingFieldId(fieldId);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch(`${API_BASE}/api/job-applications/upload-file`, { method: "POST", body });
+      const uploaded = await res.json();
+      if (!res.ok) throw new Error(uploaded.message || "Erreur lors de l'envoi du fichier");
+      setAnswers((prev) => ({ ...prev, [fieldId]: uploaded.url }));
+      setFileNames((prev) => ({ ...prev, [fieldId]: file.name }));
+    } catch (err) {
+      setStepError(err.message || "Erreur lors de l'envoi du fichier");
+    } finally {
+      setUploadingFieldId(null);
+    }
+  };
+
+  const removeFile = (fieldId) => {
+    setAnswers((prev) => { const next = { ...prev }; delete next[fieldId]; return next; });
+    setFileNames((prev) => { const next = { ...prev }; delete next[fieldId]; return next; });
   };
 
   const goNext = () => {
@@ -403,6 +446,38 @@ export default function JobApplicationForm({ jobPostingId }) {
                 />
               )}
 
+              {currentStep.type === "FILE" && (
+                <div className="tf-file-field">
+                  {answers[currentStep.id] ? (
+                    <div className="tf-file-chosen">
+                      <span>📎 {fileNames[currentStep.id] || "Fichier envoyé"}</span>
+                      <button type="button" onClick={() => removeFile(currentStep.id)} aria-label="Retirer">✕</button>
+                    </div>
+                  ) : (
+                    <label className="tf-file-upload-btn">
+                      {uploadingFieldId === currentStep.id ? "Envoi..." : "📎 Choisir un fichier"}
+                      <input
+                        type="file"
+                        hidden
+                        disabled={uploadingFieldId === currentStep.id}
+                        accept={(currentStep.validation?.allowedFileTypes || []).map((t) => `.${t}`).join(",") || undefined}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadFile(currentStep.id, file, currentStep.validation);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                  {(currentStep.validation?.maxFileSizeMB || currentStep.validation?.allowedFileTypes?.length > 0) && (
+                    <span className="tf-file-hint">
+                      {currentStep.validation?.allowedFileTypes?.length > 0 && `Formats : ${currentStep.validation.allowedFileTypes.join(", ")}. `}
+                      {currentStep.validation?.maxFileSizeMB && `Taille max : ${currentStep.validation.maxFileSizeMB} Mo.`}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {stepError && <p className="tf-error" role="alert">{stepError}</p>}
 
               <div className="tf-nav">
@@ -410,10 +485,10 @@ export default function JobApplicationForm({ jobPostingId }) {
                   ← Précédent
                 </button>
                 <span className="tf-nav__spacer" />
-                {!["SELECT", "CHECKBOX"].includes(currentStep.type) && (
+                {!["SELECT", "CHECKBOX", "FILE"].includes(currentStep.type) && (
                   <span className="tf-nav__hint">Appuyez sur Entrée ↵</span>
                 )}
-                <button type="submit" className="tf-btn tf-btn--primary">Suivant →</button>
+                <button type="submit" className="tf-btn tf-btn--primary" disabled={uploadingFieldId === currentStep.id}>Suivant →</button>
               </div>
             </form>
           )}
@@ -499,6 +574,26 @@ function JobApplicationFormStyles({ palette, textColor, textRgb }) {
         background: ${t(0.18)}; font-weight: 700; font-size: var(--text-sm);
       }
       .tf-choice--selected .tf-choice__badge { background: ${palette.accent}; color: ${palette.accentDark}; }
+
+      .tf-file-field { display: flex; flex-direction: column; gap: var(--sp-3); align-items: flex-start; }
+      .tf-file-upload-btn {
+        display: inline-block; background: ${t(0.14)}; color: ${textColor};
+        border: 2px solid ${t(0.3)}; padding: var(--sp-3) var(--sp-5);
+        border-radius: var(--r-md); font-family: var(--font-body); font-weight: 600;
+        font-size: var(--text-base); cursor: pointer; transition: background var(--tr-fast);
+      }
+      .tf-file-upload-btn:hover { background: ${t(0.22)}; }
+      .tf-file-chosen {
+        display: flex; align-items: center; gap: var(--sp-3);
+        background: ${t(0.10)}; border: 2px solid ${t(0.28)};
+        border-radius: var(--r-md); padding: var(--sp-3) var(--sp-5);
+        color: ${textColor}; font-family: var(--font-body); font-size: var(--text-base);
+      }
+      .tf-file-chosen button {
+        background: #dc2626; color: #fff; border: none; border-radius: 999px;
+        width: 1.4rem; height: 1.4rem; font-size: 0.7rem; cursor: pointer; line-height: 1;
+      }
+      .tf-file-hint { font-size: var(--text-xs); color: ${t(0.7)}; }
 
       .tf-error {
         color: #FFC9C9; font-size: var(--text-sm); margin-top: var(--sp-4); font-weight: 600;
