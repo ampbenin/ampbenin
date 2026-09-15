@@ -88,6 +88,11 @@ export default function JobsCarousel() {
         {filteredJobs.length > 0 ? filteredJobs.map((job) => {
           const catStyle = CATEGORY_COLORS[job.category] || { bg: "#1B4332", text: "#fff" };
           const fileUrl = job.file || job.applyUrl;
+          // Formulaire de candidature interne si configuré côté admin (voir
+          // JobRecruitmentManager.jsx) ; sinon repli sur l'ancien lien
+          // externe (offres pas encore migrées vers le formulaire interne).
+          const hasInternalForm = (job.applicationForm?.fields?.length || 0) > 0;
+          const applyHref = hasInternalForm ? `/recrutement/postuler/${job._id}` : job.applicationLink;
           return (
             <article key={job.id || job._id} className="job-card">
 
@@ -126,11 +131,10 @@ export default function JobsCarousel() {
                   directement le document dans un nouvel onglet, plus
                   simple qu'une modale pour un seul document. */}
               <div className="job-card__actions">
-                {job.applicationLink && (
+                {applyHref && (
                   <a
-                    href={job.applicationLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={applyHref}
+                    {...(hasInternalForm ? {} : { target: "_blank", rel: "noopener noreferrer" })}
                     className="job-card__btn job-card__btn--primary"
                     aria-label={`Postuler : ${job.title}`}
                   >
@@ -144,7 +148,7 @@ export default function JobsCarousel() {
                   href={fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`job-card__btn ${job.applicationLink ? "job-card__btn--outline" : "job-card__btn--primary"}`}
+                  className={`job-card__btn ${applyHref ? "job-card__btn--outline" : "job-card__btn--primary"}`}
                   aria-label={`Consulter : ${job.title}`}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

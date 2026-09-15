@@ -1,6 +1,7 @@
 // Gestion des offres d'emploi/consultance (page Recrutement).
 import React, { useEffect, useState } from 'react';
 import { adminFetch } from '@/services/admin/api';
+import JobRecruitmentManager from './JobRecruitmentManager.jsx';
 
 const emptyForm = {
   title: '', category: 'Consultance', location: '', applyUrl: '', applicationLink: '', deadline: '', order: 0, status: 'DRAFT',
@@ -11,6 +12,7 @@ export default function JobPostingsManager() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
+  const [recruitingJob, setRecruitingJob] = useState(null);
 
   const load = () => {
     adminFetch('/api/cms/jobs/admin').then((data) => setItems(data?.items || [])).catch(console.error);
@@ -122,7 +124,7 @@ export default function JobPostingsManager() {
               <div>
                 <strong>{item.title}</strong> <span className="text-xs text-gray-500">({item.status})</span>
                 <div className="text-sm text-gray-600">{item.category} — {item.location}</div>
-                {!item.applicationLink && (
+                {!item.applicationLink && !(item.applicationForm?.fields?.length) && (
                   <div className="text-xs text-orange-600 mt-0.5">⚠️ Pas de lien de candidature — bouton "Postuler ici" masqué</div>
                 )}
                 {isExpired && (
@@ -130,6 +132,7 @@ export default function JobPostingsManager() {
                 )}
               </div>
               <div className="flex gap-2">
+                <button onClick={() => setRecruitingJob(item)} className="underline text-blue-700">Gérer le recrutement</button>
                 <button onClick={() => edit(item)} className="underline">Éditer</button>
                 <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
               </div>
@@ -137,6 +140,10 @@ export default function JobPostingsManager() {
           );
         })}
       </div>
+
+      {recruitingJob && (
+        <JobRecruitmentManager job={recruitingJob} onClose={() => { setRecruitingJob(null); load(); }} />
+      )}
     </div>
   );
 }

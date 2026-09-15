@@ -5,6 +5,7 @@ import ArticlesManager from './ArticlesManager.jsx';
 import SlugCollectionManager from './SlugCollectionManager.jsx';
 import ActionsManager from './ActionsManager.jsx';
 import JobPostingsManager from './JobPostingsManager.jsx';
+import PersonnelManager from './PersonnelManager.jsx';
 import CampaignEditor from './CampaignEditor.jsx';
 import MediaLibrary from './MediaLibrary.jsx';
 import ContactManager from '../ContactManager.jsx';
@@ -28,6 +29,7 @@ const CONTENT_TABS = [
   { id: 'institutions', label: 'Institutions Spécialisées' },
   { id: 'actions', label: 'Actions / Projets' },
   { id: 'jobs', label: 'Recrutement' },
+  { id: 'personnel', label: 'Personnel' },
   { id: 'campaign', label: 'Campagne 16 jours' },
   { id: 'media', label: 'Médiathèque' },
   // Écriture réservée ADMIN côté serveur (routes/siteSettingsRoute.js) —
@@ -160,6 +162,7 @@ export default function AdminShell() {
         )}
         {active === 'actions' && <ActionsManager />}
         {active === 'jobs' && <JobPostingsManager />}
+        {active === 'personnel' && <PersonnelManager />}
         {active === 'campaign' && <CampaignEditor />}
         {active === 'media' && <MediaLibrary />}
         {active === 'site-settings' && role === 'ADMIN' && <SiteSettingsManager />}

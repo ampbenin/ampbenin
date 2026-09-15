@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/BaseLayout.astro';
+import JobApplicationForm from '../../../components/JobApplicationForm.jsx';
+
+const { jobPostingId } = Astro.params;
+---
+
+<Layout
+  title="Postuler — AMP BENIN"
+  description="Postulez à une offre de recrutement AMP BENIN."
+  url={`https://ampbenin.org/recrutement/postuler/${jobPostingId}`}
+  hideChrome
+>
+  <JobApplicationForm jobPostingId={jobPostingId} client:load />
+</Layout>
