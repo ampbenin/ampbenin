@@ -45,10 +45,36 @@ const TABS = [
   { value: 'candidatures', label: 'Candidatures', icon: '📋' },
 ];
 
-const newField = () => ({
-  id: `field_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-  label: '', type: 'TEXT', required: false, options: [],
-});
+// Sous-champs conditionnels ("Afficher ce champ seulement si...") — même
+// logique que VolunteerProgramEditor.jsx (un champ ne peut dépendre que
+// d'un champ SELECT/CHECKBOX déjà présent AVANT lui dans la liste ; un
+// champ avec des dépendants ne peut pas être déplacé après eux). Absente de
+// la première version de ce constructeur (retour utilisateur 2026-09-16 :
+// "les sous champs qui s'affichent en fonction d'une réponse... n'est pas
+// appliqué au niveau de recrutement") — le rendu candidat
+// (JobApplicationForm.jsx) gérait déjà `conditional`, seule l'UI admin pour
+// le configurer manquait ici.
+const CONDITIONAL_TRIGGER_TYPES = ['SELECT', 'CHECKBOX'];
+
+const emptyFieldForm = {
+  label: '', type: 'TEXT', required: false, optionsText: '',
+  minLength: '', maxLength: '', pattern: '', min: '', max: '',
+  conditionalFieldId: '', conditionalValues: [],
+};
+
+const canMoveFieldUp = (fields, index) =>
+  index > 0 && fields[index].conditional?.fieldId !== fields[index - 1].id;
+const canMoveFieldDown = (fields, index) =>
+  index < fields.length - 1 && fields[index + 1].conditional?.fieldId !== fields[index].id;
+
+const getFieldDepth = (field, fieldsById, guard = new Set()) => {
+  const parentId = field.conditional?.fieldId;
+  if (!parentId || guard.has(field.id)) return 0;
+  const parent = fieldsById.get(parentId);
+  if (!parent) return 0;
+  guard.add(field.id);
+  return 1 + getFieldDepth(parent, fieldsById, guard);
+};
 
 export default function JobRecruitmentManager({ jobId, onBack }) {
   const [job, setJob] = useState(null);
@@ -114,10 +140,10 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
 function FormBuilderTab({ job, applyUrl, onSaved }) {
   const [fields, setFields] = useState(job.applicationForm?.fields || []);
   const [estimatedDuration, setEstimatedDuration] = useState(job.applicationForm?.estimatedDuration || '');
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [importTemplateId, setImportTemplateId] = useState('');
+  const [editingFieldId, setEditingFieldId] = useState(null);
+  const [fieldForm, setFieldForm] = useState(emptyFieldForm);
 
   useEffect(() => {
     setFields(job.applicationForm?.fields || []);
@@ -128,37 +154,125 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
     adminFetch('/api/volunteer-form-templates').then((data) => setTemplates(data?.items || [])).catch(console.error);
   }, []);
 
-  const updateField = (index, patch) => {
-    setFields((prev) => prev.map((f, i) => (i === index ? { ...f, ...patch } : f)));
-    setSaved(false);
+  // Chaque ajout/édition/réordonnancement/suppression enregistre
+  // immédiatement (pas de bouton "Enregistrer" séparé pour les champs) —
+  // même comportement que VolunteerProgramEditor.jsx#saveFormFields, pour
+  // ne jamais perdre un changement si l'admin quitte la page sans y penser.
+  const saveFields = async (nextFields) => {
+    try {
+      const updated = await adminFetch(`/api/cms/jobs/admin/${job._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ applicationForm: { fields: nextFields, estimatedDuration } }),
+      });
+      setFields(updated.applicationForm?.fields || nextFields);
+      onSaved?.();
+    } catch (err) {
+      alert(err.message || 'Erreur lors de l\'enregistrement du formulaire');
+    }
   };
-  const removeField = (index) => { setFields((prev) => prev.filter((_, i) => i !== index)); setSaved(false); };
-  const moveField = (index, dir) => {
-    setFields((prev) => {
-      const next = [...prev];
-      const target = index + dir;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-    setSaved(false);
-  };
-  const addField = () => { setFields((prev) => [...prev, newField()]); setSaved(false); };
 
-  const save = async (nextFields = fields, nextDuration = estimatedDuration) => {
-    setSaving(true);
+  const saveEstimatedDuration = async (e) => {
+    e.preventDefault();
     try {
       await adminFetch(`/api/cms/jobs/admin/${job._id}`, {
         method: 'PUT',
-        body: JSON.stringify({ applicationForm: { fields: nextFields, estimatedDuration: nextDuration } }),
+        body: JSON.stringify({ applicationForm: { fields, estimatedDuration } }),
       });
-      setSaved(true);
       onSaved?.();
     } catch (err) {
-      alert(err.message);
-    } finally {
-      setSaving(false);
+      alert(err.message || 'Erreur lors de l\'enregistrement de la durée');
     }
+  };
+
+  const isTextType = ['TEXT', 'TEXTAREA', 'EMAIL', 'PHONE'].includes(fieldForm.type);
+  const fieldsById = new Map(fields.map((f) => [f.id, f]));
+  const editingFieldIndex = editingFieldId ? fields.findIndex((f) => f.id === editingFieldId) : fields.length;
+  const eligibleTriggerFields = fields.filter(
+    (f, idx) => CONDITIONAL_TRIGGER_TYPES.includes(f.type) && idx < editingFieldIndex
+  );
+  const conditionalTriggerField = fieldsById.get(fieldForm.conditionalFieldId);
+
+  const submitField = async (e) => {
+    e.preventDefault();
+    if (!fieldForm.label.trim()) return;
+
+    const field = {
+      id: editingFieldId || `f_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      label: fieldForm.label,
+      type: fieldForm.type,
+      required: fieldForm.required,
+      locked: false,
+      options: fieldForm.type === 'SELECT'
+        ? fieldForm.optionsText.split(',').map((o) => o.trim()).filter(Boolean)
+        : [],
+      validation: {
+        minLength: fieldForm.minLength ? Number(fieldForm.minLength) : null,
+        maxLength: fieldForm.maxLength ? Number(fieldForm.maxLength) : null,
+        pattern: fieldForm.pattern || '',
+        min: fieldForm.min ? Number(fieldForm.min) : null,
+        max: fieldForm.max ? Number(fieldForm.max) : null,
+      },
+      conditional: !fieldForm.conditionalFieldId
+        ? { fieldId: '', values: [] }
+        : { fieldId: fieldForm.conditionalFieldId, values: fieldForm.conditionalValues },
+    };
+
+    const nextFields = editingFieldId
+      ? fields.map((f) => (f.id === editingFieldId ? field : f))
+      : [...fields, field];
+
+    await saveFields(nextFields);
+    setFieldForm(emptyFieldForm);
+    setEditingFieldId(null);
+  };
+
+  const editField = (field) => {
+    setEditingFieldId(field.id);
+    setFieldForm({
+      label: field.label,
+      type: field.type,
+      required: field.required,
+      optionsText: (field.options || []).join(', '),
+      minLength: field.validation?.minLength ?? '',
+      maxLength: field.validation?.maxLength ?? '',
+      pattern: field.validation?.pattern || '',
+      min: field.validation?.min ?? '',
+      max: field.validation?.max ?? '',
+      conditionalFieldId: field.conditional?.fieldId || '',
+      conditionalValues: field.conditional?.values || [],
+    });
+  };
+
+  const deleteField = async (fieldId) => {
+    if (!confirm('Supprimer ce champ du formulaire ?')) return;
+    const dependents = fields.filter((f) => f.conditional?.fieldId === fieldId);
+    const remaining = fields
+      .filter((f) => f.id !== fieldId)
+      .map((f) => (f.conditional?.fieldId === fieldId ? { ...f, conditional: { fieldId: '', values: [] } } : f));
+
+    await saveFields(remaining);
+    if (dependents.length > 0) {
+      alert(`${dependents.length} sous-champ(s) dépendaient de ce champ : ils redeviennent toujours affichés.`);
+    }
+  };
+
+  const toggleConditionalValue = (value) => {
+    setFieldForm((prev) => ({
+      ...prev,
+      conditionalValues: prev.conditionalValues.includes(value)
+        ? prev.conditionalValues.filter((v) => v !== value)
+        : [...prev.conditionalValues, value],
+    }));
+  };
+
+  const moveField = async (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= fields.length) return;
+    if (direction === -1 && !canMoveFieldUp(fields, index)) return;
+    if (direction === 1 && !canMoveFieldDown(fields, index)) return;
+    const reordered = [...fields];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    await saveFields(reordered);
   };
 
   const importTemplate = async () => {
@@ -177,10 +291,8 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
       }
     });
 
-    const next = [...fields, ...imported];
-    setFields(next);
     setImportTemplateId('');
-    await save(next);
+    await saveFields([...fields, ...imported]);
   };
 
   const saveAsTemplate = async () => {
@@ -216,11 +328,14 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         Prénom, nom, email et téléphone sont toujours demandés automatiquement — ajoutez ici uniquement les questions spécifiques à cette offre.
       </p>
 
-      <div className="mb-3">
-        <label className="text-sm text-gray-600">Durée estimée du formulaire (optionnel, ex: "5 minutes")</label>
-        <input value={estimatedDuration} onChange={(e) => { setEstimatedDuration(e.target.value); setSaved(false); }}
-          className="border px-2 py-1 rounded w-full mt-1" />
-      </div>
+      <form onSubmit={saveEstimatedDuration} className="flex gap-2 items-center mb-4">
+        <input type="text" placeholder="Durée estimée affichée au candidat (ex : 5 minutes)"
+          value={estimatedDuration} onChange={(e) => setEstimatedDuration(e.target.value)}
+          className="flex-1 border border-gray-300 rounded-xl p-2" />
+        <button type="submit" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl text-sm">
+          Enregistrer la durée
+        </button>
+      </form>
 
       <div className="flex gap-2 items-center flex-wrap mb-4">
         <select value={importTemplateId} onChange={(e) => setImportTemplateId(e.target.value)}
@@ -240,44 +355,122 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         </button>
       </div>
 
-      <div className="space-y-3">
-        {fields.map((field, i) => (
-          <div key={field.id} className="border rounded p-3">
-            <div className="flex gap-2 mb-2">
-              <input placeholder="Intitulé de la question" value={field.label}
-                onChange={(e) => updateField(i, { label: e.target.value })} className="border px-2 py-1 rounded flex-1" />
-              <select value={field.type} onChange={(e) => updateField(i, { type: e.target.value })} className="border px-2 py-1 rounded">
-                {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
-            {field.type === 'SELECT' && (
-              <input placeholder="Options séparées par des virgules" value={(field.options || []).join(', ')}
-                onChange={(e) => updateField(i, { options: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
-                className="border px-2 py-1 rounded w-full mb-2" />
-            )}
-            <div className="flex justify-between items-center">
-              <label className="text-sm flex items-center gap-1">
-                <input type="checkbox" checked={!!field.required} onChange={(e) => updateField(i, { required: e.target.checked })} />
-                Obligatoire
-              </label>
-              <div className="flex gap-1">
-                <button type="button" onClick={() => moveField(i, -1)} disabled={i === 0} className="px-2 border rounded disabled:opacity-30">↑</button>
-                <button type="button" onClick={() => moveField(i, 1)} disabled={i === fields.length - 1} className="px-2 border rounded disabled:opacity-30">↓</button>
-                <button type="button" onClick={() => removeField(i)} className="px-2 border rounded text-red-600">Suppr</button>
+      <div className="space-y-2">
+        {fields.length === 0 && <p className="text-gray-500">Aucun champ personnalisé pour l'instant.</p>}
+        {fields.map((field, index) => {
+          const depth = getFieldDepth(field, fieldsById);
+          const parentField = field.conditional?.fieldId ? fieldsById.get(field.conditional.fieldId) : null;
+          return (
+            <div key={field.id} className="flex items-center gap-3 border border-gray-200 rounded-xl p-3"
+              style={{ marginLeft: depth * 24 }}>
+              <div className="flex flex-col gap-0.5">
+                <button type="button" onClick={() => moveField(index, -1)} disabled={!canMoveFieldUp(fields, index)}
+                  className="disabled:opacity-30">▲</button>
+                <button type="button" onClick={() => moveField(index, 1)} disabled={!canMoveFieldDown(fields, index)}
+                  className="disabled:opacity-30">▼</button>
+              </div>
+              <div className="flex-1">
+                <strong>{field.label}</strong>
+                <span className="text-xs text-gray-500 ml-2">
+                  {FIELD_TYPES.find((t) => t.value === field.type)?.label} {field.required && '· obligatoire'}
+                </span>
+                {parentField && (
+                  <div className="text-xs text-blue-600">↳ Visible si « {parentField.label} » = {(field.conditional.values || []).join(', ')}</div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => editField(field)} className="text-blue-600 hover:underline text-sm">Éditer</button>
+                <button type="button" onClick={() => deleteField(field.id)} className="text-red-600 hover:underline text-sm">Supprimer</button>
               </div>
             </div>
-          </div>
-        ))}
-        {fields.length === 0 && <p className="text-gray-500 text-sm">Aucun champ personnalisé pour l'instant.</p>}
+          );
+        })}
       </div>
 
-      <div className="flex items-center gap-3 mt-4">
-        <button type="button" onClick={addField} className="px-3 py-1 border rounded">+ Ajouter un champ</button>
-        <button type="button" onClick={() => save()} disabled={saving} className="px-3 py-1 bg-blue-600 text-white rounded">
-          {saving ? 'Enregistrement...' : 'Enregistrer le formulaire'}
-        </button>
-        {saved && <span className="text-green-600 text-sm">✓ Enregistré</span>}
-      </div>
+      <form onSubmit={submitField} className="border-t pt-4 mt-4 space-y-3">
+        <h3 className="font-semibold">{editingFieldId ? 'Modifier le champ' : 'Ajouter un champ'}</h3>
+        <input type="text" placeholder="Libellé de la question" value={fieldForm.label}
+          onChange={(e) => setFieldForm({ ...fieldForm, label: e.target.value })} required
+          className="w-full border border-gray-300 rounded-xl p-2" />
+        <div className="grid grid-cols-2 gap-3">
+          <select value={fieldForm.type}
+            onChange={(e) => setFieldForm({ ...fieldForm, type: e.target.value })}
+            className="border border-gray-300 rounded-xl p-2">
+            {FIELD_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={fieldForm.required}
+              onChange={(e) => setFieldForm({ ...fieldForm, required: e.target.checked })} />
+            Obligatoire
+          </label>
+        </div>
+        {fieldForm.type === 'SELECT' && (
+          <input type="text" placeholder="Options séparées par des virgules" value={fieldForm.optionsText}
+            onChange={(e) => setFieldForm({ ...fieldForm, optionsText: e.target.value })}
+            className="w-full border border-gray-300 rounded-xl p-2" />
+        )}
+        {isTextType && (
+          <div className="grid grid-cols-3 gap-2">
+            <input type="number" placeholder="Longueur min" value={fieldForm.minLength}
+              onChange={(e) => setFieldForm({ ...fieldForm, minLength: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+            <input type="number" placeholder="Longueur max" value={fieldForm.maxLength}
+              onChange={(e) => setFieldForm({ ...fieldForm, maxLength: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+            <input type="text" placeholder="Motif regex (optionnel)" value={fieldForm.pattern}
+              onChange={(e) => setFieldForm({ ...fieldForm, pattern: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+          </div>
+        )}
+        {fieldForm.type === 'NUMBER' && (
+          <div className="grid grid-cols-2 gap-2">
+            <input type="number" placeholder="Min" value={fieldForm.min}
+              onChange={(e) => setFieldForm({ ...fieldForm, min: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+            <input type="number" placeholder="Max" value={fieldForm.max}
+              onChange={(e) => setFieldForm({ ...fieldForm, max: e.target.value })}
+              className="border border-gray-300 rounded-xl p-2" />
+          </div>
+        )}
+
+        <div className="border border-gray-200 rounded-xl p-3">
+          <label className="text-sm font-semibold text-gray-700">Afficher ce champ seulement si...</label>
+          <select value={fieldForm.conditionalFieldId}
+            onChange={(e) => setFieldForm({ ...fieldForm, conditionalFieldId: e.target.value, conditionalValues: [] })}
+            className="w-full border border-gray-300 rounded-xl p-2 mt-1">
+            <option value="">-- Toujours visible --</option>
+            {eligibleTriggerFields.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+          </select>
+          {fieldForm.conditionalFieldId && conditionalTriggerField && (
+            <div className="mt-2 flex gap-3 flex-wrap">
+              {(conditionalTriggerField.type === 'CHECKBOX' ? ['true', 'false'] : conditionalTriggerField.options || []).map((opt) => (
+                <label key={opt} className="flex items-center gap-1 text-sm">
+                  <input type="checkbox" checked={fieldForm.conditionalValues.includes(opt)}
+                    onChange={() => toggleConditionalValue(opt)} />
+                  {conditionalTriggerField.type === 'CHECKBOX' ? (opt === 'true' ? 'si coché' : 'si non coché') : opt}
+                </label>
+              ))}
+            </div>
+          )}
+          {eligibleTriggerFields.length === 0 && (
+            <p className="text-xs text-gray-500 mt-1">
+              Ajoutez d'abord un champ "Choix" ou "Case à cocher" avant celui-ci pour pouvoir le conditionner.
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button type="submit" className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-xl hover:bg-blue-700">
+            {editingFieldId ? 'Enregistrer le champ' : 'Ajouter le champ'}
+          </button>
+          {editingFieldId && (
+            <button type="button" onClick={() => { setEditingFieldId(null); setFieldForm(emptyFieldForm); }}
+              className="px-4 py-2 border rounded-xl">
+              Annuler
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
