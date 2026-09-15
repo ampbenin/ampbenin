@@ -2,13 +2,18 @@
 // Assistant de candidature façon Typeform pour les offres de recrutement
 // (JobPosting) — adapté de VolunteerApplicationForm.jsx (même mécanique de
 // pas-à-pas, champs conditionnels, validation), mais formulaire d'une seule
-// offre (pas de mode "spontané"), sans couleur de marque personnalisable
-// (JobPosting n'a pas de brandColor comme VolunteerProgram) ni de détails
-// de programme (dates, lieu...) — juste le titre + la durée estimée.
+// offre (pas de mode "spontané"), sans détails de programme (dates,
+// lieu...) — juste le titre + la durée estimée. Couleur de fond et couleur
+// de texte réglables par offre (job.applicationForm.backgroundColor/textColor,
+// décision utilisateur 2026-09-16 — deux champs explicites plutôt qu'une
+// seule "couleur de marque" dérivée comme pour le volontariat) : le fond
+// pilote toujours le dégradé/l'accent (derivePalette), le texte pilote
+// toutes les nuances de blanc du gabarit (via textRgba ci-dessous).
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "";
-const BRAND_COLOR = "#1B4332"; // vert AMP Bénin, fixe (pas de personnalisation par offre)
+const DEFAULT_BACKGROUND_COLOR = "#1B4332"; // vert AMP Bénin
+const DEFAULT_TEXT_COLOR = "#FFFFFF";
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
 function hexToHsl(hex) {
@@ -51,7 +56,8 @@ function hexToRgb(hex) {
   return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
 }
 
-function derivePalette(base) {
+function derivePalette(bg) {
+  const base = /^#[0-9a-fA-F]{6}$/.test(bg || "") ? bg : DEFAULT_BACKGROUND_COLOR;
   const { h, s } = hexToHsl(base);
   const satHigh = clamp(s + 10, 55, 95);
   const hueShift = h + 20;
@@ -121,7 +127,6 @@ const validateStep = (step, value) => {
 };
 
 const INPUT_TYPE = { EMAIL: "email", NUMBER: "number", DATE: "date", PHONE: "tel" };
-const palette = derivePalette(BRAND_COLOR);
 
 export default function JobApplicationForm({ jobPostingId }) {
   const [form, setForm] = useState(null);
@@ -148,6 +153,13 @@ export default function JobApplicationForm({ jobPostingId }) {
       .catch((err) => setError(err.message || "Offre introuvable"))
       .finally(() => setLoading(false));
   }, [jobPostingId]);
+
+  const palette = useMemo(() => derivePalette(form?.backgroundColor), [form?.backgroundColor]);
+  const textColor = useMemo(
+    () => (/^#[0-9a-fA-F]{6}$/.test(form?.textColor || "") ? form.textColor : DEFAULT_TEXT_COLOR),
+    [form?.textColor]
+  );
+  const textRgb = useMemo(() => hexToRgb(textColor).join(", "), [textColor]);
 
   const fieldsById = useMemo(() => new Map((form?.fields || []).map((f) => [f.id, f])), [form]);
 
@@ -262,7 +274,7 @@ export default function JobApplicationForm({ jobPostingId }) {
           </p>
           <a href="/recrutement" className="tf-btn tf-btn--primary">Retour aux offres</a>
         </div>
-        <JobApplicationFormStyles />
+        <JobApplicationFormStyles palette={palette} textColor={textColor} textRgb={textRgb} />
       </div>
     );
   }
@@ -277,7 +289,7 @@ export default function JobApplicationForm({ jobPostingId }) {
             Commencer →
           </button>
         </div>
-        <JobApplicationFormStyles />
+        <JobApplicationFormStyles palette={palette} textColor={textColor} textRgb={textRgb} />
       </div>
     );
   }
@@ -408,15 +420,19 @@ export default function JobApplicationForm({ jobPostingId }) {
         </div>
       </div>
 
-      <JobApplicationFormStyles />
+      <JobApplicationFormStyles palette={palette} textColor={textColor} textRgb={textRgb} />
     </div>
   );
 }
 
-function JobApplicationFormStyles() {
-  // Même feuille de style que VolunteerApplicationForm.jsx (plein écran
-  // volontairement toujours sombre, couleurs figées en hexadécimal plutôt
-  // que var(--col-*), voir son commentaire pour le raisonnement complet).
+function JobApplicationFormStyles({ palette, textColor, textRgb }) {
+  // Même feuille de style que VolunteerApplicationForm.jsx (plein écran,
+  // couleurs figées en hexadécimal plutôt que var(--col-*)), mais avec deux
+  // réglages indépendants par offre (décision utilisateur 2026-09-16) : le
+  // fond pilote toujours le dégradé/l'accent (derivePalette), le texte
+  // (`textColor`/`textRgb`) remplace chaque nuance de blanc — plus de
+  // dépendance à un fond forcément sombre.
+  const t = (alpha) => `rgba(${textRgb}, ${alpha})`;
   return (
     <style>{`
       .tf-shell {
@@ -424,7 +440,7 @@ function JobApplicationFormStyles() {
         display: flex; flex-direction: column;
         background: radial-gradient(ellipse at top right, ${palette.glowRgba}, transparent 55%),
                     linear-gradient(160deg, ${palette.gradDark} 0%, ${palette.gradMid} 55%, ${palette.gradEnd} 140%);
-        color: #FFFFFF;
+        color: ${textColor};
         font-family: var(--font-body);
         z-index: 10;
       }
@@ -432,16 +448,16 @@ function JobApplicationFormStyles() {
 
       .tf-loading, .tf-fatal-error { font-size: var(--text-lg); }
 
-      .tf-progress { height: 4px; width: 100%; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+      .tf-progress { height: 4px; width: 100%; background: ${t(0.18)}; flex-shrink: 0; }
       .tf-progress__bar { height: 100%; background: ${palette.accent}; transition: width var(--tr-slow); }
 
       .tf-topbar {
         display: flex; align-items: center; justify-content: space-between;
         padding: var(--sp-5) var(--sp-6); flex-shrink: 0;
       }
-      .tf-topbar__count { font-size: var(--text-sm); color: rgba(255,255,255,0.8); }
-      .tf-topbar__quit { font-size: var(--text-sm); color: rgba(255,255,255,0.8); }
-      .tf-topbar__quit:hover { color: #FFFFFF; }
+      .tf-topbar__count { font-size: var(--text-sm); color: ${t(0.8)}; }
+      .tf-topbar__quit { font-size: var(--text-sm); color: ${t(0.8)}; }
+      .tf-topbar__quit:hover { color: ${textColor}; }
 
       .tf-stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--sp-6); }
 
@@ -451,36 +467,36 @@ function JobApplicationFormStyles() {
       @keyframes tf-in-forward { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
       @keyframes tf-in-backward { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
 
-      .tf-question__hint { font-size: var(--text-sm); color: rgba(255,255,255,0.85); margin-bottom: var(--sp-2); }
+      .tf-question__hint { font-size: var(--text-sm); color: ${t(0.85)}; margin-bottom: var(--sp-2); }
       .tf-question__title {
-        font-family: var(--font-heading); font-weight: 500; line-height: 1.25; color: #FFFFFF;
+        font-family: var(--font-heading); font-weight: 500; line-height: 1.25; color: ${textColor};
         font-size: clamp(1.5rem, 4vw, 2.25rem); margin-bottom: var(--sp-8);
       }
       .tf-question__required { color: ${palette.accentLight}; }
 
       .tf-input, .tf-textarea {
-        width: 100%; background: transparent; border: none; border-bottom: 2px solid rgba(255,255,255,0.5);
-        color: #FFFFFF; font-family: var(--font-body); font-size: var(--text-xl);
+        width: 100%; background: transparent; border: none; border-bottom: 2px solid ${t(0.5)};
+        color: ${textColor}; font-family: var(--font-body); font-size: var(--text-xl);
         padding: var(--sp-3) var(--sp-1); transition: border-color var(--tr-base);
       }
-      .tf-input::placeholder, .tf-textarea::placeholder { color: rgba(255,255,255,0.45); }
+      .tf-input::placeholder, .tf-textarea::placeholder { color: ${t(0.45)}; }
       .tf-input:focus, .tf-textarea:focus { outline: none; border-color: ${palette.accent}; }
       .tf-textarea { resize: vertical; }
 
       .tf-choices { display: flex; flex-direction: column; gap: var(--sp-3); }
       .tf-choice {
         display: flex; align-items: center; gap: var(--sp-4);
-        background: rgba(255,255,255,0.10); border: 2px solid rgba(255,255,255,0.28);
+        background: ${t(0.10)}; border: 2px solid ${t(0.28)};
         border-radius: var(--r-md); padding: var(--sp-4) var(--sp-5);
-        color: #FFFFFF; font-family: var(--font-body); font-size: var(--text-base);
+        color: ${textColor}; font-family: var(--font-body); font-size: var(--text-base);
         text-align: left; cursor: pointer; transition: all var(--tr-fast);
       }
-      .tf-choice:hover { border-color: ${palette.accentLight}; background: rgba(255,255,255,0.16); transform: translateX(4px); }
+      .tf-choice:hover { border-color: ${palette.accentLight}; background: ${t(0.16)}; transform: translateX(4px); }
       .tf-choice--selected { border-color: ${palette.accent}; background: ${palette.selectedBgRgba}; }
       .tf-choice__badge {
         display: flex; align-items: center; justify-content: center;
         width: 2rem; height: 2rem; border-radius: var(--r-sm); flex-shrink: 0;
-        background: rgba(255,255,255,0.18); font-weight: 700; font-size: var(--text-sm);
+        background: ${t(0.18)}; font-weight: 700; font-size: var(--text-sm);
       }
       .tf-choice--selected .tf-choice__badge { background: ${palette.accent}; color: ${palette.accentDark}; }
 
@@ -497,7 +513,7 @@ function JobApplicationFormStyles() {
       .tf-nav { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-3) var(--sp-4); margin-top: var(--sp-8); }
       .tf-nav--review { justify-content: space-between; flex-wrap: wrap; }
       .tf-nav__spacer { flex: 1; }
-      .tf-nav__hint { font-size: var(--text-xs); color: rgba(255,255,255,0.65); }
+      .tf-nav__hint { font-size: var(--text-xs); color: ${t(0.65)}; }
 
       .tf-btn {
         display: inline-flex; align-items: center; gap: var(--sp-2);
@@ -508,19 +524,19 @@ function JobApplicationFormStyles() {
       .tf-btn--primary { background: ${palette.accent}; color: ${palette.accentDark}; box-shadow: 0 4px 24px ${palette.shadowRgba}; }
       .tf-btn--primary:hover { background: ${palette.accentLight}; transform: translateY(-2px); }
       .tf-btn--primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-      .tf-btn--ghost { background: transparent; color: rgba(255,255,255,0.9); border: 2px solid rgba(255,255,255,0.4); }
-      .tf-btn--ghost:hover { border-color: rgba(255,255,255,0.65); color: #FFFFFF; background: rgba(255,255,255,0.06); }
+      .tf-btn--ghost { background: transparent; color: ${t(0.9)}; border: 2px solid ${t(0.4)}; }
+      .tf-btn--ghost:hover { border-color: ${t(0.65)}; color: ${textColor}; background: ${t(0.06)}; }
       .tf-btn--ghost:disabled { opacity: 0.35; cursor: not-allowed; }
       .tf-btn--lg { padding: var(--sp-4) var(--sp-8); font-size: var(--text-lg); }
 
       .tf-cover { max-width: 34rem; display: flex; flex-direction: column; align-items: center; }
       .tf-cover__title {
         font-family: var(--font-heading); font-weight: 500; font-size: clamp(1.75rem, 5vw, 2.75rem);
-        margin-bottom: var(--sp-4); line-height: 1.2; color: #FFFFFF;
+        margin-bottom: var(--sp-4); line-height: 1.2; color: ${textColor};
       }
-      .tf-cover__meta { color: rgba(255,255,255,0.7); font-size: var(--text-sm); margin-bottom: var(--sp-8); }
+      .tf-cover__meta { color: ${t(0.7)}; font-size: var(--text-sm); margin-bottom: var(--sp-8); }
 
-      .tf-review__desc { color: rgba(255,255,255,0.88); font-size: var(--text-lg); margin-bottom: var(--sp-6); }
+      .tf-review__desc { color: ${t(0.88)}; font-size: var(--text-lg); margin-bottom: var(--sp-6); }
 
       .tf-done { max-width: 30rem; display: flex; flex-direction: column; align-items: center; }
       .tf-check { width: 4.5rem; height: 4.5rem; margin-bottom: var(--sp-6); }
@@ -529,13 +545,13 @@ function JobApplicationFormStyles() {
         animation: tf-draw-circle 0.6s ease forwards;
       }
       .tf-check__mark {
-        stroke: #FFFFFF; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+        stroke: ${textColor}; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
         stroke-dasharray: 40; stroke-dashoffset: 40; animation: tf-draw-mark 0.4s 0.6s ease forwards;
       }
       @keyframes tf-draw-circle { to { stroke-dashoffset: 0; } }
       @keyframes tf-draw-mark { to { stroke-dashoffset: 0; } }
-      .tf-done__title { font-family: var(--font-heading); font-weight: 500; font-size: var(--text-3xl); margin-bottom: var(--sp-4); color: #FFFFFF; }
-      .tf-done__subtitle { color: rgba(255,255,255,0.88); font-size: var(--text-base); margin-bottom: var(--sp-8); }
+      .tf-done__title { font-family: var(--font-heading); font-weight: 500; font-size: var(--text-3xl); margin-bottom: var(--sp-4); color: ${textColor}; }
+      .tf-done__subtitle { color: ${t(0.88)}; font-size: var(--text-base); margin-bottom: var(--sp-8); }
 
       @media (max-width: 640px) {
         .tf-topbar { padding: var(--sp-4); }

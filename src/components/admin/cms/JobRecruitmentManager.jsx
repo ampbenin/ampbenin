@@ -140,6 +140,8 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
 function FormBuilderTab({ job, applyUrl, onSaved }) {
   const [fields, setFields] = useState(job.applicationForm?.fields || []);
   const [estimatedDuration, setEstimatedDuration] = useState(job.applicationForm?.estimatedDuration || '');
+  const [backgroundColor, setBackgroundColor] = useState(job.applicationForm?.backgroundColor || '');
+  const [textColor, setTextColor] = useState(job.applicationForm?.textColor || '');
   const [templates, setTemplates] = useState([]);
   const [importTemplateId, setImportTemplateId] = useState('');
   const [editingFieldId, setEditingFieldId] = useState(null);
@@ -148,41 +150,51 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
   useEffect(() => {
     setFields(job.applicationForm?.fields || []);
     setEstimatedDuration(job.applicationForm?.estimatedDuration || '');
+    setBackgroundColor(job.applicationForm?.backgroundColor || '');
+    setTextColor(job.applicationForm?.textColor || '');
   }, [job]);
 
   useEffect(() => {
     adminFetch('/api/volunteer-form-templates').then((data) => setTemplates(data?.items || [])).catch(console.error);
   }, []);
 
-  // Chaque ajout/édition/réordonnancement/suppression enregistre
-  // immédiatement (pas de bouton "Enregistrer" séparé pour les champs) —
-  // même comportement que VolunteerProgramEditor.jsx#saveFormFields, pour
-  // ne jamais perdre un changement si l'admin quitte la page sans y penser.
-  const saveFields = async (nextFields) => {
+  // Point d'enregistrement UNIQUE pour tout applicationForm : le backend
+  // remplace le sous-document entier à chaque PUT (Mongoose $set sur la clé
+  // top-level "applicationForm"), donc omettre un champ ici l'effacerait —
+  // chaque appel repart toujours de l'état local complet, en écrasant
+  // seulement ce que `patch` fournit explicitement. Chaque ajout/édition/
+  // réordonnancement/suppression de champ ou changement de couleur
+  // enregistre immédiatement (pas de bouton "Enregistrer" séparé), même
+  // comportement que VolunteerProgramEditor.jsx#saveFormFields/saveBrandColor.
+  const persist = async (patch) => {
+    const next = {
+      fields: patch.fields ?? fields,
+      estimatedDuration: patch.estimatedDuration ?? estimatedDuration,
+      backgroundColor: patch.backgroundColor ?? backgroundColor,
+      textColor: patch.textColor ?? textColor,
+    };
     try {
       const updated = await adminFetch(`/api/cms/jobs/admin/${job._id}`, {
         method: 'PUT',
-        body: JSON.stringify({ applicationForm: { fields: nextFields, estimatedDuration } }),
+        body: JSON.stringify({ applicationForm: next }),
       });
-      setFields(updated.applicationForm?.fields || nextFields);
+      setFields(updated.applicationForm?.fields ?? next.fields);
+      setEstimatedDuration(updated.applicationForm?.estimatedDuration ?? next.estimatedDuration);
+      setBackgroundColor(updated.applicationForm?.backgroundColor ?? next.backgroundColor);
+      setTextColor(updated.applicationForm?.textColor ?? next.textColor);
       onSaved?.();
     } catch (err) {
       alert(err.message || 'Erreur lors de l\'enregistrement du formulaire');
     }
   };
+  const saveFields = (nextFields) => persist({ fields: nextFields });
 
   const saveEstimatedDuration = async (e) => {
     e.preventDefault();
-    try {
-      await adminFetch(`/api/cms/jobs/admin/${job._id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ applicationForm: { fields, estimatedDuration } }),
-      });
-      onSaved?.();
-    } catch (err) {
-      alert(err.message || 'Erreur lors de l\'enregistrement de la durée');
-    }
+    await persist({ estimatedDuration });
   };
+
+  const saveAppearance = (patch) => persist(patch);
 
   const isTextType = ['TEXT', 'TEXTAREA', 'EMAIL', 'PHONE'].includes(fieldForm.type);
   const fieldsById = new Map(fields.map((f) => [f.id, f]));
@@ -327,6 +339,31 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
       <p className="text-sm text-gray-600 mb-3">
         Prénom, nom, email et téléphone sont toujours demandés automatiquement — ajoutez ici uniquement les questions spécifiques à cette offre.
       </p>
+
+      <div className="mb-4">
+        <label className="text-sm font-semibold text-gray-700">Couleur du formulaire</label>
+        <p className="text-xs text-gray-500 mb-1">Fond et texte du formulaire de candidature plein écran vu par le candidat — propres à cette offre.</p>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div>
+            <label className="text-xs text-gray-500 block">Fond</label>
+            <input type="color" value={backgroundColor || '#1B4332'}
+              onChange={(e) => saveAppearance({ backgroundColor: e.target.value })}
+              className="w-11 h-11 rounded border border-gray-300 cursor-pointer" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block">Texte</label>
+            <input type="color" value={textColor || '#FFFFFF'}
+              onChange={(e) => saveAppearance({ textColor: e.target.value })}
+              className="w-11 h-11 rounded border border-gray-300 cursor-pointer" />
+          </div>
+          {(backgroundColor || textColor) && (
+            <button type="button" onClick={() => saveAppearance({ backgroundColor: '', textColor: '' })}
+              className="text-sm text-blue-600 hover:underline">
+              Réinitialiser (couleurs par défaut)
+            </button>
+          )}
+        </div>
+      </div>
 
       <form onSubmit={saveEstimatedDuration} className="flex gap-2 items-center mb-4">
         <input type="text" placeholder="Durée estimée affichée au candidat (ex : 5 minutes)"
