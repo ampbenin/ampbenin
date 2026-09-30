@@ -32,11 +32,13 @@ const FIELD_TYPES = [
 ];
 
 const STATUS_LABELS = {
-  RECEIVED: 'Reçue', UNDER_REVIEW: 'En étude', RETAINED: 'Retenue', REJECTED: 'Refusée',
+  RECEIVED: 'Reçue', UNDER_REVIEW: 'En étude', PENDING_VALIDATION: 'En attente de validation ADMIN',
+  RETAINED: 'Retenue', REJECTED: 'Refusée',
 };
 const STATUS_COLORS = {
   RECEIVED: 'bg-gray-200 text-gray-700',
   UNDER_REVIEW: 'bg-yellow-100 text-yellow-700',
+  PENDING_VALIDATION: 'bg-purple-100 text-purple-700',
   RETAINED: 'bg-green-100 text-green-700',
   REJECTED: 'bg-red-100 text-red-700',
 };
@@ -621,6 +623,8 @@ function ApplicationsTab({ job, canView, canReview, role }) {
     await act(selected._id, 'retain', retainForm);
   };
 
+  const validateRetain = () => act(selected._id, 'validate-retain');
+
   const del = async (id) => {
     if (!confirm('Supprimer définitivement cette candidature ?')) return;
     await adminFetch(`/api/job-applications/${id}`, { method: 'DELETE' });
@@ -650,6 +654,7 @@ function ApplicationsTab({ job, canView, canReview, role }) {
         {[
           ['RECEIVED', 'Reçues'],
           ['UNDER_REVIEW', 'En étude'],
+          ['PENDING_VALIDATION', 'En attente de validation'],
           ['', 'Retenues & refusées'],
         ].map(([value, label]) => (
           <button
@@ -739,7 +744,7 @@ function ApplicationsTab({ job, canView, canReview, role }) {
                   className="border px-2 py-1 rounded w-full mb-2" rows={2} />
                 <div className="flex gap-3">
                   <button type="submit" className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
-                    ✓ Retenir → Ajouter au personnel
+                    {role === 'ADMIN' ? '✓ Retenir → Ajouter au personnel' : 'Proposer la rétention (validation ADMIN requise)'}
                   </button>
                   <button type="button" onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
                     Refuser
@@ -748,7 +753,28 @@ function ApplicationsTab({ job, canView, canReview, role }) {
               </form>
             )}
 
-            {!canReview && selected.status !== 'RETAINED' && selected.status !== 'REJECTED' && (
+            {selected.status === 'PENDING_VALIDATION' && (
+              <div className="border-t pt-3 mt-2">
+                <p className="text-sm text-purple-700 bg-purple-50 border border-purple-200 rounded p-2 mb-3">
+                  Rétention proposée — catégorie : <strong>{selected.proposedCategory}</strong>
+                  {selected.proposedNotes && <> · notes : {selected.proposedNotes}</>}
+                </p>
+                {role === 'ADMIN' ? (
+                  <div className="flex gap-3">
+                    <button onClick={validateRetain} className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
+                      ✓ Valider la rétention → Ajouter au personnel
+                    </button>
+                    <button onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
+                      Refuser
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">En attente de validation par un administrateur.</p>
+                )}
+              </div>
+            )}
+
+            {!canReview && !['RETAINED', 'REJECTED', 'PENDING_VALIDATION'].includes(selected.status) && (
               <p className="text-sm text-gray-500">Statut : {STATUS_LABELS[selected.status]} (lecture seule).</p>
             )}
             {selected.status === 'RETAINED' && (
