@@ -44,6 +44,8 @@ const STATUS_COLORS = {
 const TABS = [
   { value: 'formulaire', label: 'Formulaire', icon: '📝' },
   { value: 'candidatures', label: 'Candidatures', icon: '📋' },
+  // "Accès" ajouté conditionnellement (ADMIN uniquement) dans le composant,
+  // pas ici : gérer les affectations n'est jamais délégable.
 ];
 
 // Sous-champs conditionnels ("Afficher ce champ seulement si...") — même
@@ -82,13 +84,20 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [subTab, setSubTab] = useState('formulaire');
+  const [subTab, setSubTab] = useState(null); // choisi après chargement, selon les droits
   const [copied, setCopied] = useState(false);
+  // Réservé ADMIN partout dans ce fichier (voir la constante ROLE) : gérer
+  // le contenu d'une offre affectée n'implique jamais de pouvoir gérer QUI
+  // y est affecté.
+  const role = typeof window !== 'undefined' ? localStorage.getItem('amp_role') : null;
 
   const load = () => {
     setLoading(true);
     adminFetch(`/api/cms/jobs/admin/${jobId}`)
-      .then(setJob)
+      .then((data) => {
+        setJob(data);
+        setSubTab((prev) => prev || (data.myAccess?.canEditForm ? 'formulaire' : 'candidatures'));
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   };
@@ -103,6 +112,9 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
     });
   };
 
+  const access = job?.myAccess || { canEditForm: false, canViewApplications: false, canReviewApplications: false };
+  const tabs = role === 'ADMIN' ? [...TABS, { value: 'acces', label: 'Accès', icon: '🔑' }] : TABS;
+
   return (
     <div className="p-6 bg-gradient-to-br from-green-50 via-blue-50 to-violet-50 min-h-screen rounded-lg shadow-md">
       <div className="flex items-center justify-between mb-4 max-w-4xl mx-auto flex-wrap gap-2">
@@ -115,7 +127,7 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
       </div>
 
       <div className="flex gap-2 justify-center mb-6 flex-wrap">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button
             key={t.value}
             onClick={() => setSubTab(t.value)}
@@ -131,15 +143,20 @@ export default function JobRecruitmentManager({ jobId, onBack }) {
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow p-6">
         {loading && <p className="text-gray-500">Chargement...</p>}
         {error && <p className="text-red-600">{error}</p>}
-        {job && subTab === 'formulaire' && <FormBuilderTab job={job} applyUrl={applyUrl} onSaved={load} />}
-        {job && subTab === 'candidatures' && <ApplicationsTab job={job} />}
+        {job && subTab === 'formulaire' && (
+          <FormBuilderTab job={job} applyUrl={applyUrl} onSaved={load} canEdit={access.canEditForm} />
+        )}
+        {job && subTab === 'candidatures' && (
+          <ApplicationsTab job={job} canView={access.canViewApplications} canReview={access.canReviewApplications} role={role} />
+        )}
+        {job && subTab === 'acces' && role === 'ADMIN' && <AccessTab job={job} onSaved={load} />}
       </div>
     </div>
   );
 }
 
 /* -------------------- Onglet Formulaire -------------------- */
-function FormBuilderTab({ job, applyUrl, onSaved }) {
+function FormBuilderTab({ job, applyUrl, onSaved, canEdit }) {
   const [fields, setFields] = useState(job.applicationForm?.fields || []);
   const [estimatedDuration, setEstimatedDuration] = useState(job.applicationForm?.estimatedDuration || '');
   const [backgroundColor, setBackgroundColor] = useState(job.applicationForm?.backgroundColor || '');
@@ -344,6 +361,12 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         <button onClick={() => navigator.clipboard?.writeText(applyUrl)} className="px-3 py-1 border rounded text-sm">Copier</button>
       </div>
 
+      {!canEdit && (
+        <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded p-2 mb-3">
+          Vous n'avez pas les droits pour modifier ce formulaire — lecture seule.
+        </p>
+      )}
+
       <p className="text-sm text-gray-600 mb-3">
         Prénom, nom, email et téléphone sont toujours demandés automatiquement — ajoutez ici uniquement les questions spécifiques à cette offre.
       </p>
@@ -354,17 +377,17 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         <div className="flex items-center gap-4 flex-wrap">
           <div>
             <label className="text-xs text-gray-500 block">Fond</label>
-            <input type="color" value={backgroundColor || '#1B4332'}
+            <input type="color" value={backgroundColor || '#1B4332'} disabled={!canEdit}
               onChange={(e) => saveAppearance({ backgroundColor: e.target.value })}
-              className="w-11 h-11 rounded border border-gray-300 cursor-pointer" />
+              className="w-11 h-11 rounded border border-gray-300 cursor-pointer disabled:cursor-default" />
           </div>
           <div>
             <label className="text-xs text-gray-500 block">Texte</label>
-            <input type="color" value={textColor || '#FFFFFF'}
+            <input type="color" value={textColor || '#FFFFFF'} disabled={!canEdit}
               onChange={(e) => saveAppearance({ textColor: e.target.value })}
-              className="w-11 h-11 rounded border border-gray-300 cursor-pointer" />
+              className="w-11 h-11 rounded border border-gray-300 cursor-pointer disabled:cursor-default" />
           </div>
-          {(backgroundColor || textColor) && (
+          {canEdit && (backgroundColor || textColor) && (
             <button type="button" onClick={() => saveAppearance({ backgroundColor: '', textColor: '' })}
               className="text-sm text-blue-600 hover:underline">
               Réinitialiser (couleurs par défaut)
@@ -373,6 +396,7 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
         </div>
       </div>
 
+      {canEdit && (
       <form onSubmit={saveEstimatedDuration} className="flex gap-2 items-center mb-4">
         <input type="text" placeholder="Durée estimée affichée au candidat (ex : 5 minutes)"
           value={estimatedDuration} onChange={(e) => setEstimatedDuration(e.target.value)}
@@ -381,7 +405,9 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
           Enregistrer la durée
         </button>
       </form>
+      )}
 
+      {canEdit && (
       <div className="flex gap-2 items-center flex-wrap mb-4">
         <select value={importTemplateId} onChange={(e) => setImportTemplateId(e.target.value)}
           className="border border-gray-300 rounded-xl p-2 flex-1">
@@ -399,6 +425,7 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
           Enregistrer ce formulaire comme modèle
         </button>
       </div>
+      )}
 
       <div className="space-y-2">
         {fields.length === 0 && <p className="text-gray-500">Aucun champ personnalisé pour l'instant.</p>}
@@ -408,12 +435,14 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
           return (
             <div key={field.id} className="flex items-center gap-3 border border-gray-200 rounded-xl p-3"
               style={{ marginLeft: depth * 24 }}>
-              <div className="flex flex-col gap-0.5">
-                <button type="button" onClick={() => moveField(index, -1)} disabled={!canMoveFieldUp(fields, index)}
-                  className="disabled:opacity-30">▲</button>
-                <button type="button" onClick={() => moveField(index, 1)} disabled={!canMoveFieldDown(fields, index)}
-                  className="disabled:opacity-30">▼</button>
-              </div>
+              {canEdit && (
+                <div className="flex flex-col gap-0.5">
+                  <button type="button" onClick={() => moveField(index, -1)} disabled={!canMoveFieldUp(fields, index)}
+                    className="disabled:opacity-30">▲</button>
+                  <button type="button" onClick={() => moveField(index, 1)} disabled={!canMoveFieldDown(fields, index)}
+                    className="disabled:opacity-30">▼</button>
+                </div>
+              )}
               <div className="flex-1">
                 <strong>{field.label}</strong>
                 <span className="text-xs text-gray-500 ml-2">
@@ -423,15 +452,18 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
                   <div className="text-xs text-blue-600">↳ Visible si « {parentField.label} » = {(field.conditional.values || []).join(', ')}</div>
                 )}
               </div>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => editField(field)} className="text-blue-600 hover:underline text-sm">Éditer</button>
-                <button type="button" onClick={() => deleteField(field.id)} className="text-red-600 hover:underline text-sm">Supprimer</button>
-              </div>
+              {canEdit && (
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => editField(field)} className="text-blue-600 hover:underline text-sm">Éditer</button>
+                  <button type="button" onClick={() => deleteField(field.id)} className="text-red-600 hover:underline text-sm">Supprimer</button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
+      {canEdit && (
       <form onSubmit={submitField} className="border-t pt-4 mt-4 space-y-3">
         <h3 className="font-semibold">{editingFieldId ? 'Modifier le champ' : 'Ajouter un champ'}</h3>
         <input type="text" placeholder="Libellé de la question" value={fieldForm.label}
@@ -531,12 +563,13 @@ function FormBuilderTab({ job, applyUrl, onSaved }) {
           )}
         </div>
       </form>
+      )}
     </div>
   );
 }
 
 /* -------------------- Onglet Candidatures -------------------- */
-function ApplicationsTab({ job }) {
+function ApplicationsTab({ job, canView, canReview, role }) {
   const [statusFilter, setStatusFilter] = useState('RECEIVED');
   const [search, setSearch] = useState('');
   const [items, setItems] = useState([]);
@@ -546,6 +579,7 @@ function ApplicationsTab({ job }) {
   const [notesDraft, setNotesDraft] = useState('');
 
   const load = () => {
+    if (!canView) return; // le backend refuserait (403) de toute façon — évite l'aller-retour
     const params = new URLSearchParams({ jobPostingId: job._id });
     if (statusFilter) params.set('status', statusFilter);
     if (search.trim()) params.set('search', search.trim());
@@ -554,8 +588,8 @@ function ApplicationsTab({ job }) {
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [statusFilter, search, job._id]);
   useEffect(() => {
-    adminFetch('/api/personnel/categories').then((data) => setCategories(data?.categories || [])).catch(console.error);
-  }, []);
+    if (canReview) adminFetch('/api/personnel/categories').then((data) => setCategories(data?.categories || [])).catch(console.error);
+  }, [canReview]);
 
   useEffect(() => {
     setNotesDraft(selected?.staffNotes || '');
@@ -597,8 +631,21 @@ function ApplicationsTab({ job }) {
   const fieldLabelById = new Map((job.applicationForm?.fields || []).map((f) => [f.id, f.label]));
   const fieldById = new Map((job.applicationForm?.fields || []).map((f) => [f.id, f]));
 
+  if (!canView) {
+    return (
+      <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded p-3">
+        Vous n'avez pas accès aux candidatures de cette offre.
+      </p>
+    );
+  }
+
   return (
     <div>
+      {canView && !canReview && (
+        <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded p-2 mb-3">
+          Lecture seule — vous pouvez voir les candidatures mais pas les faire avancer.
+        </p>
+      )}
       <div className="flex gap-2 mb-3 flex-wrap">
         {[
           ['RECEIVED', 'Reçues'],
@@ -658,10 +705,16 @@ function ApplicationsTab({ job }) {
             </dl>
 
             <label className="text-sm font-semibold block mb-1">Note interne (jamais visible du candidat)</label>
-            <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} className="border px-2 py-1 rounded w-full mb-2" />
-            <button onClick={saveNotes} className="text-sm text-blue-600 underline mb-4">Enregistrer la note</button>
+            {canReview ? (
+              <>
+                <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} className="border px-2 py-1 rounded w-full mb-2" />
+                <button onClick={saveNotes} className="text-sm text-blue-600 underline mb-4">Enregistrer la note</button>
+              </>
+            ) : (
+              <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">{notesDraft || '—'}</p>
+            )}
 
-            {selected.status === 'RECEIVED' && (
+            {canReview && selected.status === 'RECEIVED' && (
               <div className="flex gap-3">
                 <button onClick={() => act(selected._id, 'review')} className="flex-1 bg-yellow-500 text-white font-bold py-2 rounded-xl hover:bg-yellow-600">
                   Passer en étude
@@ -672,7 +725,7 @@ function ApplicationsTab({ job }) {
               </div>
             )}
 
-            {selected.status === 'UNDER_REVIEW' && (
+            {canReview && selected.status === 'UNDER_REVIEW' && (
               <form onSubmit={retain} className="border-t pt-3 mt-2">
                 <label className="text-sm font-semibold block mb-1">Retenir — catégorie d'agent</label>
                 <input placeholder="ex: Salarié, Consultant, Stagiaire..." list="recruitment-categories"
@@ -695,6 +748,9 @@ function ApplicationsTab({ job }) {
               </form>
             )}
 
+            {!canReview && selected.status !== 'RETAINED' && selected.status !== 'REJECTED' && (
+              <p className="text-sm text-gray-500">Statut : {STATUS_LABELS[selected.status]} (lecture seule).</p>
+            )}
             {selected.status === 'RETAINED' && (
               <p className="text-sm text-green-700">✓ Candidature retenue — profil ajouté à la base du personnel (onglet "Personnel").</p>
             )}
@@ -704,11 +760,143 @@ function ApplicationsTab({ job }) {
 
             <div className="mt-4 flex items-center justify-between">
               <button onClick={() => setSelected(null)} className="text-sm text-gray-500 hover:underline">Fermer</button>
-              <button onClick={() => del(selected._id)} className="text-sm text-red-600 hover:underline">🗑 Supprimer cette candidature</button>
+              {role === 'ADMIN' && (
+                <button onClick={() => del(selected._id)} className="text-sm text-red-600 hover:underline">🗑 Supprimer cette candidature</button>
+              )}
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* -------------------- Onglet Accès (ADMIN uniquement) -------------------- */
+/* Gérer les affectations n'est jamais délégable — ce composant n'est monté
+   que si role === 'ADMIN' (voir le composant principal). Mirror du bloc
+   "Éditeurs affectés" de VolunteerProgramEditor.jsx (staff-directory,
+   affecter/retirer), étendu à 3 cases indépendantes au lieu d'un accès
+   binaire (décision utilisateur, 2026-09-30). */
+function AccessTab({ job, onSaved }) {
+  const [staffUsers, setStaffUsers] = useState([]);
+  const [selectedEditorId, setSelectedEditorId] = useState('');
+  const [newAccess, setNewAccess] = useState({ canEditForm: false, canViewApplications: false, canReviewApplications: false });
+
+  useEffect(() => {
+    adminFetch('/gestionamp/api/users/staff-directory').then(setStaffUsers).catch(console.error);
+  }, []);
+
+  const editors = staffUsers.filter((u) => u.role === 'EDITOR');
+  const assignedIds = new Set((job.staffAccess || []).map((a) => String(a.userId)));
+  const assignedEditors = editors.filter((u) => assignedIds.has(String(u._id)));
+  const unassignedEditors = editors.filter((u) => !assignedIds.has(String(u._id)));
+
+  const setAccess = async (userId, patch) => {
+    const current = (job.staffAccess || []).find((a) => String(a.userId) === String(userId)) || {};
+    const next = {
+      canEditForm: !!current.canEditForm,
+      canViewApplications: !!current.canViewApplications,
+      canReviewApplications: !!current.canReviewApplications,
+      ...patch,
+    };
+    try {
+      await adminFetch(`/api/cms/jobs/admin/${job._id}/staff-access`, {
+        method: 'PATCH',
+        body: JSON.stringify({ userId, ...next }),
+      });
+      onSaved?.();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const removeAccess = (userId) =>
+    setAccess(userId, { canEditForm: false, canViewApplications: false, canReviewApplications: false });
+
+  const addNew = async () => {
+    if (!selectedEditorId) return;
+    await setAccess(selectedEditorId, newAccess);
+    setSelectedEditorId('');
+    setNewAccess({ canEditForm: false, canViewApplications: false, canReviewApplications: false });
+  };
+
+  return (
+    <div>
+      <h3 className="font-semibold mb-1">Accès affectés à cette offre</h3>
+      <p className="text-xs text-gray-500 mb-4">
+        Un compte EDITOR ne gère plus toutes les offres par défaut : il ne peut gérer que celles affectées
+        ici, avec exactement les droits cochés ("Étudier" inclut la possibilité de voir). Créer/supprimer
+        une offre et supprimer une candidature restent réservés à ADMIN, quels que soient les droits cochés.
+      </p>
+
+      {assignedEditors.length === 0 ? (
+        <p className="text-gray-500 mb-4">Aucun compte affecté à cette offre.</p>
+      ) : (
+        <div className="space-y-2 mb-4">
+          {assignedEditors.map((u) => {
+            const a = (job.staffAccess || []).find((x) => String(x.userId) === String(u._id)) || {};
+            return (
+              <div key={u._id} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div><strong>{u.name}</strong> <span className="text-gray-500 text-sm">({u.email})</span></div>
+                  <button onClick={() => removeAccess(u._id)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                </div>
+                <div className="flex gap-4 flex-wrap text-sm">
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" checked={!!a.canEditForm}
+                      onChange={(e) => setAccess(u._id, { canEditForm: e.target.checked })} />
+                    Modifier le formulaire
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" checked={!!a.canViewApplications}
+                      onChange={(e) => setAccess(u._id, { canViewApplications: e.target.checked })} />
+                    Voir les candidatures
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" checked={!!a.canReviewApplications}
+                      onChange={(e) => setAccess(u._id, { canReviewApplications: e.target.checked })} />
+                    Étudier les candidatures
+                  </label>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {unassignedEditors.length > 0 && (
+        <div className="border-t pt-4">
+          <h4 className="font-semibold mb-2 text-sm">+ Affecter un compte</h4>
+          <select value={selectedEditorId} onChange={(e) => setSelectedEditorId(e.target.value)}
+            className="border border-gray-300 rounded-xl p-2 text-sm mb-2 w-full">
+            <option value="">-- Choisir un éditeur --</option>
+            {unassignedEditors.map((u) => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
+          </select>
+          <div className="flex gap-4 flex-wrap text-sm mb-3">
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={newAccess.canEditForm}
+                onChange={(e) => setNewAccess({ ...newAccess, canEditForm: e.target.checked })} />
+              Modifier le formulaire
+            </label>
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={newAccess.canViewApplications}
+                onChange={(e) => setNewAccess({ ...newAccess, canViewApplications: e.target.checked })} />
+              Voir les candidatures
+            </label>
+            <label className="flex items-center gap-1">
+              <input type="checkbox" checked={newAccess.canReviewApplications}
+                onChange={(e) => setNewAccess({ ...newAccess, canReviewApplications: e.target.checked })} />
+              Étudier les candidatures
+            </label>
+          </div>
+          <button onClick={addNew}
+            disabled={!selectedEditorId || !(newAccess.canEditForm || newAccess.canViewApplications || newAccess.canReviewApplications)}
+            className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+            Affecter
+          </button>
+        </div>
+      )}
+      {editors.length === 0 && <p className="text-gray-500 text-sm">Aucun compte EDITOR disponible.</p>}
     </div>
   );
 }

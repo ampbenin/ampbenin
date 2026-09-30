@@ -13,6 +13,11 @@ export default function JobPostingsManager() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
   const [recruitingJobId, setRecruitingJobId] = useState(null);
+  // Créer/supprimer une offre reste réservé à ADMIN (décision utilisateur,
+  // 2026-09-30 — jamais délégable via une affectation). Un EDITOR affecté
+  // à une offre peut en gérer le contenu (voir JobRecruitmentManager.jsx),
+  // jamais en créer/supprimer une nouvelle.
+  const role = typeof window !== 'undefined' ? localStorage.getItem('amp_role') : null;
 
   const load = () => {
     adminFetch('/api/cms/jobs/admin').then((data) => setItems(data?.items || [])).catch(console.error);
@@ -81,6 +86,11 @@ export default function JobPostingsManager() {
     <div className="p-4 bg-white rounded shadow">
       <h2 className="text-xl font-semibold mb-4">Offres (recrutement)</h2>
 
+      {/* Créer une offre est réservé ADMIN — mais ce même formulaire sert
+          aussi à éditer une offre existante (editingId), ce qu'un EDITOR
+          avec canEditForm doit pouvoir faire (bouton "Éditer" plus bas,
+          déjà gated par item.myAccess?.canEditForm). */}
+      {(role === 'ADMIN' || editingId) && (
       <form onSubmit={submit} className="mb-6 grid gap-2 max-w-xl">
         {error && <p className="text-red-600 text-sm">{error}</p>}
         <input placeholder="Titre de l'offre" value={form.title}
@@ -122,6 +132,7 @@ export default function JobPostingsManager() {
           {editingId && <button type="button" onClick={resetForm} className="px-3 py-1 border rounded">Annuler</button>}
         </div>
       </form>
+      )}
 
       {/* Pas de hauteur limitée avec scroll interne ici : une liste
           courte dans une boîte à défilement donne l'impression que les
@@ -145,8 +156,12 @@ export default function JobPostingsManager() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setRecruitingJobId(item._id)} className="underline text-blue-700">Gérer le recrutement</button>
-                <button onClick={() => edit(item)} className="underline">Éditer</button>
-                <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
+                {item.myAccess?.canEditForm && (
+                  <button onClick={() => edit(item)} className="underline">Éditer</button>
+                )}
+                {role === 'ADMIN' && (
+                  <button onClick={() => del(item._id)} className="text-red-600">Suppr</button>
+                )}
               </div>
             </div>
           );
