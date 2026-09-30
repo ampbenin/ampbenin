@@ -1,0 +1,29 @@
+---
+/**
+ * Recrutement — pour les comptes EC/IS/SUPERVISEUR/PARTENAIRE affectés à
+ * une ou plusieurs offres (décision utilisateur, 2026-09-30 : n'importe
+ * quel rôle sauf ADMIN peut être affecté). EDITOR garde son accès existant
+ * via /admin/dashboard (AdminShell), pas besoin de cette page pour lui.
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+import RecruitmentAssignedPanel from "@/components/gestionamp/dashboard/RecruitmentAssignedPanel.jsx";
+---
+
+<script>
+  import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+  authRedirectAMP(["EC", "IS", "SUPERVISEUR", "PARTENAIRE"]);
+</script>
+
+<Layout title="Recrutement | AMP BENIN">
+  <main class="dashboard recrutement-dashboard">
+    <header class="dashboard-header">
+      <h1>Recrutement</h1>
+      <p>Offres de recrutement qui vous sont affectées</p>
+    </header>
+
+    <section class="dashboard-section">
+      <RecruitmentAssignedPanel client:load />
+    </section>
+  </main>
+</Layout>

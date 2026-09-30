@@ -776,7 +776,11 @@ function ApplicationsTab({ job, canView, canReview, role }) {
    que si role === 'ADMIN' (voir le composant principal). Mirror du bloc
    "Éditeurs affectés" de VolunteerProgramEditor.jsx (staff-directory,
    affecter/retirer), étendu à 3 cases indépendantes au lieu d'un accès
-   binaire (décision utilisateur, 2026-09-30). */
+   binaire (décision utilisateur, 2026-09-30) — et élargi le même jour à
+   tout rôle sauf ADMIN (pas seulement EDITOR) : EC/IS/SUPERVISEUR/
+   PARTENAIRE peuvent aussi être affectés, ils gèrent alors l'offre depuis
+   leur propre tableau de bord (RecruitmentAssignedPanel.jsx), pas
+   /admin/dashboard. */
 function AccessTab({ job, onSaved }) {
   const [staffUsers, setStaffUsers] = useState([]);
   const [selectedEditorId, setSelectedEditorId] = useState('');
@@ -786,7 +790,7 @@ function AccessTab({ job, onSaved }) {
     adminFetch('/gestionamp/api/users/staff-directory').then(setStaffUsers).catch(console.error);
   }, []);
 
-  const editors = staffUsers.filter((u) => u.role === 'EDITOR');
+  const editors = staffUsers.filter((u) => u.role !== 'ADMIN');
   const assignedIds = new Set((job.staffAccess || []).map((a) => String(a.userId)));
   const assignedEditors = editors.filter((u) => assignedIds.has(String(u._id)));
   const unassignedEditors = editors.filter((u) => !assignedIds.has(String(u._id)));
@@ -824,9 +828,10 @@ function AccessTab({ job, onSaved }) {
     <div>
       <h3 className="font-semibold mb-1">Accès affectés à cette offre</h3>
       <p className="text-xs text-gray-500 mb-4">
-        Un compte EDITOR ne gère plus toutes les offres par défaut : il ne peut gérer que celles affectées
-        ici, avec exactement les droits cochés ("Étudier" inclut la possibilité de voir). Créer/supprimer
-        une offre et supprimer une candidature restent réservés à ADMIN, quels que soient les droits cochés.
+        N'importe quel compte sauf ADMIN peut être affecté (EDITOR, EC, IS, SUPERVISEUR, PARTENAIRE) — il ne
+        gère que les offres affectées ici, avec exactement les droits cochés ("Étudier" inclut la possibilité
+        de voir). Créer/supprimer une offre et supprimer une candidature restent réservés à ADMIN, quels que
+        soient les droits cochés.
       </p>
 
       {assignedEditors.length === 0 ? (
@@ -838,7 +843,7 @@ function AccessTab({ job, onSaved }) {
             return (
               <div key={u._id} className="border border-gray-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <div><strong>{u.name}</strong> <span className="text-gray-500 text-sm">({u.email})</span></div>
+                  <div><strong>{u.name}</strong> <span className="text-gray-500 text-sm">({u.role} — {u.email})</span></div>
                   <button onClick={() => removeAccess(u._id)} className="text-red-600 hover:underline text-xs">Retirer</button>
                 </div>
                 <div className="flex gap-4 flex-wrap text-sm">
@@ -869,8 +874,8 @@ function AccessTab({ job, onSaved }) {
           <h4 className="font-semibold mb-2 text-sm">+ Affecter un compte</h4>
           <select value={selectedEditorId} onChange={(e) => setSelectedEditorId(e.target.value)}
             className="border border-gray-300 rounded-xl p-2 text-sm mb-2 w-full">
-            <option value="">-- Choisir un éditeur --</option>
-            {unassignedEditors.map((u) => <option key={u._id} value={u._id}>{u.name} ({u.email})</option>)}
+            <option value="">-- Choisir un compte --</option>
+            {unassignedEditors.map((u) => <option key={u._id} value={u._id}>{u.name} ({u.role} — {u.email})</option>)}
           </select>
           <div className="flex gap-4 flex-wrap text-sm mb-3">
             <label className="flex items-center gap-1">
@@ -896,7 +901,7 @@ function AccessTab({ job, onSaved }) {
           </button>
         </div>
       )}
-      {editors.length === 0 && <p className="text-gray-500 text-sm">Aucun compte EDITOR disponible.</p>}
+      {editors.length === 0 && <p className="text-gray-500 text-sm">Aucun compte disponible (hors ADMIN).</p>}
     </div>
   );
 }
