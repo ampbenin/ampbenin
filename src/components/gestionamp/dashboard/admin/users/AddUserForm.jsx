@@ -59,6 +59,10 @@ export default function AddUserForm({ onUserCreated }) {
       return;
     }
 
+    if (role === "ADMIN" && !confirm("Créer un compte ADMIN ? Ce rôle a accès à tout le système.")) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -126,6 +130,7 @@ export default function AddUserForm({ onUserCreated }) {
         <label>
           Rôle
           <select value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="ADMIN">Administrateur (ADMIN)</option>
             <option value="EC">Émissaire Communautaire (EC)</option>
             <option value="IS">Institution Spécialisée (IS)</option>
             <option value="EDITOR">Éditeur de contenu (EDITOR)</option>

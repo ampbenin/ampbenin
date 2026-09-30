@@ -83,7 +83,42 @@ export default function SpacesManager({ endpoint, title, extraField, extraLabel 
       await apiFetch(`/${endpoint}/${id}`, { method: "DELETE" });
       fetchItems();
     } catch (err) {
+      // Le message renvoyé par makeSpaceCrud.js#remove détaille déjà le
+      // nombre de comptes/activités qui bloquent la suppression — pas
+      // besoin d'un second appel, juste l'afficher clairement.
       alert(err.message || "Erreur lors de la suppression");
+    }
+  };
+
+  // Retour utilisateur, 2026-09-30 : "il faut un moyen pour vérifier les
+  // données et on peut supprimer. Ou désactivé" — consultable à tout
+  // moment, pas seulement après un échec de suppression.
+  const checkUsage = async (id, name) => {
+    try {
+      const data = await apiFetch(`/${endpoint}/${id}/usage`);
+      const usersList = data.users.length
+        ? data.users.map((u) => `- ${u.name} (${u.role})`).join("\n")
+        : "Aucun";
+      const activitiesList = data.activities.length
+        ? data.activities.map((a) => `- ${a.title} (${a.status})`).join("\n")
+        : "Aucune";
+      alert(
+        `Données rattachées à "${name}" :\n\n` +
+        `${data.userCount} compte(s) :\n${usersList}\n\n` +
+        `${data.activityCount} activité(s) :\n${activitiesList}`
+      );
+    } catch (err) {
+      alert(err.message || "Erreur lors de la vérification");
+    }
+  };
+
+  const toggleActive = async (id) => {
+    try {
+      const data = await apiFetch(`/${endpoint}/${id}/status`, { method: "PATCH" });
+      alert(data.message);
+      fetchItems();
+    } catch (err) {
+      alert(err.message || "Erreur lors du changement de statut");
     }
   };
 
@@ -143,13 +178,14 @@ export default function SpacesManager({ endpoint, title, extraField, extraLabel 
             <th>Nom</th>
             <th>{extraLabel}</th>
             <th>Description</th>
+            <th>Statut</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 && (
             <tr>
-              <td colSpan="4">Aucun élément trouvé</td>
+              <td colSpan="5">Aucun élément trouvé</td>
             </tr>
           )}
 
@@ -158,8 +194,13 @@ export default function SpacesManager({ endpoint, title, extraField, extraLabel 
               <td>{item.name}</td>
               <td>{item[extraField]}</td>
               <td>{item.description}</td>
+              <td>{item.isActive === false ? "Inactif" : "Actif"}</td>
               <td className="actions">
                 <button onClick={() => startEdit(item)}>Modifier</button>
+                <button onClick={() => checkUsage(item._id, item.name)}>🔍 Vérifier</button>
+                <button onClick={() => toggleActive(item._id)}>
+                  {item.isActive === false ? "Activer" : "Désactiver"}
+                </button>
                 <button className="danger" onClick={() => handleDelete(item._id)}>
                   Supprimer
                 </button>
