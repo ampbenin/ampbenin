@@ -18,7 +18,7 @@ export default function ValidationQueue() {
 
   const fetchPendingActivities = async () => {
     try {
-      const data = await apiFetch("/api/activities?status=PENDING");
+      const data = await apiFetch("/activities?status=PENDING");
       setPendingActivities(data);
     } catch (err) {
       console.error("Erreur file validation :", err);
@@ -38,7 +38,7 @@ export default function ValidationQueue() {
     setProcessingId(id);
 
     try {
-      await apiFetch(`/api/activities/${id}/validate`, {
+      await apiFetch(`/activities/${id}/validate`, {
         method: "PUT",
       });
 

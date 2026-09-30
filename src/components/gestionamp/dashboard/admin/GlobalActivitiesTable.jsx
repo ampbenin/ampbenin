@@ -39,7 +39,7 @@ export default function GlobalActivitiesTable() {
     const fetchActivities = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch("/api/activities", {
+        const data = await apiFetch("/activities", {
           params: filters,
         });
         setActivities(data);

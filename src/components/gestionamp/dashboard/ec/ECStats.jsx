@@ -20,7 +20,7 @@ export default function ECStats() {
 
     const fetchECStats = async () => {
       try {
-        const data = await apiFetch("/api/dashboard/ec/stats");
+        const data = await apiFetch("/dashboard/ec/stats");
         setStats(data);
       } catch (err) {
         console.error("Erreur stats EC :", err);

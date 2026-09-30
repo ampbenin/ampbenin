@@ -19,7 +19,7 @@ export default function InstitutionActivitiesTable() {
 
     const fetchActivities = async () => {
       try {
-        const data = await apiFetch("/api/activities");
+        const data = await apiFetch("/activities");
         setActivities(data);
       } catch (err) {
         console.error("Erreur activités IS :", err);

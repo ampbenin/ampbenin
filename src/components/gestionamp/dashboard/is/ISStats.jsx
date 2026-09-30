@@ -19,7 +19,7 @@ export default function ISStats() {
 
     const fetchISStats = async () => {
       try {
-        const data = await apiFetch("/api/dashboard/is/stats");
+        const data = await apiFetch("/dashboard/is/stats");
         setStats(data);
       } catch (err) {
         console.error("Erreur stats IS :", err);
@@ -48,16 +48,16 @@ export default function ISStats() {
     <section className="is-stats">
       <h2>{stats.institutionName}</h2>
 
-      {/* Activités par domaine */}
-      <div className="domain-stats">
-        <h3>Activités par domaine</h3>
-        <ul>
-          {stats.activitiesByDomain.map((item) => (
-            <li key={item.domain}>
-              {item.domain} : {item.count}
-            </li>
-          ))}
-        </ul>
+      {/* Activités */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Activités prévues</h3>
+          <p>{stats.activities.planned}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Activités réalisées</h3>
+          <p>{stats.activities.completed}</p>
+        </div>
       </div>
 
       {/* Finances */}

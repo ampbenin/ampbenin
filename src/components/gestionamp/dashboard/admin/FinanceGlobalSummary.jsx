@@ -39,7 +39,7 @@ export default function FinanceGlobalSummary() {
     const fetchFinanceSummary = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch("/api/finances/summary", {
+        const data = await apiFetch("/finances/summary", {
           params: filters,
         });
         setFinance(data);

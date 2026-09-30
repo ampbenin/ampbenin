@@ -7,7 +7,7 @@ export default function ReportDownloader() {
   const [loading, setLoading] = useState(false);
 
   const loadReports = () => {
-    apiFetch("/api/reports").then(setReports);
+    apiFetch("/reports").then(setReports);
   };
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function ReportDownloader() {
 
   const generateReport = async () => {
     setLoading(true);
-    await apiFetch("/api/reports", {
+    await apiFetch("/reports", {
       method: "POST",
       body: JSON.stringify({ year }),
     });
@@ -25,7 +25,7 @@ export default function ReportDownloader() {
   };
 
   const downloadReport = async (id) => {
-    const data = await apiFetch(`/api/reports/${id}/download`);
+    const data = await apiFetch(`/reports/${id}/download`);
     alert("Rapport généré (PDF à intégrer)");
     console.log(data);
   };

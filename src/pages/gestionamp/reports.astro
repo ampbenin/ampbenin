@@ -1,22 +1,29 @@
 ---
-import ReportDownloader from "../../components/gestionamp/reports/ReportDownloader.jsx";
-import LogoutButton from "../../components/gestionamp/common/LogoutButton.jsx";
+/**
+ * Rapports annuels — EC / IS (génération + téléchargement après validation
+ * ADMIN). Page orpheline jusqu'ici : ni garde d'accès, ni lien depuis les
+ * tableaux de bord ec/is.astro, ni layout commun — corrigé dans le cadre de
+ * l'audit "qu'est-ce qui manque pour que la gestion des IS marche"
+ * (2026-09-30).
+ */
+import Layout from "@/layouts/GestionAMPLayout.astro";
+import ReportDownloader from "@/components/gestionamp/reports/ReportDownloader.jsx";
 ---
 
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Rapports | AMP BENIN</title>
-  </head>
+<script>
+  import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+  authRedirectAMP(["EC", "IS"]);
+</script>
 
-  <body>
-    <main style="padding:20px;">
-      <LogoutButton client:load />
+<Layout title="Rapports | AMP BENIN">
+  <main class="dashboard reports-dashboard">
+    <header class="dashboard-header">
+      <h1>Rapports annuels</h1>
+      <p>Générez votre rapport annuel et téléchargez-le une fois validé par l'administration</p>
+    </header>
 
-      <h1>Rapports AMP BENIN</h1>
-
+    <section class="dashboard-section">
       <ReportDownloader client:load />
-    </main>
-  </body>
-</html>
+    </section>
+  </main>
+</Layout>

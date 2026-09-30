@@ -36,7 +36,7 @@ export default function AddInstitutionActivityForm({ onActivityCreated }) {
     setSuccess(null);
 
     try {
-      await apiFetch("/api/activities", {
+      await apiFetch("/activities", {
         method: "POST",
         body: JSON.stringify({
           ...formData,

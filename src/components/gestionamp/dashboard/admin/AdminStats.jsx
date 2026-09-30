@@ -39,7 +39,7 @@ export default function AdminStats() {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        const data = await apiFetch("/api/dashboard/stats", {
+        const data = await apiFetch("/dashboard/stats", {
           params: filters,
         });
         setStats(data);

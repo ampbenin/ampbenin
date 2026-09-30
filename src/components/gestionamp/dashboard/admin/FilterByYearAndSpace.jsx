@@ -24,8 +24,8 @@ export default function FilterByYearAndSpace() {
 
     const fetchSpaces = async () => {
       try {
-        const cc = await apiFetch("/api/coordinations");
-        const is = await apiFetch("/api/institutions");
+        const cc = await apiFetch("/coordinations");
+        const is = await apiFetch("/institutions");
 
         setCoordinations(cc);
         setInstitutions(is);

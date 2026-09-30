@@ -35,7 +35,7 @@ export default function AddFinanceForm({ onFinanceAdded }) {
     setSuccess(null);
 
     try {
-      await apiFetch("/api/finances", {
+      await apiFetch("/finances", {
         method: "POST",
         body: JSON.stringify({
           ...formData,

@@ -19,7 +19,7 @@ export default function InstitutionFinanceSummary() {
 
     const fetchFinanceSummary = async () => {
       try {
-        const data = await apiFetch("/api/finances/summary");
+        const data = await apiFetch("/finances/summary");
         setSummary(data);
       } catch (err) {
         console.error("Erreur finances IS :", err);
