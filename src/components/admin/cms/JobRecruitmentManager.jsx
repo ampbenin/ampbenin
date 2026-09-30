@@ -18,6 +18,7 @@
 // dupliquée par domaine).
 import React, { useEffect, useState } from 'react';
 import { adminFetch } from '@/services/admin/api';
+import { exportJobApplicationPdf } from '@/utils/exportJobApplicationPdf.js';
 
 const FIELD_TYPES = [
   { value: 'TEXT', label: 'Texte court' },
@@ -643,6 +644,130 @@ function ApplicationsTab({ job, canView, canReview, role }) {
     );
   }
 
+  // Vraie page de détail (pas une boîte modale, retour utilisateur
+  // 2026-09-30 : "au lieu d'une boîte, ça puisse être une vraie page") —
+  // même principe que JobRecruitmentManager lui-même vis-à-vis de
+  // JobPostingsManager.jsx : remplace intégralement la liste plutôt que de
+  // se superposer dessus.
+  if (selected) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <button onClick={() => setSelected(null)} className="text-blue-600 hover:underline text-sm">← Retour aux candidatures</button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => exportJobApplicationPdf({
+                jobTitle: job.title, application: selected, fieldLabelById, fieldById, statusLabel: STATUS_LABELS[selected.status],
+              })}
+              className="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1.5 rounded-lg"
+            >
+              📄 Télécharger en PDF
+            </button>
+            {role === 'ADMIN' && (
+              <button onClick={() => del(selected._id)} className="text-sm text-red-600 hover:underline">🗑 Supprimer</button>
+            )}
+          </div>
+        </div>
+
+        <div className="border border-gray-200 rounded-xl p-6">
+          <h3 className="text-xl font-bold mb-1">{selected.applicantFirstName} {selected.applicantLastName}</h3>
+          <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold mb-3 ${STATUS_COLORS[selected.status]}`}>{STATUS_LABELS[selected.status]}</span>
+          <dl className="text-sm space-y-1 mb-4">
+            <div><dt className="inline font-semibold">Email : </dt><dd className="inline">{selected.applicantEmail}</dd></div>
+            <div><dt className="inline font-semibold">Téléphone : </dt><dd className="inline">{selected.applicantPhone || '—'}</dd></div>
+            {Object.entries(selected.responses || {}).map(([key, value]) => (
+              <div key={key}>
+                <dt className="inline font-semibold">{fieldLabelById.get(key) || key} : </dt>
+                <dd className="inline">
+                  {fieldById.get(key)?.type === 'FILE' && value ? (
+                    <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">📎 Voir le fichier</a>
+                  ) : (
+                    value === true ? 'Oui' : value === false ? 'Non' : String(value ?? '—')
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <label className="text-sm font-semibold block mb-1">Note interne (jamais visible du candidat)</label>
+          {canReview ? (
+            <>
+              <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} className="border px-2 py-1 rounded w-full mb-2" />
+              <button onClick={saveNotes} className="text-sm text-blue-600 underline mb-4">Enregistrer la note</button>
+            </>
+          ) : (
+            <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">{notesDraft || '—'}</p>
+          )}
+
+          {canReview && selected.status === 'RECEIVED' && (
+            <div className="flex gap-3">
+              <button onClick={() => act(selected._id, 'review')} className="flex-1 bg-yellow-500 text-white font-bold py-2 rounded-xl hover:bg-yellow-600">
+                Passer en étude
+              </button>
+              <button onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
+                Refuser
+              </button>
+            </div>
+          )}
+
+          {canReview && selected.status === 'UNDER_REVIEW' && (
+            <form onSubmit={retain} className="border-t pt-3 mt-2">
+              <label className="text-sm font-semibold block mb-1">Retenir — catégorie d'agent</label>
+              <input placeholder="ex: Salarié, Consultant, Stagiaire..." list="recruitment-categories"
+                value={retainForm.category} onChange={(e) => setRetainForm({ ...retainForm, category: e.target.value })}
+                className="border px-2 py-1 rounded w-full mb-2" required />
+              <datalist id="recruitment-categories">
+                {categories.map((c) => <option key={c} value={c} />)}
+              </datalist>
+              <textarea placeholder="Notes (optionnel)" value={retainForm.notes}
+                onChange={(e) => setRetainForm({ ...retainForm, notes: e.target.value })}
+                className="border px-2 py-1 rounded w-full mb-2" rows={2} />
+              <div className="flex gap-3">
+                <button type="submit" className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
+                  {role === 'ADMIN' ? '✓ Retenir → Ajouter au personnel' : 'Proposer la rétention (validation ADMIN requise)'}
+                </button>
+                <button type="button" onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
+                  Refuser
+                </button>
+              </div>
+            </form>
+          )}
+
+          {selected.status === 'PENDING_VALIDATION' && (
+            <div className="border-t pt-3 mt-2">
+              <p className="text-sm text-purple-700 bg-purple-50 border border-purple-200 rounded p-2 mb-3">
+                Rétention proposée — catégorie : <strong>{selected.proposedCategory}</strong>
+                {selected.proposedNotes && <> · notes : {selected.proposedNotes}</>}
+              </p>
+              {role === 'ADMIN' ? (
+                <div className="flex gap-3">
+                  <button onClick={validateRetain} className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
+                    ✓ Valider la rétention → Ajouter au personnel
+                  </button>
+                  <button onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
+                    Refuser
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">En attente de validation par un administrateur.</p>
+              )}
+            </div>
+          )}
+
+          {!canReview && !['RETAINED', 'REJECTED', 'PENDING_VALIDATION'].includes(selected.status) && (
+            <p className="text-sm text-gray-500">Statut : {STATUS_LABELS[selected.status]} (lecture seule).</p>
+          )}
+          {selected.status === 'RETAINED' && (
+            <p className="text-sm text-green-700">✓ Candidature retenue — profil ajouté à la base du personnel (onglet "Personnel").</p>
+          )}
+          {selected.status === 'REJECTED' && (
+            <p className="text-sm text-gray-500">Candidature refusée.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       {canView && !canReview && (
@@ -686,113 +811,6 @@ function ApplicationsTab({ job, canView, canReview, role }) {
           <span className={`px-2 py-1 rounded-full text-xs font-bold ${STATUS_COLORS[a.status]}`}>{STATUS_LABELS[a.status]}</span>
         </div>
       ))}
-
-      {selected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold mb-1">{selected.applicantFirstName} {selected.applicantLastName}</h3>
-            <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold mb-3 ${STATUS_COLORS[selected.status]}`}>{STATUS_LABELS[selected.status]}</span>
-            <dl className="text-sm space-y-1 mb-4">
-              <div><dt className="inline font-semibold">Email : </dt><dd className="inline">{selected.applicantEmail}</dd></div>
-              <div><dt className="inline font-semibold">Téléphone : </dt><dd className="inline">{selected.applicantPhone || '—'}</dd></div>
-              {Object.entries(selected.responses || {}).map(([key, value]) => (
-                <div key={key}>
-                  <dt className="inline font-semibold">{fieldLabelById.get(key) || key} : </dt>
-                  <dd className="inline">
-                    {fieldById.get(key)?.type === 'FILE' && value ? (
-                      <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">📎 Voir le fichier</a>
-                    ) : (
-                      value === true ? 'Oui' : value === false ? 'Non' : String(value ?? '—')
-                    )}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-
-            <label className="text-sm font-semibold block mb-1">Note interne (jamais visible du candidat)</label>
-            {canReview ? (
-              <>
-                <textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} className="border px-2 py-1 rounded w-full mb-2" />
-                <button onClick={saveNotes} className="text-sm text-blue-600 underline mb-4">Enregistrer la note</button>
-              </>
-            ) : (
-              <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">{notesDraft || '—'}</p>
-            )}
-
-            {canReview && selected.status === 'RECEIVED' && (
-              <div className="flex gap-3">
-                <button onClick={() => act(selected._id, 'review')} className="flex-1 bg-yellow-500 text-white font-bold py-2 rounded-xl hover:bg-yellow-600">
-                  Passer en étude
-                </button>
-                <button onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
-                  Refuser
-                </button>
-              </div>
-            )}
-
-            {canReview && selected.status === 'UNDER_REVIEW' && (
-              <form onSubmit={retain} className="border-t pt-3 mt-2">
-                <label className="text-sm font-semibold block mb-1">Retenir — catégorie d'agent</label>
-                <input placeholder="ex: Salarié, Consultant, Stagiaire..." list="recruitment-categories"
-                  value={retainForm.category} onChange={(e) => setRetainForm({ ...retainForm, category: e.target.value })}
-                  className="border px-2 py-1 rounded w-full mb-2" required />
-                <datalist id="recruitment-categories">
-                  {categories.map((c) => <option key={c} value={c} />)}
-                </datalist>
-                <textarea placeholder="Notes (optionnel)" value={retainForm.notes}
-                  onChange={(e) => setRetainForm({ ...retainForm, notes: e.target.value })}
-                  className="border px-2 py-1 rounded w-full mb-2" rows={2} />
-                <div className="flex gap-3">
-                  <button type="submit" className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
-                    {role === 'ADMIN' ? '✓ Retenir → Ajouter au personnel' : 'Proposer la rétention (validation ADMIN requise)'}
-                  </button>
-                  <button type="button" onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
-                    Refuser
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {selected.status === 'PENDING_VALIDATION' && (
-              <div className="border-t pt-3 mt-2">
-                <p className="text-sm text-purple-700 bg-purple-50 border border-purple-200 rounded p-2 mb-3">
-                  Rétention proposée — catégorie : <strong>{selected.proposedCategory}</strong>
-                  {selected.proposedNotes && <> · notes : {selected.proposedNotes}</>}
-                </p>
-                {role === 'ADMIN' ? (
-                  <div className="flex gap-3">
-                    <button onClick={validateRetain} className="flex-1 bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
-                      ✓ Valider la rétention → Ajouter au personnel
-                    </button>
-                    <button onClick={() => act(selected._id, 'reject')} className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl hover:bg-red-700">
-                      Refuser
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">En attente de validation par un administrateur.</p>
-                )}
-              </div>
-            )}
-
-            {!canReview && !['RETAINED', 'REJECTED', 'PENDING_VALIDATION'].includes(selected.status) && (
-              <p className="text-sm text-gray-500">Statut : {STATUS_LABELS[selected.status]} (lecture seule).</p>
-            )}
-            {selected.status === 'RETAINED' && (
-              <p className="text-sm text-green-700">✓ Candidature retenue — profil ajouté à la base du personnel (onglet "Personnel").</p>
-            )}
-            {selected.status === 'REJECTED' && (
-              <p className="text-sm text-gray-500">Candidature refusée.</p>
-            )}
-
-            <div className="mt-4 flex items-center justify-between">
-              <button onClick={() => setSelected(null)} className="text-sm text-gray-500 hover:underline">Fermer</button>
-              {role === 'ADMIN' && (
-                <button onClick={() => del(selected._id)} className="text-sm text-red-600 hover:underline">🗑 Supprimer cette candidature</button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
