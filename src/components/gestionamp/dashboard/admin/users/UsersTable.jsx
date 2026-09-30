@@ -151,6 +151,22 @@ export default function UsersTable() {
   };
 
   /**
+   * Envoyer un email d'invitation (bouton "se connecter" -> définir le mot
+   * de passe) — retour utilisateur, 2026-09-30. Utile aussi pour renvoyer
+   * l'invitation à un compte déjà créé (premier email perdu/non reçu),
+   * pas seulement juste après la création (voir AddUserForm.jsx).
+   */
+  const sendInvite = async (userId, email) => {
+    if (!confirm(`Envoyer un email d'invitation à ${email} ?`)) return;
+    try {
+      const data = await apiFetch(`/users/${userId}/send-invite`, { method: "POST" });
+      alert(data.message);
+    } catch (error) {
+      alert(error.message || "Erreur lors de l'envoi de l'invitation");
+    }
+  };
+
+  /**
    * Supprimer un utilisateur
    */
   const deleteUser = async (userId) => {
@@ -292,6 +308,10 @@ export default function UsersTable() {
                 <td className="actions">
                   <button onClick={() => startEdit(user)}>
                     Modifier
+                  </button>
+
+                  <button onClick={() => sendInvite(user._id, user.email)}>
+                    ✉️ Inviter
                   </button>
 
                   <button

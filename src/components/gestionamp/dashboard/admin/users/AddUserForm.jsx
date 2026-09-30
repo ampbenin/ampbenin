@@ -17,6 +17,13 @@ export default function AddUserForm({ onUserCreated }) {
   const [institutionId, setInstitutionId] = useState("");
 
   const [loading, setLoading] = useState(false);
+  // Compte tout juste créé — affiche un bandeau avec le bouton d'invitation
+  // (retour utilisateur, 2026-09-30 : "lors de la création il faut un
+  // bouton envoyer de mail... le mail va contenir un bouton qui va lui
+  // permettre de se connecter"). Réutilise le même endpoint que le bouton
+  // "✉️ Inviter" de UsersTable.jsx (utile aussi pour un compte existant).
+  const [justCreated, setJustCreated] = useState(null);
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   /**
    * Charger les Coordinations et Institutions
@@ -55,7 +62,7 @@ export default function AddUserForm({ onUserCreated }) {
     setLoading(true);
 
     try {
-      await apiFetch("/users", {
+      const data = await apiFetch("/users", {
         method: "POST",
         body: JSON.stringify({
           name,
@@ -66,6 +73,8 @@ export default function AddUserForm({ onUserCreated }) {
           institutionSpecialiseeId: role === "IS" ? institutionId : undefined,
         }),
       });
+
+      setJustCreated(data.user);
 
       // reset
       setName("");
@@ -82,9 +91,36 @@ export default function AddUserForm({ onUserCreated }) {
     }
   };
 
+  const sendInvite = async () => {
+    if (!justCreated) return;
+    setSendingInvite(true);
+    try {
+      const data = await apiFetch(`/users/${justCreated.id}/send-invite`, { method: "POST" });
+      alert(data.message);
+    } catch (error) {
+      alert(error.message || "Erreur lors de l'envoi de l'invitation");
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   return (
     <div className="add-user-form">
       <h3>Créer un utilisateur</h3>
+
+      {justCreated && (
+        <div style={{ background: "#EFF6E9", border: "1px solid #1B4332", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+          <p style={{ margin: "0 0 8px" }}>
+            Compte créé pour <strong>{justCreated.name}</strong> ({justCreated.email}).
+          </p>
+          <button type="button" onClick={sendInvite} disabled={sendingInvite}>
+            {sendingInvite ? "Envoi..." : "✉️ Envoyer un email d'invitation"}
+          </button>
+          <button type="button" onClick={() => setJustCreated(null)} style={{ marginLeft: 8 }}>
+            Fermer
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <label>
