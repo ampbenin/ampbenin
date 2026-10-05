@@ -22,7 +22,11 @@ if (!campaign) {
 }
 ---
 
-<BaseLayout title={campaign ? `${campaign.title} | Badge AMP BENIN` : "Campagne introuvable | AMP BENIN"}>
+<BaseLayout
+  title={campaign ? `${campaign.title} | Badge AMP BENIN` : "Campagne introuvable | AMP BENIN"}
+  description={campaign?.description || undefined}
+  image={campaign ? (campaign.bannerUrl || campaign.templateUrl) : undefined}
+>
   <div class="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50" style={campaign ? `--badge-accent: ${campaign.colors?.accent || "#1B4332"};` : undefined}>
     {campaign ? (
       <>
