@@ -41,20 +41,18 @@ if (!campaign) {
             <div class="max-w-3xl mx-auto px-4">
               <h2 class="text-xl font-bold mb-6 text-center" style="color: var(--badge-accent);">Ils s'engagent avec nous</h2>
             </div>
-            <div class="badge-marquee-viewport overflow-hidden">
-              <ul class="badge-marquee flex flex-nowrap items-center">
+            <div class="badge-marquee-viewport overflow-hidden whitespace-nowrap">
+              <div class="badge-marquee">
                 {[0, 1].map((copy) => (
-                  <li class="flex flex-nowrap items-center" aria-hidden={copy === 1 ? "true" : undefined}>
+                  <div class="inline-block align-top mr-8" aria-hidden={copy === 1 ? "true" : undefined}>
                     {campaign.partners.map((p) => (
-                      <div class="mr-8 shrink-0">
-
+                      <div class="inline-block align-top mr-8">
                         <PartnerItem partner={p} />
-
                       </div>
                     ))}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
             <div class="text-center mt-8">
               <a href={`/badge/partenaires/${campaign.slug}`} class="inline-block border-2 px-6 py-2 rounded-xl font-semibold hover:opacity-80" style="border-color: var(--badge-accent); color: var(--badge-accent);">
@@ -82,7 +80,7 @@ if (!campaign) {
 
 <style>
   .badge-marquee {
-    width: max-content;
+    display: inline-block;
     animation: badge-marquee 30s linear infinite;
   }
   .badge-marquee-viewport:hover .badge-marquee {
