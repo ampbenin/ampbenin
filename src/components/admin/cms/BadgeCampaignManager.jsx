@@ -30,10 +30,28 @@ const ZONE_FIELDS = [
   { key: 'h', label: 'Hauteur (%)' },
 ];
 
+// Met la zone à l'échelle `factor` autour de son centre, bornée au gabarit.
+function scaleZone(zone, factor) {
+  const cx = zone.x + zone.w / 2;
+  const cy = zone.y + zone.h / 2;
+  const w = clamp(zone.w * factor, 1, 100);
+  const h = clamp(zone.h * factor, 1, 100);
+  return {
+    x: round1(clamp(cx - w / 2, 0, 100 - w)),
+    y: round1(clamp(cy - h / 2, 0, 100 - h)),
+    w: round1(w),
+    h: round1(h),
+  };
+}
+
 function ZoneEditor({ label, zone, onChange, color }) {
   return (
     <fieldset className="border rounded p-3">
       <legend className="px-1 font-semibold" style={{ color }}>{label}</legend>
+      <div className="flex gap-2 mb-3">
+        <button type="button" onClick={() => onChange(scaleZone(zone, 1.1))} className="border px-3 py-1 rounded text-sm">+ Agrandir</button>
+        <button type="button" onClick={() => onChange(scaleZone(zone, 0.9))} className="border px-3 py-1 rounded text-sm">− Réduire</button>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         {ZONE_FIELDS.map((f) => (
           <label key={f.key} className="text-sm">
@@ -141,10 +159,10 @@ function TemplatePreview({ templateUrl, photoZone, nameZone, onZoneChange }) {
             className="touch-none cursor-nwse-resize"
             style={{
               position: 'absolute',
-              right: -6,
-              bottom: -6,
-              width: 14,
-              height: 14,
+              right: -8,
+              bottom: -8,
+              width: 20,
+              height: 20,
               background: color,
               borderRadius: 3,
             }}
