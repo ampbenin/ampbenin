@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   templatePublicId: null,
   photoZone: { ...EMPTY_ZONE },
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
+  nameAlign: 'center',
   colors: { accent: '#1B4332', nameText: '#FFFFFF' },
   bannerUrl: null,
   bannerPublicId: null,
@@ -254,6 +255,7 @@ export default function BadgeCampaignManager() {
       templatePublicId: item.templatePublicId || null,
       photoZone: item.photoZone,
       nameZone: item.nameZone,
+      nameAlign: item.nameAlign || 'center',
       colors: { ...EMPTY_FORM.colors, ...(item.colors || {}) },
       bannerUrl: item.bannerUrl || null,
       bannerPublicId: item.bannerPublicId || null,
@@ -284,6 +286,7 @@ export default function BadgeCampaignManager() {
       templatePublicId: form.templatePublicId,
       photoZone: form.photoZone,
       nameZone: form.nameZone,
+      nameAlign: form.nameAlign,
       colors: form.colors,
       bannerUrl: form.bannerUrl,
       bannerPublicId: form.bannerPublicId,
@@ -409,6 +412,15 @@ export default function BadgeCampaignManager() {
 
           <ZoneEditor label="Zone photo" zone={form.photoZone} onChange={set('photoZone')} color="#2563eb" />
           <ZoneEditor label="Zone nom" zone={form.nameZone} onChange={set('nameZone')} color="#16a34a" />
+
+          <label className="block text-sm font-semibold">
+            Alignement du nom sur le badge
+            <select value={form.nameAlign} onChange={(e) => set('nameAlign')(e.target.value)} className="border px-3 py-2 rounded w-full">
+              <option value="left">Gauche</option>
+              <option value="center">Centre</option>
+              <option value="right">Droite</option>
+            </select>
+          </label>
 
           <fieldset className="border rounded p-3 space-y-2">
             <legend className="px-1 font-semibold">Couleurs de la campagne</legend>

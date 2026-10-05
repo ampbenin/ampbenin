@@ -254,13 +254,16 @@ export default function BadgeGenerator({ campaign }) {
     ctx.beginPath();
     ctx.rect(nx, ny, nw, nh);
     ctx.clip();
-    ctx.textAlign = 'center';
+    const align = campaign.nameAlign || 'center';
+    const pad = nw * 0.02;
+    const textX = align === 'left' ? nx + pad : align === 'right' ? nx + nw - pad : nx + nw / 2;
+    ctx.textAlign = align;
     ctx.textBaseline = 'middle';
     ctx.lineWidth = Math.max(2, size / 8);
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.fillStyle = nameColor;
-    ctx.strokeText(label, nx + nw / 2, ny + nh / 2);
-    ctx.fillText(label, nx + nw / 2, ny + nh / 2);
+    ctx.strokeText(label, textX, ny + nh / 2);
+    ctx.fillText(label, textX, ny + nh / 2);
     ctx.restore();
 
     return canvas;
