@@ -301,15 +301,15 @@ export default function BadgeGenerator({ campaign }) {
     `px-3 py-2 rounded-lg border text-sm font-medium ${active ? 'text-white' : 'bg-white text-gray-700 border-gray-300'}`;
 
   return (
-    <div className="w-full max-w-full min-w-0 box-border bg-white rounded-2xl shadow p-4 sm:p-6 space-y-5">
+    <div className="w-full max-w-full min-w-0 box-border overflow-hidden bg-white rounded-2xl shadow p-4 sm:p-6 space-y-5">
       {loadError && <p className="text-red-600 bg-red-50 rounded px-3 py-2">{loadError}</p>}
 
-      <label className="block font-semibold text-gray-800">
+      <label className="block w-full min-w-0 font-semibold text-gray-800">
         Votre photo
-        <input type="file" accept="image/*" onChange={handlePhotoChange} className="block mt-1" />
+        <input type="file" accept="image/*" onChange={handlePhotoChange} className="block w-full max-w-full min-w-0 mt-1 text-sm" />
       </label>
 
-      <label className="block font-semibold text-gray-800">
+      <label className="block w-full min-w-0 font-semibold text-gray-800">
         Votre nom (affiché sur le badge)
         <input
           type="text"
