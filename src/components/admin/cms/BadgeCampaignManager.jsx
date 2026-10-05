@@ -90,6 +90,7 @@ function TemplatePreview({ templateUrl, photoZone, nameZone }) {
 
 export default function BadgeCampaignManager() {
   const [items, setItems] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -106,6 +107,7 @@ export default function BadgeCampaignManager() {
 
   useEffect(() => {
     load();
+    loadRequests();
   }, []);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
@@ -228,6 +230,28 @@ export default function BadgeCampaignManager() {
     }
   };
 
+  const loadRequests = async () => {
+    try {
+      const data = await adminFetch('/api/cms/badge-campaigns/partner-requests');
+      setRequests(data || []);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const reviewRequest = async (req, status) => {
+    try {
+      await adminFetch(`/api/cms/badge-campaigns/partner-requests/${req._id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      loadRequests();
+      if (status === 'ACCEPTED') load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const publicUrl = form.slug ? `/badge/${form.slug}` : null;
 
   return (
@@ -344,6 +368,50 @@ export default function BadgeCampaignManager() {
           <TemplatePreview templateUrl={form.templateUrl} photoZone={form.photoZone} nameZone={form.nameZone} />
         </div>
       </form>
+
+      <div className="border rounded-xl bg-white overflow-hidden">
+        <h3 className="font-semibold p-3 bg-gray-100">Demandes de partenariat</h3>
+        <table className="w-full text-sm">
+          <thead className="text-left">
+            <tr>
+              <th className="p-3">Structure</th>
+              <th className="p-3">Campagne</th>
+              <th className="p-3">Contact</th>
+              <th className="p-3">Action / apport</th>
+              <th className="p-3">Statut</th>
+              <th className="p-3">Décision</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.length === 0 && (
+              <tr><td colSpan="6" className="p-3 text-gray-500">Aucune demande pour l'instant.</td></tr>
+            )}
+            {requests.map((r) => (
+              <tr key={r._id} className="border-t align-top">
+                <td className="p-3">
+                  {r.logoUrl && <img src={r.logoUrl} alt="" className="h-8 mb-1 object-contain" />}
+                  <div className="font-semibold break-words">{r.structureName}</div>
+                </td>
+                <td className="p-3">{r.campaignTitle}</td>
+                <td className="p-3 break-all">{r.email}<br />{r.phone}</td>
+                <td className="p-3 max-w-xs">
+                  <p className="whitespace-pre-line break-words"><strong>Action :</strong> {r.actionDescription}</p>
+                  <p className="whitespace-pre-line break-words mt-1"><strong>Apport :</strong> {r.contribution}</p>
+                </td>
+                <td className="p-3">{{ PENDING: 'En attente', ACCEPTED: 'Acceptée', REJECTED: 'Refusée' }[r.status]}</td>
+                <td className="p-3 space-y-1">
+                  {r.status !== 'ACCEPTED' && (
+                    <button onClick={() => reviewRequest(r, 'ACCEPTED')} className="block text-green-700 underline">Accepter (ajoute aux partenaires)</button>
+                  )}
+                  {r.status !== 'REJECTED' && (
+                    <button onClick={() => reviewRequest(r, 'REJECTED')} className="block text-red-600 underline">Refuser</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="border rounded-xl bg-white overflow-hidden">
         <table className="w-full text-sm">
