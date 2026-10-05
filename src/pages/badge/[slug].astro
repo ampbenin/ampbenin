@@ -4,6 +4,7 @@ export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BadgeGenerator from "../../components/badge/BadgeGenerator.jsx";
 import BadgePartnerJoin from "../../components/badge/BadgePartnerJoin.jsx";
+import PartnerItem from "../../components/badge/PartnerItem.astro";
 
 const { slug } = Astro.params;
 const apiBase = import.meta.env.PUBLIC_API_BASE || "";
@@ -36,26 +37,29 @@ if (!campaign) {
           <BadgeGenerator client:load campaign={campaign} />
         </div>
         {campaign.partners?.length > 0 && (
-          <section class="bg-white border-t py-10 px-4">
-            <div class="max-w-3xl mx-auto">
+          <section class="bg-white border-t py-10">
+            <div class="max-w-3xl mx-auto px-4">
               <h2 class="text-xl font-bold mb-6 text-center" style="color: var(--badge-accent);">Ils s'engagent avec nous</h2>
-              <ul class="flex flex-wrap justify-center items-center gap-8">
-                {campaign.partners.map((p) => (
-                  <li class="text-center w-40 max-w-full">
-                    {p.websiteUrl ? (
-                      <a href={p.websiteUrl} target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 hover:opacity-80">
-                        {p.logoUrl && <img src={p.logoUrl} alt={p.name} class="h-14 max-w-[160px] object-contain" />}
-                        <span class="block w-full break-words text-sm text-gray-800">{p.name}</span>
-                      </a>
-                    ) : (
-                      <div class="flex flex-col items-center gap-2">
-                        {p.logoUrl && <img src={p.logoUrl} alt={p.name} class="h-14 max-w-[160px] object-contain" />}
-                        <span class="block w-full break-words text-sm text-gray-800">{p.name}</span>
+            </div>
+            <div class="badge-marquee-viewport overflow-hidden">
+              <ul class="badge-marquee flex flex-nowrap items-center">
+                {[0, 1].map((copy) => (
+                  <li class="flex flex-nowrap items-center" aria-hidden={copy === 1 ? "true" : undefined}>
+                    {campaign.partners.map((p) => (
+                      <div class="mr-8 shrink-0">
+
+                        <PartnerItem partner={p} />
+
                       </div>
-                    )}
+                    ))}
                   </li>
                 ))}
               </ul>
+            </div>
+            <div class="text-center mt-8">
+              <a href={`/badge/partenaires/${campaign.slug}`} class="inline-block border-2 px-6 py-2 rounded-xl font-semibold hover:opacity-80" style="border-color: var(--badge-accent); color: var(--badge-accent);">
+                Voir tous les partenaires
+              </a>
             </div>
           </section>
         )}
@@ -75,3 +79,21 @@ if (!campaign) {
     )}
   </div>
 </BaseLayout>
+
+<style>
+  .badge-marquee {
+    width: max-content;
+    animation: badge-marquee 30s linear infinite;
+  }
+  .badge-marquee-viewport:hover .badge-marquee {
+    animation-play-state: paused;
+  }
+  @keyframes badge-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .badge-marquee { animation: none; }
+    .badge-marquee-viewport { overflow-x: auto; }
+  }
+</style>
