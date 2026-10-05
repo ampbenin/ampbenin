@@ -1,17 +1,15 @@
 ---
 const { partner } = Astro.props;
-const inner = (
-  <>
-    {partner.logoUrl && <img src={partner.logoUrl} alt={partner.name} class="h-14 w-auto max-w-[160px] object-contain" />}
-    <span class="block w-full break-words text-center text-sm text-gray-800">{partner.name}</span>
-  </>
-);
+const linked = Boolean(partner.websiteUrl);
+const Tag = linked ? "a" : "div";
 ---
 
-{partner.websiteUrl ? (
-  <a href={partner.websiteUrl} target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-2 w-40 hover:opacity-80">
-    {inner}
-  </a>
-) : (
-  <div class="flex flex-col items-center gap-2 w-40">{inner}</div>
-)}
+<Tag
+  href={linked ? partner.websiteUrl : undefined}
+  target={linked ? "_blank" : undefined}
+  rel={linked ? "noopener noreferrer" : undefined}
+  class:list={["flex flex-col items-center gap-2 w-40", linked && "hover:opacity-80"]}
+>
+  {partner.logoUrl && <img src={partner.logoUrl} alt={partner.name} class="h-14 w-auto max-w-[160px] object-contain" />}
+  <span class="block w-full break-words text-center text-sm text-gray-800">{partner.name}</span>
+</Tag>
