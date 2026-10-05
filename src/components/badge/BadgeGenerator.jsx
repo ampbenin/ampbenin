@@ -221,17 +221,28 @@ export default function BadgeGenerator({ campaign }) {
     const nh = (n.h / 100) * H;
     let size = Math.floor(nh * 0.8);
     ctx.font = `700 ${size}px sans-serif`;
-    while (size > 8 && ctx.measureText(name.trim()).width > nw) {
+    while (size > 10 && ctx.measureText(name.trim()).width > nw) {
       size -= 2;
       ctx.font = `700 ${size}px sans-serif`;
     }
+    let label = name.trim();
+    while (label.length > 1 && ctx.measureText(label).width > nw) {
+      label = label.slice(0, -1);
+    }
+    if (label !== name.trim()) label = label.trimEnd() + '…';
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(nx, ny, nw, nh);
+    ctx.clip();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = Math.max(2, size / 8);
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.fillStyle = nameColor;
-    ctx.strokeText(name.trim(), nx + nw / 2, ny + nh / 2);
-    ctx.fillText(name.trim(), nx + nw / 2, ny + nh / 2);
+    ctx.strokeText(label, nx + nw / 2, ny + nh / 2);
+    ctx.fillText(label, nx + nw / 2, ny + nh / 2);
+    ctx.restore();
 
     return canvas;
   };
@@ -367,7 +378,7 @@ export default function BadgeGenerator({ campaign }) {
         </div>
       )}
 
-      <div className="flex justify-center bg-gray-100 rounded-xl p-4 min-h-[200px] items-center">
+      <div className="flex justify-center bg-gray-100 rounded-xl p-4 min-h-[200px] items-center overflow-hidden">
         {previewUrl ? (
           <img src={previewUrl} alt="Aperçu de votre badge" className="max-w-full h-auto rounded" />
         ) : (
