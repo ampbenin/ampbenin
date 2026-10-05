@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   templatePublicId: null,
   photoZone: { ...EMPTY_ZONE },
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
+  colors: { accent: '#1B4332', nameText: '#FFFFFF' },
   status: 'DRAFT',
 };
 
@@ -139,6 +140,7 @@ export default function BadgeCampaignManager() {
       templatePublicId: item.templatePublicId || null,
       photoZone: item.photoZone,
       nameZone: item.nameZone,
+      colors: { ...EMPTY_FORM.colors, ...(item.colors || {}) },
       status: item.status,
     });
     setError('');
@@ -165,6 +167,7 @@ export default function BadgeCampaignManager() {
       templatePublicId: form.templatePublicId,
       photoZone: form.photoZone,
       nameZone: form.nameZone,
+      colors: form.colors,
       status: form.status,
     };
     try {
@@ -232,6 +235,26 @@ export default function BadgeCampaignManager() {
 
           <ZoneEditor label="Zone photo" zone={form.photoZone} onChange={set('photoZone')} color="#2563eb" />
           <ZoneEditor label="Zone nom" zone={form.nameZone} onChange={set('nameZone')} color="#16a34a" />
+
+          <fieldset className="border rounded p-3 space-y-2">
+            <legend className="px-1 font-semibold">Couleurs de la campagne</legend>
+            <label className="flex items-center justify-between text-sm">
+              Couleur d'accent (titres, bouton)
+              <input
+                type="color"
+                value={form.colors.accent}
+                onChange={(e) => set('colors')({ ...form.colors, accent: e.target.value })}
+              />
+            </label>
+            <label className="flex items-center justify-between text-sm">
+              Couleur du nom sur le badge
+              <input
+                type="color"
+                value={form.colors.nameText}
+                onChange={(e) => set('colors')({ ...form.colors, nameText: e.target.value })}
+              />
+            </label>
+          </fieldset>
 
           <label className="block text-sm font-semibold">
             Statut

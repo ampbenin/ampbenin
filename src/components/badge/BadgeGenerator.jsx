@@ -27,7 +27,7 @@ function drawCover(ctx, img, x, y, w, h) {
 }
 
 // Ajuste la taille de police pour que le nom tienne dans la zone.
-function drawFittedName(ctx, text, x, y, w, h) {
+function drawFittedName(ctx, text, x, y, w, h, color) {
   let size = Math.floor(h * 0.8);
   ctx.font = `700 ${size}px sans-serif`;
   while (size > 8 && ctx.measureText(text).width > w) {
@@ -38,7 +38,7 @@ function drawFittedName(ctx, text, x, y, w, h) {
   ctx.textBaseline = 'middle';
   ctx.lineWidth = Math.max(2, size / 8);
   ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = color;
   ctx.strokeText(text, x + w / 2, y + h / 2);
   ctx.fillText(text, x + w / 2, y + h / 2);
 }
@@ -80,7 +80,7 @@ export default function BadgeGenerator({ campaign }) {
       drawCover(ctx, photo, (p.x / 100) * W, (p.y / 100) * H, (p.w / 100) * W, (p.h / 100) * H);
 
       const n = campaign.nameZone;
-      drawFittedName(ctx, name.trim(), (n.x / 100) * W, (n.y / 100) * H, (n.w / 100) * W, (n.h / 100) * H);
+      drawFittedName(ctx, name.trim(), (n.x / 100) * W, (n.y / 100) * H, (n.w / 100) * W, (n.h / 100) * H, campaign.colors?.nameText || '#FFFFFF');
 
       return canvas;
     } catch (err) {
@@ -155,7 +155,8 @@ export default function BadgeGenerator({ campaign }) {
         type="button"
         onClick={handleDownload}
         disabled={!previewUrl}
-        className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl disabled:opacity-50"
+        style={{ backgroundColor: campaign.colors?.accent || '#1B4332' }}
+        className="w-full text-white font-semibold py-3 rounded-xl hover:opacity-90 disabled:opacity-50"
       >
         Télécharger mon badge (PNG)
       </button>
