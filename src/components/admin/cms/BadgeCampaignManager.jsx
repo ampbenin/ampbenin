@@ -15,8 +15,13 @@ const EMPTY_FORM = {
   photoZone: { ...EMPTY_ZONE },
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
   colors: { accent: '#1B4332', nameText: '#FFFFFF' },
+  bannerUrl: null,
+  bannerPublicId: null,
+  partners: [],
   status: 'DRAFT',
 };
+
+const EMPTY_PARTNER = { name: '', logoUrl: null, websiteUrl: '' };
 
 const ZONE_FIELDS = [
   { key: 'x', label: 'X (%)' },
@@ -105,7 +110,9 @@ export default function BadgeCampaignManager() {
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
 
-  const handleTemplateUpload = async (e) => {
+  // Upload générique d'une image (gabarit, bannière, logo partenaire) ;
+  // `onDone` reçoit { url, publicId } et range le résultat au bon endroit.
+  const uploadImage = async (e, onDone) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -114,14 +121,14 @@ export default function BadgeCampaignManager() {
       const token = localStorage.getItem('amp_token');
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API_BASE_URL}/api/cms/badge-campaigns/upload-template`, {
+      const res = await fetch(`${API_BASE_URL}/api/cms/badge-campaigns/upload-image`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Échec de l\'upload');
-      setForm((f) => ({ ...f, templateUrl: data.url, templatePublicId: data.publicId }));
+      onDone(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -129,6 +136,26 @@ export default function BadgeCampaignManager() {
       e.target.value = '';
     }
   };
+
+  const handleTemplateUpload = (e) =>
+    uploadImage(e, (d) => setForm((f) => ({ ...f, templateUrl: d.url, templatePublicId: d.publicId })));
+
+  const handleBannerUpload = (e) =>
+    uploadImage(e, (d) => setForm((f) => ({ ...f, bannerUrl: d.url, bannerPublicId: d.publicId })));
+
+  const updatePartner = (index, patch) =>
+    setForm((f) => ({
+      ...f,
+      partners: f.partners.map((p, i) => (i === index ? { ...p, ...patch } : p)),
+    }));
+
+  const addPartner = () => setForm((f) => ({ ...f, partners: [...f.partners, { ...EMPTY_PARTNER }] }));
+
+  const removePartner = (index) =>
+    setForm((f) => ({ ...f, partners: f.partners.filter((_, i) => i !== index) }));
+
+  const handlePartnerLogoUpload = (index) => (e) =>
+    uploadImage(e, (d) => updatePartner(index, { logoUrl: d.url }));
 
   const startEdit = (item) => {
     setForm({
@@ -141,6 +168,9 @@ export default function BadgeCampaignManager() {
       photoZone: item.photoZone,
       nameZone: item.nameZone,
       colors: { ...EMPTY_FORM.colors, ...(item.colors || {}) },
+      bannerUrl: item.bannerUrl || null,
+      bannerPublicId: item.bannerPublicId || null,
+      partners: (item.partners || []).map((p) => ({ name: p.name, logoUrl: p.logoUrl || null, websiteUrl: p.websiteUrl || '' })),
       status: item.status,
     });
     setError('');
@@ -168,6 +198,9 @@ export default function BadgeCampaignManager() {
       photoZone: form.photoZone,
       nameZone: form.nameZone,
       colors: form.colors,
+      bannerUrl: form.bannerUrl,
+      bannerPublicId: form.bannerPublicId,
+      partners: form.partners.filter((p) => p.name.trim()),
       status: form.status,
     };
     try {
@@ -232,6 +265,38 @@ export default function BadgeCampaignManager() {
             <input type="file" accept="image/*" onChange={handleTemplateUpload} disabled={uploading} className="block mt-1" />
             {uploading && <span className="text-xs text-gray-500">Envoi en cours…</span>}
           </label>
+
+          <label className="block text-sm font-semibold">
+            Bannière en haut de page (image, facultative)
+            <input type="file" accept="image/*" onChange={handleBannerUpload} disabled={uploading} className="block mt-1" />
+            {form.bannerUrl && <img src={form.bannerUrl} alt="Bannière" className="mt-2 max-h-24 rounded" />}
+          </label>
+
+          <fieldset className="border rounded p-3 space-y-3">
+            <legend className="px-1 font-semibold">Partenaires engagés (affichés en bas de page)</legend>
+            {form.partners.map((p, i) => (
+              <div key={i} className="border rounded p-2 space-y-2">
+                <input
+                  placeholder="Nom du partenaire"
+                  value={p.name}
+                  onChange={(e) => updatePartner(i, { name: e.target.value })}
+                  className="border px-2 py-1 rounded w-full"
+                />
+                <input
+                  placeholder="Site web (https://…), facultatif"
+                  value={p.websiteUrl}
+                  onChange={(e) => updatePartner(i, { websiteUrl: e.target.value })}
+                  className="border px-2 py-1 rounded w-full"
+                />
+                <div className="flex items-center gap-3">
+                  <input type="file" accept="image/*" onChange={handlePartnerLogoUpload(i)} disabled={uploading} className="text-sm" />
+                  {p.logoUrl && <img src={p.logoUrl} alt={p.name} className="h-8 object-contain" />}
+                  <button type="button" onClick={() => removePartner(i)} className="text-red-600 underline text-sm ml-auto">Retirer</button>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={addPartner} className="text-blue-600 underline text-sm">+ Ajouter un partenaire</button>
+          </fieldset>
 
           <ZoneEditor label="Zone photo" zone={form.photoZone} onChange={set('photoZone')} color="#2563eb" />
           <ZoneEditor label="Zone nom" zone={form.nameZone} onChange={set('nameZone')} color="#16a34a" />
