@@ -282,7 +282,7 @@ export default function BadgeGenerator({ campaign }) {
     `px-3 py-2 rounded-lg border text-sm font-medium ${active ? 'text-white' : 'bg-white text-gray-700 border-gray-300'}`;
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6 space-y-5">
+    <div className="w-full max-w-full min-w-0 box-border bg-white rounded-2xl shadow p-4 sm:p-6 space-y-5">
       {loadError && <p className="text-red-600 bg-red-50 rounded px-3 py-2">{loadError}</p>}
 
       <label className="block font-semibold text-gray-800">
@@ -314,8 +314,8 @@ export default function BadgeGenerator({ campaign }) {
                 onPointerCancel={onCropPointerUp}
                 className="cursor-move touch-none overflow-hidden bg-gray-100"
                 style={{
-                  width: PREVIEW_CROP_WIDTH,
-                  maxWidth: '100%',
+                  width: '100%',
+                  maxWidth: PREVIEW_CROP_WIDTH,
                   aspectRatio: `${zoneRatio}`,
                   borderRadius: shape === 'circle' ? '50%' : '8px',
                 }}
