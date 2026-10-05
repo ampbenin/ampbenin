@@ -7,6 +7,7 @@ import ActionsManager from './ActionsManager.jsx';
 import JobPostingsManager from './JobPostingsManager.jsx';
 import PersonnelManager from './PersonnelManager.jsx';
 import CampaignEditor from './CampaignEditor.jsx';
+import BadgeCampaignManager from './BadgeCampaignManager.jsx';
 import MediaLibrary from './MediaLibrary.jsx';
 import ContactManager from '../ContactManager.jsx';
 import MemberManager from '../MemberManager.jsx';
@@ -31,6 +32,8 @@ const CONTENT_TABS = [
   { id: 'jobs', label: 'Recrutement' },
   { id: 'personnel', label: 'Personnel' },
   { id: 'campaign', label: 'Campagne 16 jours' },
+  // Création/gestion des badges de campagne réservée ADMIN (décision utilisateur).
+  { id: 'badges', label: 'Badges de campagne', adminOnly: true },
   { id: 'media', label: 'Médiathèque' },
   // Écriture réservée ADMIN côté serveur (routes/siteSettingsRoute.js) —
   // retiré de la nav pour un EDITOR, même logique que l'onglet Discipline.
@@ -164,6 +167,7 @@ export default function AdminShell() {
         {active === 'jobs' && <JobPostingsManager />}
         {active === 'personnel' && <PersonnelManager />}
         {active === 'campaign' && <CampaignEditor />}
+        {active === 'badges' && role === 'ADMIN' && <BadgeCampaignManager />}
         {active === 'media' && <MediaLibrary />}
         {active === 'site-settings' && role === 'ADMIN' && <SiteSettingsManager />}
 
