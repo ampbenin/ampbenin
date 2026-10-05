@@ -40,6 +40,25 @@ function cropRect(img, ratio, zoom, panX, panY) {
   };
 }
 
+// Dessine la photo recadrée dans (x,y,w,h), tournée de `rotation` degrés
+// autour du centre. Le zoom est majoré pour que la photo tournée recouvre
+// toujours la zone (pas de bord vide dans le PNG).
+function drawPhoto(ctx, img, ratio, zoom, panX, panY, rotation, x, y, w, h) {
+  const theta = (rotation * Math.PI) / 180;
+  const r = Math.max(w / h, h / w);
+  const cover = Math.abs(Math.cos(theta)) + r * Math.abs(Math.sin(theta));
+  const c = cropRect(img, ratio, zoom, panX, panY);
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const dw = w * cover;
+  const dh = h * cover;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(theta);
+  ctx.drawImage(img, c.sx, c.sy, c.sw, c.sh, -dw / 2, -dh / 2, dw, dh);
+  ctx.restore();
+}
+
 // Chemin de la forme (carré ou cercle inscrit) dans la zone photo.
 function shapePath(ctx, shape, x, y, w, h) {
   ctx.beginPath();
@@ -108,6 +127,7 @@ export default function BadgeGenerator({ campaign }) {
   const [shape, setShape] = useState('square');
   const [frame, setFrame] = useState('none');
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [loadError, setLoadError] = useState('');
@@ -146,6 +166,7 @@ export default function BadgeGenerator({ campaign }) {
       setPhotoUrl(url);
       setPhoto(img);
       setZoom(1);
+      setRotation(0);
       setPanX(0);
       setPanY(0);
       setLoadError('');
@@ -165,9 +186,8 @@ export default function BadgeGenerator({ campaign }) {
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f3f4f6';
     ctx.fillRect(0, 0, w, h);
-    const c = cropRect(photo, zoneRatio, zoom, panX, panY);
-    ctx.drawImage(photo, c.sx, c.sy, c.sw, c.sh, 0, 0, w, h);
-  }, [photo, zoneRatio, zoom, panX, panY]);
+    drawPhoto(ctx, photo, zoneRatio, zoom, panX, panY, rotation, 0, 0, w, h);
+  }, [photo, zoneRatio, zoom, panX, panY, rotation]);
 
   const onCropPointerDown = (e) => {
     dragRef.current = { x: e.clientX, y: e.clientY, panX, panY };
@@ -206,11 +226,10 @@ export default function BadgeGenerator({ campaign }) {
     const zw = (p.w / 100) * W;
     const zh = (p.h / 100) * H;
 
-    const c = cropRect(photo, zw / zh, zoom, panX, panY);
     ctx.save();
     shapePath(ctx, shape, zx, zy, zw, zh);
     ctx.clip();
-    ctx.drawImage(photo, c.sx, c.sy, c.sw, c.sh, zx, zy, zw, zh);
+    drawPhoto(ctx, photo, zw / zh, zoom, panX, panY, rotation, zx, zy, zw, zh);
     ctx.restore();
 
     drawFrame(ctx, frame, shape, zx, zy, zw, zh, accent);
@@ -266,7 +285,7 @@ export default function BadgeGenerator({ campaign }) {
     }, 120);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name, photo, template, zoom, panX, panY, shape, frame]);
+  }, [name, photo, template, zoom, rotation, panX, panY, shape, frame]);
 
   const handleDownload = () => {
     if (!previewUrl) return;
@@ -335,6 +354,19 @@ export default function BadgeGenerator({ campaign }) {
               step="0.05"
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full"
+            />
+          </label>
+
+          <label className="block text-sm font-semibold text-gray-800">
+            Rotation ({rotation > 0 ? '+' : ''}{rotation.toFixed(1)}°)
+            <input
+              type="range"
+              min="-45"
+              max="45"
+              step="0.5"
+              value={rotation}
+              onChange={(e) => setRotation(Number(e.target.value))}
               className="w-full"
             />
           </label>
