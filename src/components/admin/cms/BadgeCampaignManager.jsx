@@ -177,6 +177,7 @@ function TemplatePreview({ templateUrl, photoZone, nameZone, onZoneChange }) {
 export default function BadgeCampaignManager() {
   const [items, setItems] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [participants, setParticipants] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -194,6 +195,7 @@ export default function BadgeCampaignManager() {
   useEffect(() => {
     load();
     loadRequests();
+    loadParticipants();
   }, []);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
@@ -313,6 +315,15 @@ export default function BadgeCampaignManager() {
       await adminFetch(`/api/cms/badge-campaigns/${item._id}`, { method: 'DELETE' });
       if (form.id === item._id) resetForm();
       load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const loadParticipants = async () => {
+    try {
+      const data = await adminFetch('/api/cms/badge-campaigns/participants');
+      setParticipants(data || []);
     } catch (err) {
       setError(err.message);
     }
@@ -470,6 +481,35 @@ export default function BadgeCampaignManager() {
           />
         </div>
       </form>
+
+      <div className="border rounded-xl bg-white overflow-hidden">
+        <h3 className="font-semibold p-3 bg-gray-100">Personnes inscrites ({participants.length})</h3>
+        <table className="w-full text-sm">
+          <thead className="text-left">
+            <tr>
+              <th className="p-3">Nom</th>
+              <th className="p-3">Email</th>
+              <th className="p-3">WhatsApp</th>
+              <th className="p-3">Pays / Ville</th>
+              <th className="p-3">Campagne</th>
+            </tr>
+          </thead>
+          <tbody>
+            {participants.length === 0 && (
+              <tr><td colSpan="5" className="p-3 text-gray-500">Aucune inscription pour l'instant.</td></tr>
+            )}
+            {participants.map((p) => (
+              <tr key={p._id} className="border-t align-top">
+                <td className="p-3 break-words">{p.name}</td>
+                <td className="p-3 break-all">{p.email}</td>
+                <td className="p-3">{p.whatsapp}</td>
+                <td className="p-3 break-words">{p.countryCity}</td>
+                <td className="p-3">{p.campaignTitle}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="border rounded-xl bg-white overflow-hidden">
         <h3 className="font-semibold p-3 bg-gray-100">Demandes de partenariat</h3>

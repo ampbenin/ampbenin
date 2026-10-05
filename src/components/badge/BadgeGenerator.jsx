@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import BadgeParticipantForm from './BadgeParticipantForm.jsx';
 
 // Composition 100% côté navigateur : la photo du visiteur n'est jamais
 // envoyée au serveur. Le canvas reprend la taille réelle du gabarit pour
@@ -133,6 +134,9 @@ export default function BadgeGenerator({ campaign }) {
   const [loadError, setLoadError] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [rendering, setRendering] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [registeredMessage, setRegisteredMessage] = useState('');
 
   const cropCanvasRef = useRef(null);
   const canvasRef = useRef(null);
@@ -413,20 +417,36 @@ export default function BadgeGenerator({ campaign }) {
         </div>
       )}
 
-      <div className="flex justify-center bg-gray-100 rounded-xl p-4 min-h-[200px] items-center overflow-hidden">
-        {previewUrl ? (
-          <img src={previewUrl} alt="Aperçu de votre badge" className="max-w-full h-auto rounded" />
-        ) : (
-          <p className="text-gray-500 text-sm">
-            {rendering ? 'Génération…' : 'Votre badge apparaîtra ici.'}
-          </p>
-        )}
-      </div>
+      {registered && (
+        <div className="flex justify-center bg-gray-100 rounded-xl p-4 min-h-[200px] items-center overflow-hidden">
+          {previewUrl ? (
+            <img src={previewUrl} alt="Aperçu de votre badge" className="max-w-full h-auto rounded" />
+          ) : (
+            <p className="text-gray-500 text-sm">{rendering ? 'Génération…' : 'Votre badge apparaîtra ici.'}</p>
+          )}
+        </div>
+      )}
+
+      {!registered && showForm && (
+        <BadgeParticipantForm
+          slug={campaign.slug}
+          onSuccess={(message) => {
+            setRegistered(true);
+            setShowForm(false);
+            setRegisteredMessage(message);
+          }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {registeredMessage && registered && (
+        <p className="text-sm text-green-800 bg-green-50 rounded px-3 py-2">{registeredMessage}</p>
+      )}
 
       <button
         type="button"
-        onClick={handleDownload}
-        disabled={!previewUrl}
+        onClick={registered ? handleDownload : () => setShowForm(true)}
+        disabled={!previewUrl || showForm}
         style={{ backgroundColor: accent }}
         className="w-full text-white font-semibold py-3 rounded-xl hover:opacity-90 disabled:opacity-50"
       >
