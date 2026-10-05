@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { adminFetch } from '@/services/admin/api';
+import BadgeListPanel from './BadgeListPanel.jsx';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE || '';
 
@@ -176,8 +177,6 @@ function TemplatePreview({ templateUrl, photoZone, nameZone, onZoneChange }) {
 
 export default function BadgeCampaignManager() {
   const [items, setItems] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [participants, setParticipants] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -194,8 +193,6 @@ export default function BadgeCampaignManager() {
 
   useEffect(() => {
     load();
-    loadRequests();
-    loadParticipants();
   }, []);
 
   const set = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
@@ -320,31 +317,13 @@ export default function BadgeCampaignManager() {
     }
   };
 
-  const loadParticipants = async () => {
-    try {
-      const data = await adminFetch('/api/cms/badge-campaigns/participants');
-      setParticipants(data || []);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const loadRequests = async () => {
-    try {
-      const data = await adminFetch('/api/cms/badge-campaigns/partner-requests');
-      setRequests(data || []);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const reviewRequest = async (req, status) => {
+  const reviewRequest = async (req, status, reload) => {
     try {
       await adminFetch(`/api/cms/badge-campaigns/partner-requests/${req._id}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
-      loadRequests();
+      reload();
       if (status === 'ACCEPTED') load();
     } catch (err) {
       setError(err.message);
@@ -482,78 +461,46 @@ export default function BadgeCampaignManager() {
         </div>
       </form>
 
-      <div className="border rounded-xl bg-white overflow-hidden">
-        <h3 className="font-semibold p-3 bg-gray-100">Personnes inscrites ({participants.length})</h3>
-        <table className="w-full text-sm">
-          <thead className="text-left">
-            <tr>
-              <th className="p-3">Nom</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">WhatsApp</th>
-              <th className="p-3">Pays / Ville</th>
-              <th className="p-3">Campagne</th>
-            </tr>
-          </thead>
-          <tbody>
-            {participants.length === 0 && (
-              <tr><td colSpan="5" className="p-3 text-gray-500">Aucune inscription pour l'instant.</td></tr>
-            )}
-            {participants.map((p) => (
-              <tr key={p._id} className="border-t align-top">
-                <td className="p-3 break-words">{p.name}</td>
-                <td className="p-3 break-all">{p.email}</td>
-                <td className="p-3">{p.whatsapp}</td>
-                <td className="p-3 break-words">{p.countryCity}</td>
-                <td className="p-3">{p.campaignTitle}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <BadgeListPanel
+        title="Personnes inscrites"
+        endpoint="participants"
+        campaigns={items}
+        columns={[
+          { key: 'name', label: 'Nom' },
+          { key: 'email', label: 'Email' },
+          { key: 'whatsapp', label: 'WhatsApp' },
+          { key: 'countryCity', label: 'Pays / Ville' },
+          { key: 'campaignTitle', label: 'Campagne' },
+        ]}
+      />
 
-      <div className="border rounded-xl bg-white overflow-hidden">
-        <h3 className="font-semibold p-3 bg-gray-100">Demandes de partenariat</h3>
-        <table className="w-full text-sm">
-          <thead className="text-left">
-            <tr>
-              <th className="p-3">Structure</th>
-              <th className="p-3">Campagne</th>
-              <th className="p-3">Contact</th>
-              <th className="p-3">Action / apport</th>
-              <th className="p-3">Statut</th>
-              <th className="p-3">Décision</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.length === 0 && (
-              <tr><td colSpan="6" className="p-3 text-gray-500">Aucune demande pour l'instant.</td></tr>
+      <BadgeListPanel
+        title="Demandes de partenariat"
+        endpoint="partner-requests"
+        campaigns={items}
+        statusOptions={[
+          { value: 'PENDING', label: 'En attente' },
+          { value: 'ACCEPTED', label: 'Acceptées' },
+          { value: 'REJECTED', label: 'Refusées' },
+        ]}
+        columns={[
+          { key: 'structureName', label: 'Structure' },
+          { key: 'email', label: 'Contact', render: (r) => <>{r.email}<br />{r.phone}</> },
+          { key: 'action', label: 'Action / apport', render: (r) => <><strong>Action :</strong> {r.actionDescription}<br /><strong>Apport :</strong> {r.contribution}</> },
+          { key: 'campaignTitle', label: 'Campagne' },
+          { key: 'status', label: 'Statut', render: (r) => ({ PENDING: 'En attente', ACCEPTED: 'Acceptée', REJECTED: 'Refusée' }[r.status]) },
+        ]}
+        renderRowActions={(r, reload) => (
+          <>
+            {r.status !== 'ACCEPTED' && (
+              <button type="button" onClick={() => reviewRequest(r, 'ACCEPTED', reload)} className="block text-green-700 underline">Accepter (ajoute aux partenaires)</button>
             )}
-            {requests.map((r) => (
-              <tr key={r._id} className="border-t align-top">
-                <td className="p-3">
-                  {r.logoUrl && <img src={r.logoUrl} alt="" className="h-8 mb-1 object-contain" />}
-                  <div className="font-semibold break-words">{r.structureName}</div>
-                </td>
-                <td className="p-3">{r.campaignTitle}</td>
-                <td className="p-3 break-all">{r.email}<br />{r.phone}</td>
-                <td className="p-3 max-w-xs">
-                  <p className="whitespace-pre-line break-words"><strong>Action :</strong> {r.actionDescription}</p>
-                  <p className="whitespace-pre-line break-words mt-1"><strong>Apport :</strong> {r.contribution}</p>
-                </td>
-                <td className="p-3">{{ PENDING: 'En attente', ACCEPTED: 'Acceptée', REJECTED: 'Refusée' }[r.status]}</td>
-                <td className="p-3 space-y-1">
-                  {r.status !== 'ACCEPTED' && (
-                    <button onClick={() => reviewRequest(r, 'ACCEPTED')} className="block text-green-700 underline">Accepter (ajoute aux partenaires)</button>
-                  )}
-                  {r.status !== 'REJECTED' && (
-                    <button onClick={() => reviewRequest(r, 'REJECTED')} className="block text-red-600 underline">Refuser</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            {r.status !== 'REJECTED' && (
+              <button type="button" onClick={() => reviewRequest(r, 'REJECTED', reload)} className="block text-red-600 underline">Refuser</button>
+            )}
+          </>
+        )}
+      />
 
       <div className="border rounded-xl bg-white overflow-hidden">
         <table className="w-full text-sm">
