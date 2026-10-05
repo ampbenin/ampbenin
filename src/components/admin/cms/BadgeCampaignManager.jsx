@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { adminFetch } from '@/services/admin/api';
 
 const API_BASE_URL = import.meta.env.PUBLIC_API_BASE || '';
@@ -54,36 +54,103 @@ function ZoneEditor({ label, zone, onChange, color }) {
   );
 }
 
-function TemplatePreview({ templateUrl, photoZone, nameZone }) {
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+const round1 = (v) => Math.round(v * 10) / 10;
+
+// Aperçu interactif : glisser une zone pour la déplacer, poignée en bas à
+// droite pour la redimensionner. Les valeurs saisies sont en % du gabarit,
+// donc le déplacement à la souris se traduit directement en coordonnées réelles.
+function TemplatePreview({ templateUrl, photoZone, nameZone, onZoneChange }) {
+  const containerRef = useRef(null);
+  const dragRef = useRef(null);
+
   if (!templateUrl) {
     return <p className="text-sm text-gray-500">Uploadez un gabarit pour voir l'aperçu des zones.</p>;
   }
-  const overlay = (zone, color, text) => (
-    <div
-      style={{
-        position: 'absolute',
-        left: `${zone.x}%`,
-        top: `${zone.y}%`,
-        width: `${zone.w}%`,
-        height: `${zone.h}%`,
-        border: `2px dashed ${color}`,
-        background: `${color}33`,
-        color,
-        fontSize: 12,
-        fontWeight: 700,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {text}
-    </div>
-  );
+
+  const zones = [
+    { key: 'photoZone', zone: photoZone, color: '#2563eb', text: 'PHOTO' },
+    { key: 'nameZone', zone: nameZone, color: '#16a34a', text: 'NOM' },
+  ];
+
+  const startDrag = (key, zone, mode) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = containerRef.current.getBoundingClientRect();
+    dragRef.current = { key, zone, mode, startX: e.clientX, startY: e.clientY, rect };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onMove = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dx = ((e.clientX - d.startX) / d.rect.width) * 100;
+    const dy = ((e.clientY - d.startY) / d.rect.height) * 100;
+    const z = { ...d.zone };
+    if (d.mode === 'move') {
+      z.x = round1(clamp(d.zone.x + dx, 0, 100 - d.zone.w));
+      z.y = round1(clamp(d.zone.y + dy, 0, 100 - d.zone.h));
+    } else {
+      z.w = round1(clamp(d.zone.w + dx, 1, 100 - d.zone.x));
+      z.h = round1(clamp(d.zone.h + dy, 1, 100 - d.zone.y));
+    }
+    onZoneChange(d.key, z);
+  };
+
+  const endDrag = () => {
+    dragRef.current = null;
+  };
+
   return (
-    <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
-      <img src={templateUrl} alt="Gabarit" style={{ display: 'block', maxWidth: '100%', height: 'auto' }} />
-      {overlay(photoZone, '#2563eb', 'PHOTO')}
-      {overlay(nameZone, '#16a34a', 'NOM')}
+    <div
+      ref={containerRef}
+      className="select-none"
+      style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}
+    >
+      <img src={templateUrl} alt="Gabarit" draggable={false} style={{ display: 'block', maxWidth: '100%', height: 'auto' }} />
+      {zones.map(({ key, zone, color, text }) => (
+        <div
+          key={key}
+          onPointerDown={startDrag(key, zone, 'move')}
+          onPointerMove={onMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className="touch-none cursor-move"
+          style={{
+            position: 'absolute',
+            left: `${zone.x}%`,
+            top: `${zone.y}%`,
+            width: `${zone.w}%`,
+            height: `${zone.h}%`,
+            border: `2px dashed ${color}`,
+            background: `${color}33`,
+            color,
+            fontSize: 12,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {text}
+          <div
+            onPointerDown={startDrag(key, zone, 'resize')}
+            onPointerMove={onMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            className="touch-none cursor-nwse-resize"
+            style={{
+              position: 'absolute',
+              right: -6,
+              bottom: -6,
+              width: 14,
+              height: 14,
+              background: color,
+              borderRadius: 3,
+            }}
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -365,7 +432,12 @@ export default function BadgeCampaignManager() {
 
         <div>
           <p className="text-sm font-semibold mb-2">Aperçu des zones</p>
-          <TemplatePreview templateUrl={form.templateUrl} photoZone={form.photoZone} nameZone={form.nameZone} />
+          <TemplatePreview
+            templateUrl={form.templateUrl}
+            photoZone={form.photoZone}
+            nameZone={form.nameZone}
+            onZoneChange={(key, zone) => set(key)(zone)}
+          />
         </div>
       </form>
 
