@@ -128,6 +128,10 @@ export default function BadgeGenerator({ campaign }) {
   const borderColor = campaign.frameColor || '#1B4332';
   const nameColor = campaign.colors?.nameText || '#FFFFFF';
 
+  const nameMode = campaign.nameMode || 'required';
+  const showName = nameMode !== 'disabled';
+  const nameRequired = nameMode === 'required';
+
   const [name, setName] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photo, setPhoto] = useState(null);
@@ -221,7 +225,7 @@ export default function BadgeGenerator({ campaign }) {
   };
 
   const renderBadge = () => {
-    if (!template || !photo || !name.trim()) return null;
+    if (!template || !photo || (nameRequired && !name.trim())) return null;
     const scale = Math.min(1, MAX_CANVAS_WIDTH / template.width);
     const W = Math.round(template.width * scale);
     const H = Math.round(template.height * scale);
@@ -265,6 +269,7 @@ export default function BadgeGenerator({ campaign }) {
     ctx.beginPath();
     ctx.rect(nx, ny, nw, nh);
     ctx.clip();
+    if (!showName || !name.trim()) return canvas;
     const align = campaign.nameAlign || 'center';
     const pad = nw * 0.02;
     const textX = align === 'left' ? nx + pad : align === 'right' ? nx + nw - pad : nx + nw / 2;
@@ -282,7 +287,7 @@ export default function BadgeGenerator({ campaign }) {
 
   // Aperçu du badge complet, recalculé après une courte pause de saisie/glisser.
   useEffect(() => {
-    if (!template || !photo || !name.trim()) {
+    if (!template || !photo || (nameRequired && !name.trim())) {
       setPreviewUrl('');
       return;
     }
@@ -323,17 +328,20 @@ export default function BadgeGenerator({ campaign }) {
         <input type="file" accept="image/*" onChange={handlePhotoChange} className="block w-full max-w-full min-w-0 mt-1 text-sm" />
       </label>
 
-      <label className="block w-full min-w-0 font-semibold text-gray-800">
-        Votre nom (affiché sur le badge)
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={60}
-          placeholder="Prénom Nom"
-          className="border px-3 py-2 rounded w-full mt-1"
-        />
-      </label>
+      {showName && (
+        <label className="block w-full min-w-0 font-semibold text-gray-800">
+          Votre nom (affiché sur le badge){nameRequired ? '' : ' — facultatif'}
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required={nameRequired}
+            maxLength={60}
+            placeholder="Prénom Nom"
+            className="border px-3 py-2 rounded w-full mt-1"
+          />
+        </label>
+      )}
 
       {photo && (
         <div className="space-y-4 border rounded-xl p-4">
@@ -442,7 +450,10 @@ export default function BadgeGenerator({ campaign }) {
             setShowForm(false);
             setRegisteredMessage(message);
           }}
-          onCancel={() => setShowForm(false)}
+          onSkip={() => {
+            setShowForm(false);
+            setRegistered(true);
+          }}
         />
       )}
 

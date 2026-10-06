@@ -16,6 +16,7 @@ const EMPTY_FORM = {
   photoZone: { ...EMPTY_ZONE },
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
   nameAlign: 'center',
+  nameMode: 'required',
   frameShape: 'square',
   frameStyle: 'none',
   frameColor: '#1B4332',
@@ -258,6 +259,7 @@ export default function BadgeCampaignManager() {
       photoZone: item.photoZone,
       nameZone: item.nameZone,
       nameAlign: item.nameAlign || 'center',
+      nameMode: item.nameMode || 'required',
       frameShape: item.frameShape || 'square',
       frameStyle: item.frameStyle || 'none',
       frameColor: item.frameColor || '#1B4332',
@@ -292,6 +294,7 @@ export default function BadgeCampaignManager() {
       photoZone: form.photoZone,
       nameZone: form.nameZone,
       nameAlign: form.nameAlign,
+      nameMode: form.nameMode,
       frameShape: form.frameShape,
       frameStyle: form.frameStyle,
       frameColor: form.frameColor,
@@ -411,6 +414,15 @@ export default function BadgeCampaignManager() {
 
           <ZoneEditor label="Zone photo" zone={form.photoZone} onChange={set('photoZone')} color="#2563eb" />
           <ZoneEditor label="Zone nom" zone={form.nameZone} onChange={set('nameZone')} color="#16a34a" />
+
+          <label className="block text-sm font-semibold">
+            Champ nom sur la page publique
+            <select value={form.nameMode} onChange={(e) => set('nameMode')(e.target.value)} className="border px-3 py-2 rounded w-full">
+              <option value="required">Obligatoire</option>
+              <option value="optional">Facultatif</option>
+              <option value="disabled">Désactivé (pas de nom sur le badge)</option>
+            </select>
+          </label>
 
           <label className="block text-sm font-semibold">
             Alignement du nom sur le badge

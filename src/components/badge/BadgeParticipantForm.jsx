@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.PUBLIC_API_BASE || '';
 
 const EMPTY = { name: '', email: '', whatsapp: '', countryCity: '' };
 
-export default function BadgeParticipantForm({ slug, onSuccess, onCancel }) {
+export default function BadgeParticipantForm({ slug, onSuccess, onSkip }) {
   const [form, setForm] = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -13,6 +13,10 @@ export default function BadgeParticipantForm({ slug, onSuccess, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!Object.values(form).some((v) => v.trim())) {
+      onSkip();
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {
@@ -38,7 +42,6 @@ export default function BadgeParticipantForm({ slug, onSuccess, onCancel }) {
         type={type}
         value={form[key]}
         onChange={set(key)}
-        required
         placeholder={placeholder}
         className="border px-3 py-2 rounded w-full mt-1 font-normal"
       />
@@ -49,7 +52,7 @@ export default function BadgeParticipantForm({ slug, onSuccess, onCancel }) {
     <form onSubmit={handleSubmit} className="bg-white border-2 rounded-xl p-4 sm:p-5 space-y-4 w-full box-border overflow-hidden" style={{ borderColor: 'var(--badge-accent)' }}>
       <div>
         <p className="font-bold text-gray-900">Rejoignez la campagne</p>
-        <p className="text-sm text-gray-600">Renseignez vos coordonnées pour recevoir les rappels de la campagne et obtenir votre badge.</p>
+        <p className="text-sm text-gray-600">Rejoignez la campagne pour recevoir les rappels, ou passez cette étape pour obtenir directement votre badge. Tous les champs sont facultatifs.</p>
       </div>
 
       {error && <p className="text-red-600 bg-red-50 rounded px-3 py-2 text-sm">{error}</p>}
@@ -66,10 +69,10 @@ export default function BadgeParticipantForm({ slug, onSuccess, onCancel }) {
           style={{ backgroundColor: 'var(--badge-accent)' }}
           className="flex-1 text-white font-semibold py-3 rounded-xl hover:opacity-90 disabled:opacity-50"
         >
-          {submitting ? 'Envoi…' : 'Valider et voir mon badge'}
+          {submitting ? 'Envoi…' : 'Rejoindre et voir mon badge'}
         </button>
-        <button type="button" onClick={onCancel} className="border px-4 py-3 rounded-xl text-gray-700">
-          Annuler
+        <button type="button" onClick={onSkip} className="border px-4 py-3 rounded-xl text-gray-700">
+          Passer
         </button>
       </div>
     </form>
