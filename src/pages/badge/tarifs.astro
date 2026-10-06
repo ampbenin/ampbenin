@@ -1,0 +1,76 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { BADGE_CONTACT } from "../../data/badgeContact.js";
+
+// Formules proposées — à valider avant mise en ligne. Les montants ne sont
+// pas affichés : la mention « tarifs sur devis » s'applique à toutes.
+const PLANS = [
+  {
+    name: "Essentiel",
+    description: "Une campagne de badge simple pour votre structure ou votre cause.",
+    features: ["Gabarit de badge personnalisé", "Page de campagne avec titre et description", "Téléchargement PNG des badges"],
+  },
+  {
+    name: "Standard",
+    description: "Pour une campagne visible, avec vos partenaires et vos inscrits.",
+    features: ["Tout l'essentiel", "Bannière et couleurs de votre campagne", "Liste de partenaires et formulaire d'adhésion", "Suivi des inscrits"],
+  },
+  {
+    name: "Premium",
+    description: "Un accompagnement complet, conçu avec notre équipe.",
+    features: ["Tout le standard", "Conception graphique sur mesure", "Envoi d'emails groupés aux inscrits", "Accompagnement de notre équipe"],
+  },
+];
+
+const whatsappDigits = BADGE_CONTACT.whatsapp.replace(/\D/g, "");
+const whatsappHref = whatsappDigits
+  ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Bonjour, je souhaite créer une campagne de badge avec AMP BENIN.")}`
+  : null;
+const emailHref = BADGE_CONTACT.email
+  ? `mailto:${BADGE_CONTACT.email}?subject=${encodeURIComponent("Création d'une campagne de badge")}`
+  : null;
+---
+
+<BaseLayout title="Créer votre campagne de badge | AMP BENIN" description="Créez une campagne de badge personnalisée avec l'équipe AMP BENIN.">
+  <div class="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50">
+    <div class="w-full max-w-5xl mx-auto py-10 px-4 box-border">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-3">Créez votre campagne de badge</h1>
+      <p class="text-gray-700 text-center max-w-2xl mx-auto mb-2">
+        Associations, ONG, collectifs : nous concevons avec vous une campagne de badge à votre image, avec sa page, ses couleurs et ses partenaires.
+      </p>
+      <p class="text-center font-semibold text-gray-900 mb-10">Tarifs sur devis : contactez-nous pour une proposition adaptée à votre besoin.</p>
+
+      <ul class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {PLANS.map((plan) => (
+          <li class="bg-white rounded-2xl shadow p-6 flex flex-col">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">{plan.name}</h2>
+            <p class="text-gray-600 text-sm mb-4">{plan.description}</p>
+            <ul class="space-y-2 text-sm text-gray-800 mb-6 flex-1">
+              {plan.features.map((f) => (
+                <li class="flex gap-2"><span aria-hidden="true">✓</span><span>{f}</span></li>
+              ))}
+            </ul>
+            <p class="text-sm font-semibold text-gray-700">Tarifs sur devis</p>
+          </li>
+        ))}
+      </ul>
+
+      <section class="bg-white rounded-2xl shadow p-6 mt-10 text-center">
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Parlons de votre campagne</h2>
+        <p class="text-gray-600 mb-6">Présentez-nous votre structure et votre projet, nous vous répondons rapidement.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          {whatsappHref && (
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90">
+              Nous écrire sur WhatsApp
+            </a>
+          )}
+          {emailHref && (
+            <a href={emailHref} class="border-2 border-gray-800 text-gray-900 font-semibold px-6 py-3 rounded-xl hover:opacity-80">
+              Nous écrire par email
+            </a>
+          )}
+        </div>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
