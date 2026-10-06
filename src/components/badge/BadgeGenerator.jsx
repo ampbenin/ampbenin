@@ -10,6 +10,7 @@ const PREVIEW_CROP_WIDTH = 260;
 
 const FRAMES = [
   { id: 'none', label: 'Sans cadre' },
+  { id: 'simple', label: 'Filet uni' },
   { id: 'or', label: 'Or' },
   { id: 'argent', label: 'Argent' },
   { id: 'double', label: 'Double filet' },
@@ -71,7 +72,7 @@ function shapePath(ctx, shape, x, y, w, h) {
 }
 
 // Cadres décoratifs : or, argent, double filet, passe-partout.
-function drawFrame(ctx, style, shape, x, y, w, h, accent) {
+function drawFrame(ctx, style, shape, x, y, w, h, borderColor) {
   if (style === 'none') return;
   const size = Math.min(w, h);
   const pad = size * 0.03;
@@ -81,7 +82,7 @@ function drawFrame(ctx, style, shape, x, y, w, h, accent) {
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = size * 0.06;
     ctx.lineWidth = size * 0.05;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = borderColor;
     shapePath(ctx, shape, x, y, w, h);
     ctx.stroke();
     ctx.restore();
@@ -107,11 +108,16 @@ function drawFrame(ctx, style, shape, x, y, w, h, accent) {
     ctx.stroke();
   } else if (style === 'double') {
     ctx.lineWidth = size * 0.012;
-    ctx.strokeStyle = accent;
+    ctx.strokeStyle = borderColor;
     shapePath(ctx, shape, x - pad * 2, y - pad * 2, w + pad * 4, h + pad * 4);
     ctx.stroke();
-    ctx.strokeStyle = accent;
+    ctx.strokeStyle = borderColor;
     shapePath(ctx, shape, x - pad * 0.5, y - pad * 0.5, w + pad, h + pad);
+    ctx.stroke();
+  } else if (style === 'simple') {
+    ctx.lineWidth = size * 0.02;
+    ctx.strokeStyle = borderColor;
+    shapePath(ctx, shape, x - pad, y - pad, w + pad * 2, h + pad * 2);
     ctx.stroke();
   }
   ctx.restore();
@@ -119,14 +125,15 @@ function drawFrame(ctx, style, shape, x, y, w, h, accent) {
 
 export default function BadgeGenerator({ campaign }) {
   const accent = campaign.colors?.accent || '#1B4332';
+  const borderColor = campaign.frameColor || '#1B4332';
   const nameColor = campaign.colors?.nameText || '#FFFFFF';
 
   const [name, setName] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photo, setPhoto] = useState(null);
   const [template, setTemplate] = useState(null);
-  const [shape, setShape] = useState('square');
-  const [frame, setFrame] = useState('none');
+  const [shape, setShape] = useState(campaign.frameShape || 'square');
+  const [frame, setFrame] = useState(campaign.frameStyle || 'none');
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [panX, setPanX] = useState(0);
@@ -236,7 +243,7 @@ export default function BadgeGenerator({ campaign }) {
     drawPhoto(ctx, photo, zw / zh, zoom, panX, panY, rotation, zx, zy, zw, zh);
     ctx.restore();
 
-    drawFrame(ctx, frame, shape, zx, zy, zw, zh, accent);
+    drawFrame(ctx, frame, shape, zx, zy, zw, zh, borderColor);
 
     const nx = (n.x / 100) * W;
     const ny = (n.y / 100) * H;

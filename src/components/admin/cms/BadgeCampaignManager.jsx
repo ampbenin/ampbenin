@@ -16,6 +16,9 @@ const EMPTY_FORM = {
   photoZone: { ...EMPTY_ZONE },
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
   nameAlign: 'center',
+  frameShape: 'square',
+  frameStyle: 'none',
+  frameColor: '#1B4332',
   colors: { accent: '#1B4332', nameText: '#FFFFFF' },
   bannerUrl: null,
   bannerPublicId: null,
@@ -255,6 +258,9 @@ export default function BadgeCampaignManager() {
       photoZone: item.photoZone,
       nameZone: item.nameZone,
       nameAlign: item.nameAlign || 'center',
+      frameShape: item.frameShape || 'square',
+      frameStyle: item.frameStyle || 'none',
+      frameColor: item.frameColor || '#1B4332',
       colors: { ...EMPTY_FORM.colors, ...(item.colors || {}) },
       bannerUrl: item.bannerUrl || null,
       bannerPublicId: item.bannerPublicId || null,
@@ -286,6 +292,9 @@ export default function BadgeCampaignManager() {
       photoZone: form.photoZone,
       nameZone: form.nameZone,
       nameAlign: form.nameAlign,
+      frameShape: form.frameShape,
+      frameStyle: form.frameStyle,
+      frameColor: form.frameColor,
       colors: form.colors,
       bannerUrl: form.bannerUrl,
       bannerPublicId: form.bannerPublicId,
@@ -411,6 +420,32 @@ export default function BadgeCampaignManager() {
               <option value="right">Droite</option>
             </select>
           </label>
+
+          <fieldset className="border rounded p-3 space-y-2">
+            <legend className="px-1 font-semibold">Cadre de la photo (réglage par défaut)</legend>
+            <label className="flex items-center justify-between text-sm">
+              Forme
+              <select value={form.frameShape} onChange={(e) => set('frameShape')(e.target.value)} className="border px-2 py-1 rounded">
+                <option value="square">Carré</option>
+                <option value="circle">Circulaire</option>
+              </select>
+            </label>
+            <label className="flex items-center justify-between text-sm">
+              Style du cadre
+              <select value={form.frameStyle} onChange={(e) => set('frameStyle')(e.target.value)} className="border px-2 py-1 rounded">
+                <option value="none">Sans cadre</option>
+                <option value="simple">Filet uni</option>
+                <option value="double">Double filet</option>
+                <option value="or">Or</option>
+                <option value="argent">Argent</option>
+                <option value="ombre">Passe-partout</option>
+              </select>
+            </label>
+            <label className="flex items-center justify-between text-sm">
+              Couleur de bordure
+              <input type="color" value={form.frameColor} onChange={(e) => set('frameColor')(e.target.value)} />
+            </label>
+          </fieldset>
 
           <fieldset className="border rounded p-3 space-y-2">
             <legend className="px-1 font-semibold">Couleurs de la campagne</legend>
