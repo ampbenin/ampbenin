@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import BadgeParticipantForm from './BadgeParticipantForm.jsx';
 
+const API_BASE_URL = import.meta.env.PUBLIC_API_BASE || '';
+
 // Composition 100% côté navigateur : la photo du visiteur n'est jamais
 // envoyée au serveur. Le canvas reprend la taille réelle du gabarit pour
 // que le PNG téléchargé soit net, quelle que soit la taille affichée.
@@ -253,7 +255,7 @@ export default function BadgeGenerator({ campaign }) {
     const ny = (n.y / 100) * H;
     const nw = (n.w / 100) * W;
     const nh = (n.h / 100) * H;
-    let size = Math.floor(nh * 0.8);
+    let size = Math.floor(nh * 0.8 * ((campaign.nameFontScale ?? 100) / 100));
     ctx.font = `700 ${size}px sans-serif`;
     while (size > 10 && ctx.measureText(name.trim()).width > nw) {
       size -= 2;
@@ -308,6 +310,7 @@ export default function BadgeGenerator({ campaign }) {
 
   const handleDownload = () => {
     if (!previewUrl) return;
+    fetch(`${API_BASE_URL}/api/cms/badge-campaigns/public/${campaign.slug}/download`, { method: 'POST', keepalive: true }).catch(() => {});
     const link = document.createElement('a');
     link.href = previewUrl;
     link.download = `badge-${campaign.slug}-${name.trim().replace(/\s+/g, '-')}.png`;

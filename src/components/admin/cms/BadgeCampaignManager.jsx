@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   nameZone: { x: 10, y: 75, w: 80, h: 10 },
   nameAlign: 'center',
   nameMode: 'required',
+  nameFontScale: 100,
   frameShape: 'square',
   frameStyle: 'none',
   frameColor: '#1B4332',
@@ -260,6 +261,7 @@ export default function BadgeCampaignManager() {
       nameZone: item.nameZone,
       nameAlign: item.nameAlign || 'center',
       nameMode: item.nameMode || 'required',
+      nameFontScale: item.nameFontScale ?? 100,
       frameShape: item.frameShape || 'square',
       frameStyle: item.frameStyle || 'none',
       frameColor: item.frameColor || '#1B4332',
@@ -295,6 +297,7 @@ export default function BadgeCampaignManager() {
       nameZone: form.nameZone,
       nameAlign: form.nameAlign,
       nameMode: form.nameMode,
+      nameFontScale: Number(form.nameFontScale),
       frameShape: form.frameShape,
       frameStyle: form.frameStyle,
       frameColor: form.frameColor,
@@ -414,6 +417,20 @@ export default function BadgeCampaignManager() {
 
           <ZoneEditor label="Zone photo" zone={form.photoZone} onChange={set('photoZone')} color="#2563eb" />
           <ZoneEditor label="Zone nom" zone={form.nameZone} onChange={set('nameZone')} color="#16a34a" />
+
+          <label className="block text-sm font-semibold">
+            Taille de la police du nom ({form.nameFontScale}%)
+            <input
+              type="range"
+              min="40"
+              max="150"
+              step="5"
+              value={form.nameFontScale}
+              onChange={(e) => set('nameFontScale')(Number(e.target.value))}
+              className="w-full"
+            />
+            <span className="text-xs text-gray-500">100 % = taille automatique ; le nom est réduit s'il ne tient pas dans sa zone.</span>
+          </label>
 
           <label className="block text-sm font-semibold">
             Champ nom sur la page publique
@@ -556,6 +573,8 @@ export default function BadgeCampaignManager() {
               <th className="p-3">Titre</th>
               <th className="p-3">URL</th>
               <th className="p-3">Statut</th>
+              <th className="p-3">Visites</th>
+              <th className="p-3">Téléchargements</th>
               <th className="p-3">Actions</th>
             </tr>
           </thead>
@@ -568,6 +587,8 @@ export default function BadgeCampaignManager() {
                 <td className="p-3">{item.title}</td>
                 <td className="p-3 font-mono">/badge/{item.slug}</td>
                 <td className="p-3">{item.status === 'PUBLISHED' ? 'Publiée' : 'Brouillon'}</td>
+                <td className="p-3">{item.stats?.views ?? 0}</td>
+                <td className="p-3">{item.stats?.downloads ?? 0}</td>
                 <td className="p-3 space-x-3">
                   <button onClick={() => startEdit(item)} className="text-blue-600 underline">Modifier</button>
                   <button onClick={() => handleDelete(item)} className="text-red-600 underline">Supprimer</button>
