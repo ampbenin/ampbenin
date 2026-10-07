@@ -14,7 +14,16 @@ const dir = lang === 'ar' ? 'rtl' : 'ltr';
 const {
   title       = "AMP BENIN — Action Monde Productif",
   description = "Découvrez les actions de AMP BENIN pour un Bénin plus durable à travers des programmes communautaires et la mobilisation des jeunes.",
-  url         = SITE,
+  // Déduite de la requête par défaut — avant ce correctif, aucune des 39
+  // pages du site ne passait `url`, donc og:url valait toujours SITE
+  // (la racine) partout. Facebook met en cache les données Open Graph
+  // PAR og:url déclaré (pas par l'URL réellement visitée) : avec un
+  // og:url identique sur toutes les pages, son cache fusionnait tous les
+  // aperçus en une seule entrée, qui affichait l'image de la dernière
+  // page scrapée au lieu de celle de chaque page. WhatsApp se base
+  // davantage sur l'URL réellement requêtée, d'où des aperçus corrects
+  // de son côté malgré le même bug.
+  url         = Astro.url.pathname,
   imagePath   = "https://res.cloudinary.com/diongmuh8/image/upload/f_auto,q_auto,w_800/v1780903879/ong-site/og-image-v16.jpg",
   image,
   keywords,
