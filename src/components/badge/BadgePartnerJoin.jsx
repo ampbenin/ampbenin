@@ -5,7 +5,10 @@ const API_BASE_URL = import.meta.env.PUBLIC_API_BASE || '';
 const EMPTY = { structureName: '', email: '', phone: '', actionDescription: '', contribution: '' };
 
 export default function BadgePartnerJoin({ slug }) {
-  const [open, setOpen] = useState(false);
+  // Lien personnalisé vers cette section (ex : /badge/<slug>#rejoindre-association)
+  // : ouvre directement le formulaire plutôt que de laisser l'association
+  // recliquer sur le bouton après avoir atterri dessus.
+  const [open, setOpen] = useState(() => typeof window !== 'undefined' && window.location.hash === '#rejoindre-association');
   const [form, setForm] = useState(EMPTY);
   const [logo, setLogo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
