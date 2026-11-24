@@ -346,7 +346,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // EDITOR affecté obtient exactement les mêmes pouvoirs qu'un ADMIN sur ce
   // programme (routes/volunteerProgramRoute.js#/:id/editors, ADMIN uniquement).
   const [selectedEditorId, setSelectedEditorId] = useState("");
+  const [selectedReviewerId, setSelectedReviewerId] = useState("");
   const currentRole = typeof window !== "undefined" ? localStorage.getItem("amp_role") : null;
+  // Un compte affecté comme réviseur (EC/IS/SUPERVISEUR/PARTENAIRE...) n'a
+  // JAMAIS les pleins pouvoirs sur un programme (contrairement à ADMIN et à
+  // un EDITOR affecté via editorIds) — voir canReviewProgram côté backend :
+  // il ne peut que consulter/traiter les candidatures, jamais les réglages,
+  // tâches, attestations ou partenaires du programme. S'il a pu charger ce
+  // programme (listAllPrograms/getProgramById), c'est forcément via
+  // reviewerIds, donc ce test de rôle suffit sans appel supplémentaire.
+  const isReviewerOnly = currentRole && !["ADMIN", "EDITOR"].includes(currentRole);
+  const visibleTabs = isReviewerOnly ? TABS.filter((t) => t.value === "applications") : TABS;
   const [partnerComments, setPartnerComments] = useState([]);
   const [partnerActivity, setPartnerActivity] = useState([]);
   const [expandedActivityPartnerId, setExpandedActivityPartnerId] = useState(null);
@@ -379,8 +389,15 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setEstimatedDuration(data.applicationForm?.estimatedDuration || "");
       setTasks(data.tasks || []);
 
-      const templates = await adminFetch("/api/volunteer-form-templates");
-      setFormTemplates(templates?.items || []);
+      // Réservé ADMIN/EDITOR côté backend (routes/volunteerFormTemplateRoute.js)
+      // — un réviseur n'en a de toute façon pas l'usage (onglet Formulaire
+      // masqué, voir visibleTabs) ; l'appeler quand même ferait échouer
+      // tout `load()` pour lui (y compris program/meta déjà chargés
+      // ci-dessus) à cause du Promise séquentiel ci-dessous.
+      if (!isReviewerOnly) {
+        const templates = await adminFetch("/api/volunteer-form-templates");
+        setFormTemplates(templates?.items || []);
+      }
     } catch (err) {
       setError(err.message || "Erreur de chargement");
     } finally {
@@ -519,6 +536,13 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       alert(err.message || "Erreur lors de la suppression du groupe");
     }
   };
+
+  // Un réviseur n'a que l'onglet Candidatures visible (voir visibleTabs) —
+  // le forcer dès l'arrivée, au cas où "info" (défaut) serait resté actif.
+  useEffect(() => {
+    if (isReviewerOnly) setActiveTab("applications");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Rechargement débouncé (350 ms) à chaque changement de filtre/recherche —
   // évite un appel réseau par frappe dans la barre de recherche.
@@ -1146,6 +1170,30 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     }
   };
 
+  // Accès "réviseur" (EC/IS/SUPERVISEUR/PARTENAIRE...) — retour utilisateur,
+  // 2026-11-24 : "donner accès à un superviseur pour intervenir sur
+  // l'étude" des candidatures d'un programme. Contrairement à editorIds (un
+  // vrai sous-endpoint PATCH dédié), reviewerIds n'a pas de route propre :
+  // on envoie le tableau complet via le PUT général (voir
+  // updateProgramMeta côté backend, qui l'accepte déjà tel quel). Un
+  // réviseur ne peut QUE consulter/traiter les candidatures de ce
+  // programme (voir canReviewProgram) — jamais ses réglages, tâches,
+  // attestations ou partenaires, qui restent réservés ADMIN/EDITOR.
+  const toggleReviewerAccess = async (userId, add) => {
+    try {
+      const current = (program?.reviewerIds || []).map((id) => String(id));
+      const next = add ? [...new Set([...current, userId])] : current.filter((id) => id !== userId);
+      const updated = await adminFetch(`/api/volunteer-programs/${programId}`, {
+        method: "PUT",
+        body: JSON.stringify({ reviewerIds: next }),
+      });
+      setProgram(updated);
+      setSelectedReviewerId("");
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour du réviseur");
+    }
+  };
+
   // Barre des partenaires — propre à CE programme (corrigé le 2026-08-07 :
   // d'abord un réglage global comme le logo AMP BENIN, l'utilisateur a
   // précisé "c'est une image propre à chaque programme, seuls les
@@ -1671,7 +1719,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       </div>
 
       <div className="flex gap-2 justify-center mb-6 flex-wrap">
-        {TABS.map((t) => (
+        {visibleTabs.map((t) => (
           <button
             key={t.value}
             onClick={() => setActiveTab(t.value)}
@@ -2252,9 +2300,11 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
           <div>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
               <h3 className="font-semibold">Candidatures ({applicationsTotal})</h3>
-              <button onClick={wipeAllApplications} className="text-sm text-red-700 border border-red-300 rounded-lg px-3 py-1 hover:bg-red-50">
-                🗑️ Vider tout
-              </button>
+              {!isReviewerOnly && (
+                <button onClick={wipeAllApplications} className="text-sm text-red-700 border border-red-300 rounded-lg px-3 py-1 hover:bg-red-50">
+                  🗑️ Vider tout
+                </button>
+              )}
             </div>
 
             {/* Recherche (toujours visible) + bouton menu Filtres */}
@@ -2816,6 +2866,45 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     ))}
                   </select>
                   <button onClick={() => toggleEditorAccess(selectedEditorId, true)} disabled={!selectedEditorId}
+                    className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                    Affecter
+                  </button>
+                </div>
+
+                <h3 className="font-semibold mb-3 mt-6">Réviseurs affectés à ce programme</h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  Un réviseur (EC, IS, SUPERVISEUR, PARTENAIRE...) peut uniquement consulter et
+                  traiter les candidatures de ce programme — accepter, rejeter, organiser en
+                  groupes. Il n'a accès ni aux réglages, ni aux tâches, ni aux attestations, ni
+                  aux partenaires de ce programme.
+                </p>
+                {(() => {
+                  const currentReviewers = staffUsers.filter((u) =>
+                    !["ADMIN", "EDITOR"].includes(u.role) &&
+                    (program?.reviewerIds || []).some((id) => String(id) === String(u._id))
+                  );
+                  return currentReviewers.length === 0 ? (
+                    <p className="text-gray-500 mb-3">Aucun réviseur affecté à ce programme.</p>
+                  ) : (
+                    <div className="space-y-2 mb-4">
+                      {currentReviewers.map((u) => (
+                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.role} — {u.email})</span></div>
+                          <button onClick={() => toggleReviewerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                <div className="flex gap-2">
+                  <select value={selectedReviewerId} onChange={(e) => setSelectedReviewerId(e.target.value)}
+                    className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
+                    <option value="">-- Choisir un compte --</option>
+                    {staffUsers.filter((u) => !["ADMIN", "EDITOR"].includes(u.role)).map((u) => (
+                      <option key={u._id} value={u._id}>{u.name} ({u.role} — {u.email})</option>
+                    ))}
+                  </select>
+                  <button onClick={() => toggleReviewerAccess(selectedReviewerId, true)} disabled={!selectedReviewerId}
                     className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
                     Affecter
                   </button>

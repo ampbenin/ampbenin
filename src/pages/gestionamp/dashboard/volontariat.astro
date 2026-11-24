@@ -1,0 +1,30 @@
+---
+/**
+ * Volontariat — pour les comptes EC/IS/SUPERVISEUR/PARTENAIRE affectés
+ * comme réviseur d'un ou plusieurs programmes (VolunteerProgram.reviewerIds,
+ * voir canReviewProgram). EDITOR garde son accès existant via
+ * /admin/dashboard (AdminShell), pas besoin de cette page pour lui.
+ * Même principe que recrutement.astro.
+ */
+
+import Layout from "@/layouts/GestionAMPLayout.astro";
+import VolunteerProgramsAssignedPanel from "@/components/gestionamp/dashboard/VolunteerProgramsAssignedPanel.jsx";
+---
+
+<script>
+  import { authRedirectAMP } from "@/services/gestionamp/authRedirect.AMP";
+  authRedirectAMP(["EC", "IS", "SUPERVISEUR", "PARTENAIRE"]);
+</script>
+
+<Layout title="Volontariat | AMP BENIN">
+  <main class="dashboard volontariat-dashboard">
+    <header class="dashboard-header">
+      <h1>Volontariat</h1>
+      <p>Programmes de volontariat qui vous sont affectés</p>
+    </header>
+
+    <section class="dashboard-section">
+      <VolunteerProgramsAssignedPanel client:load />
+    </section>
+  </main>
+</Layout>
