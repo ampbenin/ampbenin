@@ -359,6 +359,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // programme (routes/volunteerProgramRoute.js#/:id/editors, ADMIN uniquement).
   const [selectedEditorId, setSelectedEditorId] = useState("");
   const [selectedReviewerId, setSelectedReviewerId] = useState("");
+  const [assignReviewerId, setAssignReviewerId] = useState("");
   const currentRole = typeof window !== "undefined" ? localStorage.getItem("amp_role") : null;
   // Un compte affecté comme réviseur (EC/IS/SUPERVISEUR/PARTENAIRE...) n'a
   // JAMAIS les pleins pouvoirs sur un programme (contrairement à ADMIN et à
@@ -1082,7 +1083,10 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   };
 
   useEffect(() => {
-    if (activeTab === "tracking" || activeTab === "reports" || activeTab === "access") loadTracking();
+    // !isReviewerOnly : loadTracking() appelle /staff-directory (réservé
+    // ADMIN/EDITOR) — un réviseur n'a de toute façon pas besoin de cette
+    // liste (il ne peut pas affecter de candidatures à d'autres réviseurs).
+    if ((activeTab === "tracking" || activeTab === "reports" || activeTab === "access" || activeTab === "applications") && !isReviewerOnly) loadTracking();
     if (activeTab === "certificates") loadCertificates();
     if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1208,6 +1212,41 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setSelectedReviewerId("");
     } catch (err) {
       alert(err.message || "Erreur lors de la mise à jour du réviseur");
+    }
+  };
+
+  // Retire toute restriction d'un réviseur -> il revoit toutes les
+  // candidatures du programme (comportement par défaut).
+  const resetReviewerScope = async (userId) => {
+    try {
+      const data = await adminFetch(`/api/volunteer-programs/${programId}/reviewer-scope`, {
+        method: "PATCH",
+        body: JSON.stringify({ userId, mode: "all" }),
+      });
+      setProgram((p) => ({ ...p, reviewerScopes: data.reviewerScopes }));
+    } catch (err) {
+      alert(err.message || "Erreur lors de la mise à jour du réviseur");
+    }
+  };
+
+  // Confie la sélection courante de candidatures (onglet Candidatures) à un
+  // réviseur précis — retour utilisateur, 2026-11-24 : "confier soit la
+  // totalité de candidature ou un nombre [...] de personnes affectées"
+  // (plusieurs réviseurs, chacun avec un sous-ensemble choisi). S'ajoute à
+  // ce que ce réviseur a déjà (mode "add"), ne remplace pas.
+  const assignSelectionToReviewer = async (userId) => {
+    if (!userId || selectedApplicationIds.length === 0) return;
+    try {
+      const data = await adminFetch(`/api/volunteer-programs/${programId}/reviewer-scope`, {
+        method: "PATCH",
+        body: JSON.stringify({ userId, applicationIds: selectedApplicationIds, mode: "add" }),
+      });
+      setProgram((p) => ({ ...p, reviewerScopes: data.reviewerScopes }));
+      setSelectedApplicationIds([]);
+      setAssignReviewerId("");
+      alert("Candidature(s) affectée(s) au réviseur.");
+    } catch (err) {
+      alert(err.message || "Erreur lors de l'affectation");
     }
   };
 
@@ -2421,6 +2460,38 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   )}
                 </div>
 
+                {/* Confier la sélection à un réviseur précis — retour utilisateur,
+                    2026-11-24 : plusieurs réviseurs possibles sur un même
+                    programme, chacun avec un nombre de candidatures choisi.
+                    Réservé ADMIN/EDITOR (staffUsers non chargé pour un réviseur,
+                    voir isReviewerOnly) : un réviseur ne redistribue pas lui-même
+                    sa propre sélection à d'autres réviseurs. */}
+                {!isReviewerOnly && (() => {
+                  const reviewers = staffUsers.filter((u) =>
+                    !["ADMIN", "EDITOR"].includes(u.role) &&
+                    (program?.reviewerIds || []).some((id) => String(id) === String(u._id))
+                  );
+                  if (reviewers.length === 0) return null;
+                  return (
+                    <div className="mt-2 pt-2 border-t border-yellow-200 flex items-end gap-2 flex-wrap">
+                      <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">Confier cette sélection au réviseur</label>
+                        <select value={assignReviewerId} onChange={(e) => setAssignReviewerId(e.target.value)}
+                          className="border border-gray-300 rounded-lg p-2 text-sm">
+                          <option value="">-- Choisir un réviseur --</option>
+                          {reviewers.map((u) => (
+                            <option key={u._id} value={u._id}>{u.name} ({u.role})</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button onClick={() => assignSelectionToReviewer(assignReviewerId)} disabled={!assignReviewerId}
+                        className="bg-amber-600 text-white text-sm font-bold px-3 py-2 rounded-lg hover:bg-amber-700 disabled:opacity-50">
+                        Confier au réviseur
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 {showGroupPanel && selectedApplicationIds.length >= 2 && (
                   <div className="mt-2 pt-2 border-t border-yellow-200 flex flex-wrap gap-4">
                     <div className="flex items-end gap-2">
@@ -2516,6 +2587,19 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {memberGroups.map((g) => (
                                   <span key={g._id} className="bg-violet-100 text-violet-700 text-[10px] font-semibold rounded-full px-2 py-0.5">{g.name}</span>
+                                ))}
+                              </div>
+                            ) : null;
+                          })()}
+                          {!isReviewerOnly && (() => {
+                            const assignedTo = (program?.reviewerScopes || [])
+                              .filter((s) => (s.applicationIds || []).some((id) => String(id) === String(a._id)))
+                              .map((s) => staffUsers.find((u) => String(u._id) === String(s.userId))?.name)
+                              .filter(Boolean);
+                            return assignedTo.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {assignedTo.map((name) => (
+                                  <span key={name} className="bg-amber-100 text-amber-800 text-[10px] font-semibold rounded-full px-2 py-0.5">👤 {name}</span>
                                 ))}
                               </div>
                             ) : null;
@@ -2903,12 +2987,32 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   <p className="text-gray-500 mb-3">Aucun réviseur affecté à ce programme.</p>
                 ) : (
                   <div className="space-y-2 mb-4">
-                    {currentReviewers.map((u) => (
-                      <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
-                        <div><strong>{u.name}</strong> <span className="text-gray-500">({u.role} — {u.email})</span></div>
-                        <button onClick={() => toggleReviewerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
-                      </div>
-                    ))}
+                    {currentReviewers.map((u) => {
+                      const scope = (program?.reviewerScopes || []).find((s) => String(s.userId) === String(u._id));
+                      const restricted = scope && scope.applicationIds && scope.applicationIds.length > 0;
+                      return (
+                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                          <div>
+                            <strong>{u.name}</strong> <span className="text-gray-500">({u.role} — {u.email})</span>
+                            <div className="text-xs mt-0.5">
+                              {restricted ? (
+                                <span className="text-amber-700">{scope.applicationIds.length} candidature(s) spécifique(s) — voir l'onglet Candidatures pour en affecter d'autres</span>
+                              ) : (
+                                <span className="text-green-700">Toutes les candidatures</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-3 items-center">
+                            {restricted && (
+                              <button onClick={() => resetReviewerScope(u._id)} className="text-blue-600 hover:underline text-xs">
+                                Donner accès à toutes les candidatures
+                              </button>
+                            )}
+                            <button onClick={() => toggleReviewerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })()}
