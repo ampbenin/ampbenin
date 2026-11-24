@@ -141,6 +141,7 @@ const TABS = [
   { value: "reports", label: "Rapports", icon: "🏁" },
   { value: "certificates", label: "Attestations", icon: "🎓" },
   { value: "partners", label: "Partenaires", icon: "🤝" },
+  { value: "access", label: "Accès", icon: "🔐" },
 ];
 
 const SUBMISSIONS_PAGE_SIZE = 10;
@@ -356,7 +357,12 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // programme (listAllPrograms/getProgramById), c'est forcément via
   // reviewerIds, donc ce test de rôle suffit sans appel supplémentaire.
   const isReviewerOnly = currentRole && !["ADMIN", "EDITOR"].includes(currentRole);
-  const visibleTabs = isReviewerOnly ? TABS.filter((t) => t.value === "applications") : TABS;
+  // L'onglet Accès (éditeurs + réviseurs) reste réservé ADMIN — un EDITOR
+  // affecté a les pleins pouvoirs sur ce programme (voir canReviewProgram),
+  // mais pas celui de décider qui d'autre y a accès.
+  const visibleTabs = isReviewerOnly
+    ? TABS.filter((t) => t.value === "applications")
+    : TABS.filter((t) => t.value !== "access" || currentRole === "ADMIN");
   const [partnerComments, setPartnerComments] = useState([]);
   const [partnerActivity, setPartnerActivity] = useState([]);
   const [expandedActivityPartnerId, setExpandedActivityPartnerId] = useState(null);
@@ -1065,7 +1071,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   };
 
   useEffect(() => {
-    if (activeTab === "tracking" || activeTab === "reports") loadTracking();
+    if (activeTab === "tracking" || activeTab === "reports" || activeTab === "access") loadTracking();
     if (activeTab === "certificates") loadCertificates();
     if (activeTab === "partners") loadPartnerTab();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2827,90 +2833,89 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
               )}
             </div>
 
-            {/* Réservé ADMIN — un EDITOR affecté obtient exactement les
-                mêmes pouvoirs qu'un ADMIN sur ce programme (voir
-                canReviewProgram côté backend), donc seul un ADMIN peut
-                décider de cette affectation. */}
-            {currentRole === "ADMIN" && (
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Éditeurs affectés à ce programme</h3>
-                <p className="text-xs text-gray-500 mb-3">
-                  Un compte EDITOR ne gère plus tous les programmes par défaut : il ne peut
-                  gérer que ceux affectés ici, mais y a alors exactement les mêmes pouvoirs
-                  qu'un ADMIN (réglages, tâches, candidatures, groupes, suivi, finaliser les
-                  missions...).
-                </p>
-                {(() => {
-                  const currentEditors = staffUsers.filter((u) =>
-                    u.role === "EDITOR" && (program?.editorIds || []).some((id) => String(id) === String(u._id))
-                  );
-                  return currentEditors.length === 0 ? (
-                    <p className="text-gray-500 mb-3">Aucun éditeur affecté à ce programme.</p>
-                  ) : (
-                    <div className="space-y-2 mb-4">
-                      {currentEditors.map((u) => (
-                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
-                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
-                          <button onClick={() => toggleEditorAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-                <div className="flex gap-2">
-                  <select value={selectedEditorId} onChange={(e) => setSelectedEditorId(e.target.value)}
-                    className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
-                    <option value="">-- Choisir un éditeur --</option>
-                    {staffUsers.filter((u) => u.role === "EDITOR").map((u) => (
-                      <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
-                    ))}
-                  </select>
-                  <button onClick={() => toggleEditorAccess(selectedEditorId, true)} disabled={!selectedEditorId}
-                    className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
-                    Affecter
-                  </button>
-                </div>
+          </div>
+        )}
 
-                <h3 className="font-semibold mb-3 mt-6">Réviseurs affectés à ce programme</h3>
-                <p className="text-xs text-gray-500 mb-3">
-                  Un réviseur (EC, IS, SUPERVISEUR, PARTENAIRE...) peut uniquement consulter et
-                  traiter les candidatures de ce programme — accepter, rejeter, organiser en
-                  groupes. Il n'a accès ni aux réglages, ni aux tâches, ni aux attestations, ni
-                  aux partenaires de ce programme.
-                </p>
-                {(() => {
-                  const currentReviewers = staffUsers.filter((u) =>
-                    !["ADMIN", "EDITOR"].includes(u.role) &&
-                    (program?.reviewerIds || []).some((id) => String(id) === String(u._id))
-                  );
-                  return currentReviewers.length === 0 ? (
-                    <p className="text-gray-500 mb-3">Aucun réviseur affecté à ce programme.</p>
-                  ) : (
-                    <div className="space-y-2 mb-4">
-                      {currentReviewers.map((u) => (
-                        <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
-                          <div><strong>{u.name}</strong> <span className="text-gray-500">({u.role} — {u.email})</span></div>
-                          <button onClick={() => toggleReviewerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-                <div className="flex gap-2">
-                  <select value={selectedReviewerId} onChange={(e) => setSelectedReviewerId(e.target.value)}
-                    className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
-                    <option value="">-- Choisir un compte --</option>
-                    {staffUsers.filter((u) => !["ADMIN", "EDITOR"].includes(u.role)).map((u) => (
-                      <option key={u._id} value={u._id}>{u.name} ({u.role} — {u.email})</option>
+        {activeTab === "access" && currentRole === "ADMIN" && (
+          <div>
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3">Éditeurs affectés à ce programme</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Un compte EDITOR ne gère plus tous les programmes par défaut : il ne peut
+                gérer que ceux affectés ici, mais y a alors exactement les mêmes pouvoirs
+                qu'un ADMIN (réglages, tâches, candidatures, groupes, suivi, finaliser les
+                missions...).
+              </p>
+              {(() => {
+                const currentEditors = staffUsers.filter((u) =>
+                  u.role === "EDITOR" && (program?.editorIds || []).some((id) => String(id) === String(u._id))
+                );
+                return currentEditors.length === 0 ? (
+                  <p className="text-gray-500 mb-3">Aucun éditeur affecté à ce programme.</p>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    {currentEditors.map((u) => (
+                      <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                        <div><strong>{u.name}</strong> <span className="text-gray-500">({u.email})</span></div>
+                        <button onClick={() => toggleEditorAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                      </div>
                     ))}
-                  </select>
-                  <button onClick={() => toggleReviewerAccess(selectedReviewerId, true)} disabled={!selectedReviewerId}
-                    className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
-                    Affecter
-                  </button>
-                </div>
+                  </div>
+                );
+              })()}
+              <div className="flex gap-2">
+                <select value={selectedEditorId} onChange={(e) => setSelectedEditorId(e.target.value)}
+                  className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
+                  <option value="">-- Choisir un éditeur --</option>
+                  {staffUsers.filter((u) => u.role === "EDITOR").map((u) => (
+                    <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                  ))}
+                </select>
+                <button onClick={() => toggleEditorAccess(selectedEditorId, true)} disabled={!selectedEditorId}
+                  className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                  Affecter
+                </button>
               </div>
-            )}
+
+              <h3 className="font-semibold mb-3 mt-6">Réviseurs affectés à ce programme</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Un réviseur (EC, IS, SUPERVISEUR, PARTENAIRE...) peut uniquement consulter et
+                traiter les candidatures de ce programme — accepter, rejeter, organiser en
+                groupes. Il n'a accès ni aux réglages, ni aux tâches, ni aux attestations, ni
+                aux partenaires de ce programme.
+              </p>
+              {(() => {
+                const currentReviewers = staffUsers.filter((u) =>
+                  !["ADMIN", "EDITOR"].includes(u.role) &&
+                  (program?.reviewerIds || []).some((id) => String(id) === String(u._id))
+                );
+                return currentReviewers.length === 0 ? (
+                  <p className="text-gray-500 mb-3">Aucun réviseur affecté à ce programme.</p>
+                ) : (
+                  <div className="space-y-2 mb-4">
+                    {currentReviewers.map((u) => (
+                      <div key={u._id} className="flex items-center justify-between border border-gray-200 rounded-lg p-2 text-sm">
+                        <div><strong>{u.name}</strong> <span className="text-gray-500">({u.role} — {u.email})</span></div>
+                        <button onClick={() => toggleReviewerAccess(u._id, false)} className="text-red-600 hover:underline text-xs">Retirer</button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <div className="flex gap-2">
+                <select value={selectedReviewerId} onChange={(e) => setSelectedReviewerId(e.target.value)}
+                  className="border border-gray-300 rounded-xl p-2 text-sm flex-1">
+                  <option value="">-- Choisir un compte --</option>
+                  {staffUsers.filter((u) => !["ADMIN", "EDITOR"].includes(u.role)).map((u) => (
+                    <option key={u._id} value={u._id}>{u.name} ({u.role} — {u.email})</option>
+                  ))}
+                </select>
+                <button onClick={() => toggleReviewerAccess(selectedReviewerId, true)} disabled={!selectedReviewerId}
+                  className="bg-gray-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-gray-800 disabled:opacity-50">
+                  Affecter
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
