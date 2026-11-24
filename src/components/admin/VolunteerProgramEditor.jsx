@@ -307,6 +307,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [copied, setCopied] = useState(false);
 
   const [formFields, setFormFields] = useState([]);
+  // Dérivé de formFields dès sa déclaration — utilisé par loadApplications
+  // ci-dessous, défini plus loin dans ce composant. Bug trouvé le
+  // 2026-11-24 : quand ce dérivé restait déclaré après loadApplications
+  // (en bas du fichier, à côté de son seul autre usage), un réviseur dont
+  // l'onglet Candidatures se force dès le montage (voir isReviewerOnly)
+  // pouvait déclencher loadApplications avant que ce `const` n'ait
+  // lui-même été évalué dans ce rendu — ReferenceError "Cannot access
+  // 'customFormFields' before initialization" (zone morte temporelle),
+  // jamais vu auparavant car ADMIN/EDITOR n'ouvrent cet onglet que par un
+  // clic ultérieur, bien après un rendu complet.
+  const customFormFields = formFields.filter((f) => !APPLICANT_FIELD_IDS.includes(f.id));
   const [estimatedDuration, setEstimatedDuration] = useState("");
   const [fieldForm, setFieldForm] = useState(emptyFieldForm);
   const [editingFieldId, setEditingFieldId] = useState(null);
@@ -1694,7 +1705,6 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     Object.values(fieldFilterValues).filter(Boolean).length;
   const editingField = editingFieldId ? formFields.find((f) => f.id === editingFieldId) : null;
   const isEditingLocked = !!editingField?.locked;
-  const customFormFields = formFields.filter((f) => !APPLICANT_FIELD_IDS.includes(f.id));
   const fieldsById = new Map(formFields.map((f) => [f.id, f]));
   const editingFieldIndex = editingFieldId ? formFields.findIndex((f) => f.id === editingFieldId) : formFields.length;
   const eligibleTriggerFields = formFields.filter(
