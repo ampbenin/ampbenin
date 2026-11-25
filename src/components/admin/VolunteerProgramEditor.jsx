@@ -3720,6 +3720,18 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                   Rejeter
                 </button>
               </div>
+            ) : selectedApplication.status === "REJECTED" && currentRole === "ADMIN" ? (
+              // Retour utilisateur, 2026-11-25 : "si un superviseur rejette,
+              // admin peut venir modifier et accepter la personne" — seul un
+              // ADMIN peut revenir sur un rejet (voir acceptApplication côté
+              // backend, qui applique exactement cette même règle).
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Statut : {APPLICATION_STATUS_LABELS[selectedApplication.status]}</p>
+                <button onClick={() => reviewApplication(selectedApplication._id, "accept")}
+                  className="w-full bg-green-600 text-white font-bold py-2 rounded-xl hover:bg-green-700">
+                  Accepter quand même
+                </button>
+              </div>
             ) : (
               <p className="text-sm text-gray-500">Statut : {APPLICATION_STATUS_LABELS[selectedApplication.status]}</p>
             )}
