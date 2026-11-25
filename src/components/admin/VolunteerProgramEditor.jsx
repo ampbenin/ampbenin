@@ -245,7 +245,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   const [applicationsTotal, setApplicationsTotal] = useState(0);
   const [applicationsTotalPages, setApplicationsTotalPages] = useState(1);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
-  const [applicationFilters, setApplicationFilters] = useState({ status: "", dateFrom: "", dateTo: "" });
+  const [applicationFilters, setApplicationFilters] = useState({ status: "", dateFrom: "", dateTo: "", groupId: "" });
   const [applicationSearch, setApplicationSearch] = useState("");
   const [fieldFilterValues, setFieldFilterValues] = useState({});
   const [showApplicationFiltersMenu, setShowApplicationFiltersMenu] = useState(false);
@@ -426,25 +426,37 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
   // Candidatures : paginées côté serveur, chargées séparément de load()
   // (déclenché à l'activation de l'onglet et à chaque changement de
   // page/filtre/recherche — voir le useEffect dédié plus bas).
+  // Paramètres de filtre communs à la liste paginée ET à la copie d'emails
+  // (listApplicationEmails côté backend applique exactement les mêmes
+  // filtres, voir buildScopedApplicationsQuery) — un seul endroit à tenir à
+  // jour si un filtre est ajouté/retiré.
+  const buildApplicationQueryParams = () => {
+    const params = new URLSearchParams({ programId });
+    if (applicationFilters.status) params.set("status", applicationFilters.status);
+    if (applicationFilters.dateFrom) params.set("dateFrom", applicationFilters.dateFrom);
+    if (applicationFilters.dateTo) params.set("dateTo", applicationFilters.dateTo);
+    if (applicationFilters.groupId) params.set("groupId", applicationFilters.groupId);
+    if (applicationSearch.trim()) params.set("search", applicationSearch.trim());
+
+    // Les réponses CHECKBOX sont stockées en base comme de vrais booléens
+    // (pas les chaînes "true"/"false" que renvoie le <select>) — conversion
+    // nécessaire avant envoi, sinon la requête Mongo ne matche jamais.
+    const customFieldsById = new Map(customFormFields.map((f) => [f.id, f]));
+    const activeFieldFilters = Object.fromEntries(
+      Object.entries(fieldFilterValues)
+        .filter(([, v]) => v !== "" && v !== undefined && v !== null)
+        .map(([fieldId, v]) => [fieldId, customFieldsById.get(fieldId)?.type === "CHECKBOX" ? v === "true" : v])
+    );
+    if (Object.keys(activeFieldFilters).length > 0) params.set("fieldFilters", JSON.stringify(activeFieldFilters));
+    return params;
+  };
+
   const loadApplications = async (page = 1) => {
     setApplicationsLoading(true);
     try {
-      const params = new URLSearchParams({ programId, page: String(page), limit: "10" });
-      if (applicationFilters.status) params.set("status", applicationFilters.status);
-      if (applicationFilters.dateFrom) params.set("dateFrom", applicationFilters.dateFrom);
-      if (applicationFilters.dateTo) params.set("dateTo", applicationFilters.dateTo);
-      if (applicationSearch.trim()) params.set("search", applicationSearch.trim());
-
-      // Les réponses CHECKBOX sont stockées en base comme de vrais booléens
-      // (pas les chaînes "true"/"false" que renvoie le <select>) — conversion
-      // nécessaire avant envoi, sinon la requête Mongo ne matche jamais.
-      const customFieldsById = new Map(customFormFields.map((f) => [f.id, f]));
-      const activeFieldFilters = Object.fromEntries(
-        Object.entries(fieldFilterValues)
-          .filter(([, v]) => v !== "" && v !== undefined && v !== null)
-          .map(([fieldId, v]) => [fieldId, customFieldsById.get(fieldId)?.type === "CHECKBOX" ? v === "true" : v])
-      );
-      if (Object.keys(activeFieldFilters).length > 0) params.set("fieldFilters", JSON.stringify(activeFieldFilters));
+      const params = buildApplicationQueryParams();
+      params.set("page", String(page));
+      params.set("limit", "10");
 
       const res = await adminFetch(`/api/volunteer-applications?${params.toString()}`);
       setApplications(res?.items || []);
@@ -456,6 +468,30 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
       setError(err.message || "Erreur de chargement des candidatures");
     } finally {
       setApplicationsLoading(false);
+    }
+  };
+
+  // Copie dans le presse-papiers tous les emails correspondant aux filtres
+  // actuels (statut, dates, groupe, recherche, champs) — pas seulement la
+  // page affichée. Retour utilisateur, 2026-11-25 : "filtrer uniquement les
+  // mails pour les copier en gros... par groupe créé".
+  const [copyingEmails, setCopyingEmails] = useState(false);
+  const copyFilteredEmails = async () => {
+    setCopyingEmails(true);
+    try {
+      const params = buildApplicationQueryParams();
+      const res = await adminFetch(`/api/volunteer-applications/emails?${params.toString()}`);
+      const emails = res?.emails || [];
+      if (emails.length === 0) {
+        alert("Aucun email ne correspond à ces filtres.");
+        return;
+      }
+      await navigator.clipboard.writeText(emails.join(", "));
+      alert(`${emails.length} email(s) copié(s) dans le presse-papiers.`);
+    } catch (err) {
+      alert(err.message || "Erreur lors de la copie des emails");
+    } finally {
+      setCopyingEmails(false);
     }
   };
 
@@ -1741,6 +1777,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
     (applicationFilters.status ? 1 : 0) +
     (applicationFilters.dateFrom ? 1 : 0) +
     (applicationFilters.dateTo ? 1 : 0) +
+    (applicationFilters.groupId ? 1 : 0) +
     Object.values(fieldFilterValues).filter(Boolean).length;
   const editingField = editingFieldId ? formFields.find((f) => f.id === editingFieldId) : null;
   const isEditingLocked = !!editingField?.locked;
@@ -2355,11 +2392,17 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
           <div>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
               <h3 className="font-semibold">Candidatures ({applicationsTotal})</h3>
-              {!isReviewerOnly && (
-                <button onClick={wipeAllApplications} className="text-sm text-red-700 border border-red-300 rounded-lg px-3 py-1 hover:bg-red-50">
-                  🗑️ Vider tout
+              <div className="flex gap-2">
+                <button onClick={copyFilteredEmails} disabled={copyingEmails}
+                  className="text-sm text-blue-700 border border-blue-300 rounded-lg px-3 py-1 hover:bg-blue-50 disabled:opacity-50">
+                  {copyingEmails ? "Copie…" : "📋 Copier les emails (filtre actuel)"}
                 </button>
-              )}
+                {!isReviewerOnly && (
+                  <button onClick={wipeAllApplications} className="text-sm text-red-700 border border-red-300 rounded-lg px-3 py-1 hover:bg-red-50">
+                    🗑️ Vider tout
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Recherche (toujours visible) + bouton menu Filtres */}
@@ -2397,6 +2440,19 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                         <option value="REJECTED">Rejetée</option>
                       </select>
                     </div>
+                    {applicationGroups.length > 0 && (
+                      <div className="flex flex-col">
+                        <label className="text-xs text-gray-500 mb-1">Groupe</label>
+                        <select value={applicationFilters.groupId}
+                          onChange={(e) => setApplicationFilters((prev) => ({ ...prev, groupId: e.target.value }))}
+                          className="border border-gray-300 rounded-lg p-2 text-sm">
+                          <option value="">Tous les groupes</option>
+                          {applicationGroups.map((g) => (
+                            <option key={g._id} value={g._id}>{g.name} ({g.applicationIds.length})</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <div className="flex flex-col flex-1">
                         <label className="text-xs text-gray-500 mb-1">Reçue depuis</label>
@@ -2431,7 +2487,7 @@ export default function VolunteerProgramEditor({ programId, onBack }) {
                     ))}
                     {activeApplicationFilterCount > 0 && (
                       <button
-                        onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "" }); setFieldFilterValues({}); }}
+                        onClick={() => { setApplicationFilters({ status: "", dateFrom: "", dateTo: "", groupId: "" }); setFieldFilterValues({}); }}
                         className="text-xs text-red-600 hover:underline self-start"
                       >
                         Réinitialiser les filtres
